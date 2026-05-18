@@ -1,12 +1,13 @@
-# services:
-#   fodderly-app-web:
-#     build:
-#       context: .
-#       dockerfile: Dockerfile
-#     image: fodderlydocker/fodderly-dev-web:1.0.21
-#     container_name: fodderly-dev-web
-#     ports:
-#       - ${APP_PORT:-3000}:80
-#     restart: always
-#     labels:
-#       project: "fodderly-app-web"
+services:
+  fodderly-app-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fodderlydocker/fodderly-test-web:1.0.17
+    container_name: fodderly-test-web
+    ports:
+      - ${APP_PORT:-3000}:80
+    restart: always
+    labels:
+      project: "fodderly-app-web"
+ 
