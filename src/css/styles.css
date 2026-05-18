@@ -1,0 +1,212 @@
+/* Tailwind Core */
+@import "tailwindcss";
+
+/* ReUI Configs */
+@import "./config.reui.css";
+
+/** Global Styles **/
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body,
+  #root {
+    height: 100%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  *:focus-visible {
+    @apply outline-ring rounded-xs shadow-none outline-2 outline-offset-3 transition-none!;
+  }
+}
+
+/* Metronic Components  */
+@import "./components/image-input.css";
+@import "./components/apexcharts.css";
+@import "./components/leaflet.css";
+@import "./components/rating.css";
+@import "./components/image-input.css";
+@import "./components/scrollable.css";
+
+/** Dark/Light Theme Variant **/
+@custom-variant dark (&:is(.dark *));
+@custom-variant light (&:not(.dark *));
+
+* {
+  font-family: "Inter", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.user_management_tabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* .app-scrollbar,
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #1e6b3a #1e6b3a3d;
+  scrollbar-gutter: stable both-edges;
+}
+
+.app-scrollbar::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  border-radius: 10px;
+}
+
+.app-scrollbar::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #1e6b3a3d;
+  width: 5px;
+  height: 5px;
+  border-radius: 10px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #1e6b3a;
+  width: 5px;
+  height: 5px;
+  border-radius: 10px;
+}
+
+.dark .app-scrollbar,
+.dark .custom-scrollbar {
+  scrollbar-color: #7cb83e #7cb83e22;
+}
+
+.dark .app-scrollbar::-webkit-scrollbar-track,
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #7cb83e22;
+}
+
+.dark .app-scrollbar::-webkit-scrollbar-thumb,
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #7cb83e;
+} */
+
+/* Common Scrollbar */
+.app-scrollbar,
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #6fa98a #e6f4ec; /* thumb track */
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Chrome, Edge, Safari */
+.app-scrollbar::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.app-scrollbar::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #f1f5f9; /* light track */
+  border-radius: 10px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* light thumb */
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+/* Hover effect (subtle) */
+.app-scrollbar::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* Dark Theme */
+.dark .app-scrollbar,
+.dark .custom-scrollbar {
+  scrollbar-color: #4f7d65 #1b2b23;
+}
+
+.dark .app-scrollbar::-webkit-scrollbar-track,
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background-color: #1b2b23;
+}
+
+.dark .app-scrollbar::-webkit-scrollbar-thumb,
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #475569;
+}
+
+.dark .app-scrollbar::-webkit-scrollbar-thumb:hover,
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b;
+}
+
+/* Desktop sidebar: transparent scrollbar (overrides .app-scrollbar on same element) */
+.app-scrollbar.sidebar-scrollbar-transparent {
+  scrollbar-color: transparent transparent;
+}
+
+.app-scrollbar.sidebar-scrollbar-transparent::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.app-scrollbar.sidebar-scrollbar-transparent::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+
+.app-scrollbar.sidebar-scrollbar-transparent::-webkit-scrollbar-thumb:hover {
+  background-color: transparent;
+}
+
+.dark .app-scrollbar.sidebar-scrollbar-transparent {
+  scrollbar-color: transparent transparent;
+}
+
+.dark .app-scrollbar.sidebar-scrollbar-transparent::-webkit-scrollbar-track,
+.dark .app-scrollbar.sidebar-scrollbar-transparent::-webkit-scrollbar-thumb,
+.dark .app-scrollbar.sidebar-scrollbar-transparent::-webkit-scrollbar-thumb:hover {
+  background-color: transparent;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.custom_width {
+  min-width: 195px;
+}
+
+@media (max-width: 1280px) and (min-width: 1024px) {
+  .custom_width {
+    width: 49%;
+  }
+}
+
+.css-1kjihgb-MuiButtonBase-root-MuiPickersDay-root.Mui-disabled {
+  color: #525252 !important;
+  font-weight: 400 !important;
+}
+
+.css-1kjihgb-MuiButtonBase-root-MuiPickersDay-root {
+  font-weight: 900 !important;
+  font-size: 0.85rem !important;
+}
+
+/* Hide Edge native password reveal button (prevents double-eye with custom toggle) */
+input[type="password"]::-ms-reveal {
+  display: none;
+}

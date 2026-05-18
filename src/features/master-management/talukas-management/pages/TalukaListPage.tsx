@@ -1,0 +1,385 @@
+import {
+  ColumnDef,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { AlertCircle, Loader2, Navigation, RotateCcw, Upload } from "lucide-react";
+import { format } from "date-fns";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ActionButton } from "@/components/common/action-button";
+import { Container } from "@/components/common/container";
+import { SearchInput } from "@/components/common/search-input";
+import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
+import { TruncatedCell } from "@/components/common/truncated-cell";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
+import { DataGrid } from "@/components/ui/data-grid";
+import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
+import { DataGridTable } from "@/components/ui/data-grid-table";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import { useTalukasInfiniteQuery, useTalukaMutation } from "../hooks/use-taluka-queries";
+import { uploadTalukaExcel, downloadTalukaExcel, streamTalukaImport, downloadTalukaImportErrorSheet } from "../services/taluka.api";
+
+import { useStatesInfiniteQuery } from "../../states-management/hooks/use-state-queries";
+import { useDistrictsQuery } from "../../districts-management/hooks/use-district-queries";
+import { TalukaForm } from "../components/TalukaForm";
+import { CommonExcelUploadModal } from "../../components/CommonExcelUploadModal";
+import { TalukaItem, TalukaFormValues } from "../types";
+import { toast } from "sonner";
+import { getApiSortParams } from "@/lib/api-sorting";
+
+export function TalukaListPage() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([{ id: "createdAt", desc: true }]);
+  const [stateFilter, setStateFilter] = useState("");
+  const [districtFilter, setDistrictFilter] = useState("");
+  const [selectedTaluka, setSelectedTaluka] = useState<TalukaItem | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [viewOnly, setViewOnly] = useState(false);
+  const [lastErrorJobId, setLastErrorJobId] = useState<string | null>(
+    localStorage.getItem('LAST_IMPORT_ERROR_JOB_ID_TALUKA')
+  );
+  const [isDownloadingErrors, setIsDownloadingErrors] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchTerm(searchTerm), 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const { data: statesData } = useStatesInfiniteQuery({
+    prefetchAllPages: true,
+    limit: 100,
+    sortBy: "name",
+    sortOrder: "ASC",
+  });
+  const stateOptions = useMemo(
+    () =>
+      statesData?.pages.flatMap((p) =>
+        p.data.map((s) => ({
+          value: s.id,
+          label:
+            s.translations?.en || (typeof s.name === "string" ? s.name : s.name?.en) || "",
+        })),
+      ) || [],
+    [statesData],
+  );
+
+  const { data: districtsData, isLoading: isLoadingDistricts } = useDistrictsQuery({ stateId: stateFilter || undefined });
+  const districtOptions = useMemo(
+    () =>
+      (districtsData?.data || []).map((d) => ({
+        value: d.id,
+        label: d.translations?.en || (typeof d.name === "string" ? d.name : d.name?.en) || "",
+      })),
+    [districtsData],
+  );
+
+  const { sortBy, sortOrder } = getApiSortParams({
+    sorting,
+    defaultSortBy: "createdAt" as const,
+    columnToSortByMap: {
+      name: "name",
+      createdAt: "createdAt",
+    },
+  });
+
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useTalukasInfiniteQuery({
+      search: debouncedSearchTerm,
+      stateId: stateFilter || undefined,
+      districtId: districtFilter || undefined,
+      sortBy,
+      sortOrder,
+    });
+
+  const formatCreatedDate = (value?: string) => {
+    if (!value) return "-";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "-";
+    return format(parsed, "dd MMM, yyyy");
+  };
+
+  // Build a set of district IDs that belong to the selected state (for reliable client-side filtering)
+  const stateDistrictIdSet = useMemo(() =>
+    new Set((districtsData?.data || []).map(d => d.id)),
+    [districtsData]
+  );
+
+  const talukasData = useMemo(() => {
+    const allTalukas = data?.pages.flatMap(p => p.data) || [];
+    return allTalukas.filter(t => {
+      // Filter by state: use stateId if present, else check districtId belongs to state's districts
+      if (stateFilter) {
+        const matchesState = t.stateId
+          ? t.stateId === stateFilter
+          : stateDistrictIdSet.size > 0 && stateDistrictIdSet.has(t.districtId);
+        if (!matchesState) return false;
+      }
+      // Filter by district
+      if (districtFilter && t.districtId && t.districtId !== districtFilter) return false;
+      return true;
+    });
+  }, [data, stateFilter, districtFilter, stateDistrictIdSet]);
+
+  const mutation = useTalukaMutation(selectedTaluka?.id, () => {
+    setIsDialogOpen(false);
+    setSelectedTaluka(null);
+  });
+
+  const columns = useMemo<ColumnDef<TalukaItem>[]>(() => [
+    {
+      id: "serial",
+      header: ({ column }) => <DataGridColumnHeader title="Sr." column={column} />,
+      cell: ({ row }) => row.index + 1,
+      enableSorting: false,
+      size: 60,
+    },
+
+    {
+      id: "name",
+      accessorFn: (row) => row.translations?.en || (typeof row.name === "string" ? row.name : row.name?.en),
+      header: ({ column }) => <DataGridColumnHeader title="Name" column={column} />,
+      cell: ({ row }) => (
+        <TruncatedCell value={row.original.translations?.en || (typeof row.original.name === "string" ? row.original.name : row.original.name?.en) || "-"} className="font-medium" maxWidth="max-w-[200px]" />
+      ),
+      size: 200,
+    },
+    {
+      id: "districtName",
+      accessorFn: (row) => (typeof row.districtName === "string" ? row.districtName : row.districtName?.en),
+      header: ({ column }) => <DataGridColumnHeader title="District" column={column} />,
+      enableSorting: false,
+      cell: ({ row }) => <TruncatedCell value={(typeof row.original.districtName === "string" ? row.original.districtName : row.original.districtName?.en) || "-"} maxWidth="max-w-[150px]" />,
+      size: 150,
+    },
+    {
+      id: "stateName",
+      accessorFn: (row) => (typeof row.stateName === "string" ? row.stateName : row.stateName?.en),
+      header: ({ column }) => <DataGridColumnHeader title="State" column={column} />,
+      enableSorting: false,
+      cell: ({ row }) => <TruncatedCell value={(typeof row.original.stateName === "string" ? row.original.stateName : row.original.stateName?.en) || "-"} maxWidth="max-w-[150px]" />,
+      size: 150,
+    },
+    {
+      id: "createdAt",
+      accessorFn: (row) => row.createdAt || "",
+      header: ({ column }) => <DataGridColumnHeader title="Created" column={column} />,
+      enableSorting: true,
+      cell: ({ row }) => formatCreatedDate(row.original.createdAt),
+      size: 140,
+    },
+
+    {
+      id: "actions",
+      header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <ActionButton actionType="view" tooltip="View Taluka" onClick={() => { setSelectedTaluka(row.original); setViewOnly(true); setIsDialogOpen(true); }} />
+          <ActionButton actionType="edit" tooltip="Edit Taluka" onClick={() => { setSelectedTaluka(row.original); setViewOnly(false); setIsDialogOpen(true); }} />
+        </div>
+      ),
+      size: 100,
+    },
+  ], []);
+
+  const table = useReactTable({
+    data: talukasData,
+    columns,
+    getSortedRowModel: getSortedRowModel(),
+    getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+    state: { sorting },
+    onSortingChange: setSorting,
+    columnResizeMode: "onChange",
+  });
+
+  const handleReset = useCallback(() => {
+    setSearchTerm("");
+    setStateFilter("");
+    setDistrictFilter("");
+    setSorting([{ id: "createdAt", desc: true }]);
+  }, []);
+
+  const handleDownloadErrors = async () => {
+    if (!lastErrorJobId) return;
+    setIsDownloadingErrors(true);
+    try {
+      const blob = await downloadTalukaImportErrorSheet(lastErrorJobId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Taluka_Import_Errors_${lastErrorJobId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      localStorage.removeItem("LAST_IMPORT_ERROR_JOB_ID_TALUKA");
+      setLastErrorJobId(null);
+    } catch (error: unknown) {
+      if (error instanceof Error && "status" in error && (error as { status?: number }).status === 422) {
+        toast.error("This report has already been downloaded or has expired.");
+        localStorage.removeItem("LAST_IMPORT_ERROR_JOB_ID_TALUKA");
+        setLastErrorJobId(null);
+      } else {
+        toast.error("Failed to download error sheet");
+      }
+    } finally {
+      setIsDownloadingErrors(false);
+    }
+  };
+
+  const talukaQueryKey = useMemo(() => ["talukas"], []);
+
+  return (
+    <Container className="pb-8">
+      <div className="flex h-full min-h-0 flex-col gap-6">
+        <Card variant="listing" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <CardHeader className="flex flex-col gap-3 shrink-0 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center xl:flex-1">
+              <CardTitle className="text-xl flex items-center gap-2 whitespace-nowrap shrink-0">
+                <Navigation className="h-5 w-5 text-primary" />
+                Talukas
+              </CardTitle>
+              <SearchInput value={searchTerm} onChange={setSearchTerm} tooltip="Search by taluka name"
+                className="w-full sm:max-w-[250px]" inputClassName="h-9 text-[13px]" />
+              <div className="w-[150px]">
+                <SearchableSelect
+                  options={stateOptions}
+                  value={stateFilter}
+                  onValueChange={(val) => { setStateFilter(val); setDistrictFilter(""); }}
+                  placeholder="Select State"
+                  triggerClassName="h-8.5 text-[12px]"
+                  contentClassName="w-[200px] max-h-[55vh]"
+                  align="start"
+                />
+              </div>
+              <div className="w-[150px]">
+                <SearchableSelect options={districtOptions} value={districtFilter} onValueChange={setDistrictFilter}
+                  placeholder={stateFilter ? "Select District" : "Select State first"}
+                  disabled={isLoadingDistricts && !!stateFilter}
+                  triggerClassName="h-8.5 text-[12px]"
+                  contentClassName="w-[200px] max-h-[55vh]"
+                  align="start"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2 xl:shrink-0">
+              <Button variant="outline" onClick={handleReset}
+                disabled={
+                  !searchTerm &&
+                  !stateFilter &&
+                  !districtFilter &&
+                  sorting.length === 1 &&
+                  sorting[0]?.id === "createdAt" &&
+                  sorting[0]?.desc === true
+                }
+                className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all">
+                <RotateCcw className="h-4 w-4" /> Reset
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {lastErrorJobId && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8.5 w-8.5 text-destructive bg-destructive/5 hover:bg-destructive/10 border border-destructive/20 rounded-md"
+                    onClick={handleDownloadErrors}
+                    disabled={isDownloadingErrors}
+                    title="Download latest import error report"
+                  >
+                    {isDownloadingErrors ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary transition-all hover:border-primary/50 hover:bg-primary/5"
+                  onClick={() => setIsUploadModalOpen(true)}
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Excel
+                </Button>
+              </div>
+
+              <ActionButton actionType="add" showIconOnly={false} iconClassName="mr-1"
+                className="h-8.5 min-w-[90px] gap-0 px-2.5 text-[13px] font-semibold shadow-sm hover:translate-y-0"
+                onClick={() => { setSelectedTaluka(null); setViewOnly(false); setIsDialogOpen(true); }}>
+                Add Taluka
+              </ActionButton>
+            </div>
+          </CardHeader>
+
+          <CardTable className="min-h-0 flex-1 overflow-hidden">
+            <DataGrid table={table} recordCount={talukasData.length} isLoading={isLoading}
+              emptyMessage={debouncedSearchTerm ? "No talukas match your search." : "No talukas found."}
+              tableLayout={{ dense: true, headerSticky: true, columnsPinnable: true, columnsVisibility: true, cellBorder: true, width: "auto", columnsResizable: true }}
+              tableClassNames={{ headerRow: "[&_th]:text-xs", bodyRow: "[&_td]:text-[13px]" }}>
+              <InfiniteScrollContainer className="max-h-[78vh]" isLoading={isLoading}
+                isFetchingNextPage={isFetchingNextPage} hasNextPage={hasNextPage}
+                onLoadMore={() => fetchNextPage()} overflowX="auto" overflowY="auto">
+                <DataGridTable />
+              </InfiniteScrollContainer>
+            </DataGrid>
+          </CardTable>
+        </Card>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0 custom-scrollbar">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="text-xl font-bold">
+              {viewOnly ? "View" : selectedTaluka ? "Edit" : "Create"} Taluka
+            </DialogTitle>
+            {!viewOnly && (
+              <DialogDescription className="text-[13.5px] text-muted-foreground mt-1">
+                Enter the English content first, then use auto-translate to generate other languages.
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="px-6 ">
+            <TalukaForm
+              initialData={selectedTaluka}
+              states={stateOptions}
+              onSubmit={(val: TalukaFormValues) => mutation.mutate(val)}
+              onCancel={() => setIsDialogOpen(false)}
+              isLoading={mutation.isPending}
+              viewOnly={viewOnly}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <CommonExcelUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onImportError={(jobId) => setLastErrorJobId(jobId)}
+        title="Upload Talukas"
+        templateDownloadName="Taluka_Translations_Template.xlsx"
+        storageKey="LAST_IMPORT_ERROR_JOB_ID_TALUKA"
+        queryKey={talukaQueryKey}
+        uploadFn={uploadTalukaExcel}
+        downloadTemplateFn={downloadTalukaExcel}
+        streamFn={streamTalukaImport}
+      />
+    </Container>
+  );
+}
+
+export default TalukaListPage;

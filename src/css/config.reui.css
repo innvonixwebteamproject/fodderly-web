@@ -1,0 +1,157 @@
+@plugin 'tailwindcss-animate';
+
+/** Colors — Fodderly Brand: Light Theme **/
+:root {
+  /** Base Colors **/
+  --background: #f5faf6; /* Very light green-tinted white */
+  --foreground: #1a3326; /* Deep forest green for body text */
+  --card: #ffffff; /* Pure white cards */
+  --card-foreground: #1a3326; /* Deep forest green text on cards */
+  --popover: #ffffff; /* Pure white popovers */
+  --popover-foreground: #1a3326; /* Deep forest green text on popovers */
+  --primary: #1e6b3a; /* Dark forest green — Fodderly logo brand color */
+  --primary-foreground: #ffffff; /* White text on primary */
+  --secondary: #e8f5ee; /* Very light green tint */
+  --secondary-foreground: #1e5e38; /* Dark green text on secondary */
+  --muted: #eef7f1; /* Soft green-gray for muted backgrounds */
+  --muted-foreground: #5a7a64; /* Medium muted green for placeholders */
+  --accent: #dff0e7; /* Light green accent */
+  --accent-foreground: #14522c; /* Deep green text on accent */
+  --destructive: #f34a5a; /* Red for errors */
+  --destructive-foreground: #ffffff; /* White text on destructive */
+  --mono: #1a3326; /* Deep green for mono elements */
+  --mono-foreground: #ffffff; /* White for mono foreground */
+
+  /** Base Styles **/
+  --border: #c2dece; /* Soft green border */
+  --input: #c2dece; /* Soft green input border */
+  --ring: #6abf8a; /* Medium green focus ring */
+  --radius: 0.5rem;
+}
+
+.dark {
+  /** Base Colors — Fodderly Brand: Dark Theme **/
+  --background: #050c08; /* Deep forest green-black */
+  --foreground: #e1f0e6; /* Light green-white text */
+  --card: #0c1a12; /* Darker green surface */
+  --card-foreground: #e1f0e6;
+  --popover: #0c1a12;
+  --popover-foreground: #e1f0e6;
+  --primary: #7cb83e; /* Plant green from logo (vibrant for dark mode) */
+  --primary-foreground: #050c08; /* Dark text on light primary */
+  --secondary: #12291d; /* Deep olive green */
+  --secondary-foreground: #a9d4b8; /* Muted light green */
+  --muted: #0c1a12;
+  --muted-foreground: #6b8c76; /* Muted forest green */
+  --accent: #1a3326;
+  --accent-foreground: #e1f0e6;
+  --destructive: #ff4d5f;
+  --destructive-foreground: #ffffff;
+  --mono: #e1f0e6;
+  --mono-foreground: #050c08;
+
+  /** Base Styles **/
+  --border: #1a3326; /* Darker green border */
+  --input: #1a3326;
+  --ring: #3e7c52;
+}
+
+/** Theme Setup **/
+@theme inline {
+  /** Base Colors **/
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-mono: var(--mono);
+  --color-mono-foreground: var(--mono-foreground);
+
+  /** Base Styles **/
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-collapsible-up: collapsible-up 0.2s ease-out;
+  --animate-caret-blink: caret-blink 1.25s ease-out infinite;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes caret-blink {
+    0%,
+    70%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    50% {
+      opacity: 0;
+    }
+  }
+}
+
+/** Custom Font Size **/
+@theme {
+  --text-2sm: 0.8125rem;
+  --text-2sm--line-height: calc(1.075 / 0.8125);
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: calc(0.825 / 0.6875);
+}

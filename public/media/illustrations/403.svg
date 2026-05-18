@@ -1,0 +1,35 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="80" cy="80" r="75" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2"/>
+  
+  <!-- Shield background -->
+  <path d="M80 25L95 35V65C95 75 90 85 80 90C70 85 65 75 65 65V35L80 25Z" fill="#FEF2F2" stroke="#FECACA" stroke-width="1"/>
+  
+  <!-- Shield outline -->
+  <path d="M80 25L95 35V65C95 75 90 85 80 90C70 85 65 75 65 65V35L80 25Z" fill="none" stroke="#EF4444" stroke-width="2"/>
+  
+  <!-- Lock body -->
+  <rect x="72" y="60" width="16" height="20" rx="2" fill="#DC2626"/>
+  
+  <!-- Lock shackle -->
+  <path d="M76 60V52C76 49.79 77.79 48 80 48C82.21 48 84 49.79 84 52V60" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- X mark on lock -->
+  <path d="M77 67L83 73M83 67L77 73" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Warning triangles around -->
+  <path d="M40 45L45 35L50 45H40Z" fill="#FCD34D" stroke="#F59E0B" stroke-width="1"/>
+  <path d="M45 40L45 38M45 42L45 42" stroke="#F59E0B" stroke-width="1" stroke-linecap="round"/>
+  
+  <path d="M110 45L115 35L120 45H110Z" fill="#FCD34D" stroke="#F59E0B" stroke-width="1"/>
+  <path d="M115 40L115 38M115 42L115 42" stroke="#F59E0B" stroke-width="1" stroke-linecap="round"/>
+  
+  <!-- Decorative dots -->
+  <circle cx="45" cy="120" r="3" fill="#CBD5E1"/>
+  <circle cx="115" cy="120" r="3" fill="#CBD5E1"/>
+  <circle cx="30" cy="80" r="2" fill="#E2E8F0"/>
+  <circle cx="130" cy="80" r="2" fill="#E2E8F0"/>
+  
+  <!-- 403 text at bottom -->
+  <text x="80" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#64748B">403</text>
+</svg>
