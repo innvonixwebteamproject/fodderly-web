@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
-import { canAdminCancelOrder, canAdminScheduleDelivery, isOrderRejectedStatus } from "../utils/order-schedule-rules";
+import { canAdminCancelOrder, canAdminScheduleDelivery } from "../utils/order-schedule-rules";
 import {
   useFoddermanOptionsQuery,
   useTalukaOptionsQuery,

@@ -26,7 +26,6 @@ import { OrderDeliverySummaryCard } from "../components/OrderDeliverySummaryCard
 import { PartnerDispatchModal } from "../components/PartnerDispatchModal";
 import { PartnerEtaRevisionModal } from "../components/PartnerEtaRevisionModal";
 import {
-  isPartnerListVisibleStatus,
   partnerCanDispatch,
   partnerCanReviseEta,
   partnerCanScheduleDelivery,
@@ -72,7 +71,7 @@ export function PartnerOrderDetailPage() {
     };
   }, [order]);
 
-  const restrictedView = order && !isPartnerListVisibleStatus(order.orderStatus);
+
   const showDispatch = order && partnerCanDispatch(order.orderStatus, order.orderStatusApiRaw);
   const canSchedule = order && partnerCanScheduleDelivery(order);
 
@@ -94,7 +93,7 @@ export function PartnerOrderDetailPage() {
     try {
       await dispatchMutation.mutateAsync();
       setDispatchConfirmTarget(null);
-    } catch (e) {
+    } catch {
       // toast is handled in hook
     }
   };

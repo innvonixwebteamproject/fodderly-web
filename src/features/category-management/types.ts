@@ -30,6 +30,9 @@ export interface ProductCategoryItem {
   description: TranslationMap;
   status: CategoryStatus;
   isActive: boolean;
+  image?: string;
+  image_path?: string;
+  image_url?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -84,7 +87,17 @@ export const productCategoryFormSchema = z.object({
     ml: productCategoryDescriptionField,
   }),
   status: z.enum(["active", "inactive"]),
+  image: z.custom<File | null>((val) => val === null || val instanceof File, "Image must be a file").optional().nullable(),
+  existingImageRemoved: z.boolean().optional(),
+  hasExistingImage: z.boolean().optional(),
 }).superRefine((value, ctx) => {
+  if (!value.image && (!value.hasExistingImage || value.existingImageRemoved)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["image"],
+      message: "Please upload an image.",
+    });
+  }
   const englishName = value.name.en.trim();
   const englishDescription = value.description.en.trim();
 
@@ -184,6 +197,9 @@ export const getDefaultProductCategoryFormValues = (): ProductCategoryFormValues
   name: createEmptyTranslations(),
   description: createEmptyTranslations(),
   status: "active",
+  image: null,
+  existingImageRemoved: false,
+  hasExistingImage: false,
 });
 
 export const getDefaultInventoryCategoryFormValues =

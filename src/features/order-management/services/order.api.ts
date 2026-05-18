@@ -134,6 +134,9 @@ export const getPartnerOrders = async (
   if (q) body.search = q;
   if (sortBy) body.sortBy = sortBy;
   if (sortOrder) body.sortOrder = sortOrder;
+  if (filters.dateFilter) body.dateFilter = filters.dateFilter;
+  if (filters.fromDate) body.fromDate = filters.fromDate;
+  if (filters.toDate) body.toDate = filters.toDate;
 
   const response = await api.post<unknown>("/orders/partner/list", body, {
     params: { page, limit },

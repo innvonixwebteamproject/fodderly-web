@@ -31,14 +31,7 @@ export function partnerCanScheduleDelivery(order: {
   orderStatusApiRaw?: string | null;
 }): boolean {
   const { orderStatus: status, orderStatusApiRaw: raw } = order;
-  const rawLower = raw?.trim().toLowerCase();
-
-  // ONLY hide if specifically "cancelled" in API or mapped status
-  if (rawLower === "cancelled" || status === "CANCELLED" || status === "CANCELLED_BY_ADMIN") {
-    return false;
-  }
-
-  return true;
+  return partnerCanDispatch(status, raw) || partnerCanReviseEta(status);
 }
 
 /** Partner must not use admin quick-update for these transitions. */

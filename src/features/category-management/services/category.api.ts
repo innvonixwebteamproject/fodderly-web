@@ -36,6 +36,9 @@ type ProductCategoryPayload = {
   description?: TranslationMap | string | null;
   status?: CategoryStatus;
   isActive?: boolean;
+  image?: string | null;
+  image_path?: string | null;
+  image_url?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -148,6 +151,9 @@ const mapProductCategory = (
     description: toTranslationMap(payload.description),
     status,
     isActive: status === "active",
+    image: payload.image || undefined,
+    image_path: payload.image_path || undefined,
+    image_url: payload.image_url || undefined,
     createdAt: payload.createdAt,
     updatedAt: payload.updatedAt,
   };
@@ -221,9 +227,18 @@ export const getProductCategories = async ({
 export const createProductCategory = async (
   payload: ProductCategoryFormValues,
 ): Promise<MutationResult<ProductCategoryItem>> => {
-  const response = await api.post<WrappedResponse<ProductCategoryPayload>>("/category", {
-    name: sanitizeTranslations(payload.name),
-    description: sanitizeTranslations(payload.description),
+  const formData = new FormData();
+  formData.append("name", JSON.stringify(sanitizeTranslations(payload.name)));
+  formData.append("description", JSON.stringify(sanitizeTranslations(payload.description)));
+  
+  if (payload.image instanceof File) {
+    formData.append("image", payload.image);
+  }
+
+  const response = await api.post<WrappedResponse<ProductCategoryPayload>>("/category", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 
   return {
@@ -239,15 +254,31 @@ export const updateProductCategory = async (
   id: string,
   payload: Partial<ProductCategoryFormValues> & { status?: CategoryStatus },
 ): Promise<MutationResult<ProductCategoryItem>> => {
+  const formData = new FormData();
+
+  if (payload.name) {
+    formData.append("name", JSON.stringify(sanitizeTranslations(payload.name)));
+  }
+  if (payload.description) {
+    formData.append("description", JSON.stringify(sanitizeTranslations(payload.description)));
+  }
+  if (payload.status) {
+    formData.append("status", payload.status);
+  }
+  if (payload.image instanceof File) {
+    formData.append("image", payload.image);
+  } else if (payload.existingImageRemoved) {
+    formData.append("image", "");
+  }
+
   const response = await api.patch<WrappedResponse<ProductCategoryPayload>>(
     `/category/${id}`,
+    formData,
     {
-      ...(payload.name ? { name: sanitizeTranslations(payload.name) } : {}),
-      ...(payload.description
-        ? { description: sanitizeTranslations(payload.description) }
-        : {}),
-      ...(payload.status ? { status: payload.status } : {}),
-    },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
   );
 
   return {

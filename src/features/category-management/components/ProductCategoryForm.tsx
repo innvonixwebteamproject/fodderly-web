@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Languages, Loader2, Sparkles } from "lucide-react";
+import { Languages, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { SubmitErrorHandler, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -49,6 +49,8 @@ export function ProductCategoryForm({
 }: ProductCategoryFormProps) {
   const [activeLanguage, setActiveLanguage] = useState<CategoryLanguageCode>("hi");
   const [isAutoTranslating, setIsAutoTranslating] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
 
   const form = useForm<ProductCategoryFormValues>({
     resolver: zodResolver(productCategoryFormSchema),
@@ -74,6 +76,8 @@ export function ProductCategoryForm({
     if (!initialData) {
       form.reset(getDefaultProductCategoryFormValues());
       setActiveLanguage("hi");
+      setImagePreview(null);
+      setExistingImageUrl(null);
       return;
     }
 
@@ -83,10 +87,60 @@ export function ProductCategoryForm({
       nextValues.description[language] = initialData.description[language] || "";
     });
     nextValues.status = initialData.status;
+    nextValues.existingImageRemoved = false;
+    nextValues.image = null;
+    nextValues.hasExistingImage = Boolean(initialData.image_url || initialData.image_path || initialData.image);
 
     form.reset(nextValues);
     setActiveLanguage("hi");
+    setImagePreview(null);
+    setExistingImageUrl(initialData.image_url || initialData.image_path || initialData.image || null);
   }, [form, initialData]);
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
+
+  const handleFileChange = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+
+    const maxSize = 5 * 1024 * 1024;
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      form.setError("image", { type: "manual", message: "Only JPG and PNG formats are allowed." });
+      return;
+    }
+    if (file.size > maxSize) {
+      form.setError("image", { type: "manual", message: "Image size must be less than 5MB." });
+      return;
+    }
+
+    form.clearErrors("image");
+    form.setValue("image", file, { shouldValidate: true, shouldDirty: true });
+    
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    form.setValue("image", null, { shouldValidate: true, shouldDirty: true });
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+  };
+
+  const handleRemoveExistingImage = () => {
+    setExistingImageUrl(null);
+    form.setValue("existingImageRemoved", true, { shouldValidate: true, shouldDirty: true });
+  };
 
   const handleAutoTranslate = async () => {
     const englishName = form.getValues("name.en").trim();
@@ -185,7 +239,8 @@ export function ProductCategoryForm({
         className="flex min-h-full flex-col"
       >
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-                      <Card className="h-fit">
+          <div className="flex flex-col gap-4">
+            <Card className="h-fit">
               <CardHeader className="flex items-center justify-between pb-3">
                 <CardTitle>English Content</CardTitle>
                 <Button
@@ -205,39 +260,104 @@ export function ProductCategoryForm({
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name.en"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Category Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter product category name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="name.en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Category Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter product category name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="description.en"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        className="min-h-28 resize-y custom-scrollbar"
-                        placeholder="Enter product category description"
+                <FormField
+                  control={form.control}
+                  name="description.en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          className="min-h-28 resize-y custom-scrollbar"
+                          placeholder="Enter product category description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="h-fit">
+              <CardHeader className="pb-3">
+                <CardTitle>Category Image</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:bg-muted/50">
+                  <div className="rounded-full bg-primary/10 p-2">
+                    <Upload className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium">Click to upload image</p>
+                    <p className="text-xs text-muted-foreground">JPG, PNG up to 5MB</p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={(event) => handleFileChange(event.target.files)}
+                  />
+                </label>
+                <FormField control={form.control} name="image" render={() => <FormMessage />} />
+
+                {existingImageUrl && !imagePreview && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Existing Image</p>
+                    <div className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-muted">
+                      <img
+                        src={existingImageUrl}
+                        alt="Category"
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded bg-destructive/90 p-1 text-destructive-foreground shadow-sm opacity-0 transition-opacity group-hover:opacity-100"
+                        onClick={handleRemoveExistingImage}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
                 )}
-              />
-            </CardContent>
-          </Card>
+
+                {imagePreview && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">New Image</p>
+                    <div className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-muted">
+                      <img
+                        src={imagePreview}
+                        alt="New category"
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded bg-destructive/90 p-1 text-destructive-foreground shadow-sm opacity-0 transition-opacity group-hover:opacity-100"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           <Card className="h-fit">
             <CardHeader>

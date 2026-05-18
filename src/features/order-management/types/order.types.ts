@@ -192,6 +192,10 @@ export type AdminOrderListApiSortBy = "createdAt" | "orderId" | "total" | "fodde
 export interface PartnerDailyOrderListFilters {
   /** OpenAPI `status` in POST body; omit or empty string = all. */
   status?: AdminOrderListApiStatus | "";
+  search?: string;
+  dateFilter?: "last_7_days" | "custom" | "";
+  fromDate?: string;
+  toDate?: string;
 }
 
 export interface OrderListFilters {

@@ -382,6 +382,30 @@ export function CategoryCmsPage() {
         size: 48,
       },
       {
+        id: "image",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Image" column={column} />
+        ),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const imgUrl = row.original.image_url || row.original.image_path || row.original.image;
+          return (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
+              {imgUrl ? (
+                <img
+                  src={imgUrl}
+                  alt={getProductCategoryLabel(row.original)}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <Tags className="h-4 w-4 text-muted-foreground/50" />
+              )}
+            </div>
+          );
+        },
+        size: 80,
+      },
+      {
         id: "name",
         accessorFn: (row) => getProductCategoryLabel(row),
         header: ({ column }) => (
@@ -864,7 +888,7 @@ export function CategoryCmsPage() {
               Enter the English content first, then use auto-translate to generate other languages.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden px-6">
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-6">
             <ProductCategoryForm
               initialData={selectedProductCategory}
               onSubmit={handleProductSubmit}
