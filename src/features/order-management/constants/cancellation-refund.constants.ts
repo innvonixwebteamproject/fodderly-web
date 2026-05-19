@@ -55,8 +55,6 @@ export const ADMIN_CANCELLED_PAYMENT_MODE_FILTER_OPTIONS: {
   value: AdminCancelledPaymentModeApi | "";
   label: string;
 }[] = [
-  { value: "online_payment", label: "Online payment" },
-  { value: "cash_in_hand", label: "Cash in hand" },
   { value: "online", label: "Online" },
   { value: "cash", label: "Cash" },
 ];

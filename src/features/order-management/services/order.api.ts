@@ -19,6 +19,7 @@ import type {
   UpdateExpectedDeliveryPayload,
   OrderExportJobResponse,
   OrderExportJobStatus,
+  PartnerDailyOrderListFilters,
 } from "../types/order.types";
 import { serializeUpdateExpectedDeliveryBody } from "../types/order.types";
 import { ORDER_STATUS_VALUES, PAYMENT_MODE_VALUES, PAYMENT_STATUS_VALUES } from "../constants/order.constants";
@@ -122,21 +123,21 @@ const buildPartnerListRequestBody = (status?: AdminOrderListApiStatus | ""): Rec
 export const getPartnerOrders = async (
   page: number,
   limit: number,
-  filters: PartnerDailyOrderListFilters,
+  filters: PartnerDailyOrderListFilters = {},
   sortBy?: string,
   sortOrder?: "ASC" | "DESC",
 ): Promise<OrdersListResponse> => {
-  const status = filters.status ? buildPartnerListRequestBody(filters.status).status : undefined;
-  const q = filters.search || undefined;
+  const status = filters?.status ? buildPartnerListRequestBody(filters.status).status : undefined;
+  const q = filters?.search || undefined;
 
   const body: Record<string, unknown> = {};
   if (status) body.status = status;
   if (q) body.search = q;
   if (sortBy) body.sortBy = sortBy;
   if (sortOrder) body.sortOrder = sortOrder;
-  if (filters.dateFilter) body.dateFilter = filters.dateFilter;
-  if (filters.fromDate) body.fromDate = filters.fromDate;
-  if (filters.toDate) body.toDate = filters.toDate;
+  if (filters?.dateFilter) body.dateFilter = filters.dateFilter;
+  if (filters?.fromDate) body.fromDate = filters.fromDate;
+  if (filters?.toDate) body.toDate = filters.toDate;
 
   const response = await api.post<unknown>("/orders/partner/list", body, {
     params: { page, limit },
@@ -432,7 +433,7 @@ const mapPartnerListApiRowToItem = (raw: Record<string, unknown>): AdminOrderLis
 };
 
 export const mapAdminListApiRowToItem = (raw: Record<string, unknown>): AdminOrderListItem => {
-  const id = pickString(raw.orderUuid) ?? pickString(raw.id) ?? "";
+  const id = pickString(raw.orderUuid) ?? pickString(raw.id) ?? pickString(raw.orderId) ?? "";
   const orderNumber =
     pickString(raw.userOrderId) ?? pickString(raw.orderId) ?? pickString(raw.orderNumber) ?? id;
   const placedAt = pickString(raw.createdAt) ?? new Date(0).toISOString();
