@@ -265,10 +265,13 @@ export function FoddermanListPage() {
   const talukaOptions = useMemo(() => talukasResponse ?? [], [talukasResponse]);
   const partnerOptions = useMemo(
     () =>
-      (partnersData?.data || []).map((partner) => ({
-        label: partner.fullName || `${partner.firstName || ""} ${partner.lastName || ""}`.trim(),
-        value: partner.id,
-      })),
+      (partnersData?.data || []).map((partner) => {
+        const name = partner.fullName || `${partner.firstName || ""} ${partner.lastName || ""}`.trim();
+        return {
+          label: partner.phone ? `${name} (${partner.phone})` : name,
+          value: partner.id,
+        };
+      }),
     [partnersData?.data],
   );
 
@@ -568,10 +571,11 @@ export function FoddermanListPage() {
                         searchInputClassName="text-xs placeholder:text-xs"
                         disabled={isLoadingPartners}
                         triggerClassName="h-9 bg-background text-[13px]"
+                        contentClassName="!w-[280px]"
                       />
                     )}
                     <SearchableSelect
-                      options={[{ label: "All", value: "all" }, ...STATUS_OPTIONS]}
+                      options={[{ label: "All status", value: "all" }, ...STATUS_OPTIONS]}
                       value={statusFilter}
                       onValueChange={setStatusFilter}
                       placeholder="Status"

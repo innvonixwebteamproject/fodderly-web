@@ -118,7 +118,7 @@ const optionalDescriptionField = z
   .string()
   .trim()
   .max(1000, "Description Name cannot exceed 1000 characters")
-  .refine((value) => value.length === 0 || value.length >= 10, "Description Name must be at least 10 characters long");
+  .refine((value) => value.length === 0 || value.length >= 2, "Description Name must be at least 2 characters long");
 
 const optionalNutritionalField = z
   .string()

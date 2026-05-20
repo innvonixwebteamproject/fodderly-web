@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const pinCodeRegex = /^[1-9][0-9]{5}$/;
 const mobileRegex = /^[0-9]{10}$/;
-const nameRegex = /^[A-Za-z\s]+$/;
+const nameRegex = /^[\p{L}\p{M}\s]+$/u;
 
 const getNameSchema = (label: "First Name" | "Last Name") =>
   z
@@ -28,8 +28,7 @@ export const foddermanSchema = z.object({
     .nonempty("Mobile number is required.")
     .regex(mobileRegex, "Please enter a valid 10-digit mobile number."),
   languagePreference: z.enum(["en", "hi", "gu", "mr", "te", "pa", "ml"], {
-    required_error: "Language is required",
-    invalid_type_error: "Language is required",
+    errorMap: () => ({ message: "Please select Language Preference." }),
   }),
   stateId: z.string().trim().nonempty("State is required."),
   districtId: z.string().trim().nonempty("District is required."),

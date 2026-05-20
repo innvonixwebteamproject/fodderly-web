@@ -55,7 +55,6 @@ export function FoddermanForm({
       lastName: "",
       email: "",
       mobileNumber: "",
-      languagePreference: "en",
       stateId: "",
       districtId: "",
       talukaId: "",

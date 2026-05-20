@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const nameRegex = /^[A-Za-z\s]+$/;
+const nameRegex = /^[\p{L}\p{M}\s]+$/u;
 const mobileRegex = /^[0-9]{10}$/;
 const pinRegex = /^[1-9][0-9]{5}$/;
 

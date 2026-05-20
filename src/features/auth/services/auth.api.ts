@@ -173,7 +173,6 @@ export const authApi = {
     data: EditProfileSchemaType,
   ): Promise<UserProfile> => {
     const response = await api.patch<UserProfile>("/auth/admin/update-profile", {
-      email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
     });

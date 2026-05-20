@@ -35,8 +35,7 @@ export const partnerSchema = z.object({
   companyType: z.enum(
     COMPANY_TYPE_OPTIONS.map((item) => item.value) as ["pvt", "llp"],
     {
-    required_error: "Company Type is required.",
-    invalid_type_error: "Company Type is required.",
+      errorMap: () => ({ message: "Please select Company Type." }),
     },
   ),
   companyName: z

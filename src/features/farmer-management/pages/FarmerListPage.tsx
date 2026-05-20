@@ -526,6 +526,7 @@ export function FarmerListPage() {
                       searchInputClassName="text-xs placeholder:text-xs"
                       disabled={isLoadingFoddermen}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      contentClassName="!w-[280px]"
                     />
                     <SearchableSelect
                       options={statusOptions}

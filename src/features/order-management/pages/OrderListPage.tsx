@@ -153,10 +153,13 @@ export function OrderListPage() {
   const districts = useMemo(() => districtsResponse?.data ?? [], [districtsResponse?.data]);
   const partnerOptions = useMemo(
     () =>
-      (partnersResponse?.data ?? []).map((p) => ({
-        value: p.id,
-        label: p.fullName || p.companyName || p.email || p.id,
-      })),
+      (partnersResponse?.data ?? []).map((p) => {
+        const name = p.fullName || p.companyName || p.email || p.id;
+        return {
+          value: p.id,
+          label: p.phone ? `${name} (${p.phone})` : name,
+        };
+      }),
     [partnersResponse?.data],
   );
 
@@ -575,6 +578,7 @@ export function OrderListPage() {
                       searchPlaceholder="Search partner…"
                       searchInputClassName="text-xs placeholder:text-xs"
                       triggerClassName="h-9 bg-background text-[13px]"
+                      contentClassName="!w-[280px]"
                     />
                     <SearchableSelect
                       options={foddermanOptions}
@@ -585,6 +589,7 @@ export function OrderListPage() {
                       searchInputClassName="text-xs placeholder:text-xs"
                       disabled={isLoadingFoddermen}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      contentClassName="!w-[280px]"
                     />
                     <SearchableSelect
                       options={ADMIN_ORDER_LIST_STATUS_FILTER_OPTIONS}

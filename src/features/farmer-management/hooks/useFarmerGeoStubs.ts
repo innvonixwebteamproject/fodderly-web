@@ -86,7 +86,9 @@ export function useFoddermanOptionsQuery(
     data:
       query.data?.data.map((fodderman) => ({
         value: fodderman.id,
-        label: fodderman.fullName,
+        label: fodderman.mobileNumber
+          ? `${fodderman.fullName} (${fodderman.mobileNumber})`
+          : fodderman.fullName,
       })) ?? [],
     isLoading: query.isLoading,
   };
