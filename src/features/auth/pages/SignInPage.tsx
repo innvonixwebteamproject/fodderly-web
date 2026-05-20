@@ -21,7 +21,7 @@ import type { ApiError } from "@/lib/api-error";
 import { toast } from "sonner";
 import { useAuthStore } from "../store/auth.store";
 
-// import { useFirebaseMessaging } from "@/hooks/useFirebaseMessaging";
+import { useFirebaseMessaging } from "@/hooks/useFirebaseMessaging";
 
 export function SignInPage() {
   const navigate = useNavigate();
@@ -29,15 +29,14 @@ export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Firebase Messaging hook - auto-initializes and generates token if permission granted
-  // const { 
-  //   token: fcmToken, 
-  //   requestPermissionAndToken,
-  //   permissionState,
-  // } = useFirebaseMessaging({
-  //   autoInit: true,
-  //   autoRequestPermission: false, // Don't auto-request, let user decide
-  //   autoGenerateToken: true, // Generate if permission already granted
-  // });
+  const { 
+    token: fcmToken, 
+    requestPermissionAndToken,
+  } = useFirebaseMessaging({
+    autoInit: true,
+    autoRequestPermission: false, // Don't auto-request, let user decide
+    autoGenerateToken: true, // Generate if permission already granted
+  });
 
   const form = useForm<SigninSchemaType>({
     resolver: zodResolver(getSigninSchema()),
@@ -76,17 +75,21 @@ export function SignInPage() {
   async function onSubmit(values: SigninSchemaType) {
     setError(null);
 
-    // Try to get token if not already available
-    // let tokenToSend = fcmToken;
-    // if (!tokenToSend && permissionState === "default") {
-    //   // If permission not yet requested, try to request and get token
-    //   tokenToSend = await requestPermissionAndToken();
-    // }
+    // Request/generate FCM token during login (so permission popup shows and token is cached)
+    let tokenToSend = fcmToken;
+    try {
+      const generatedToken = await requestPermissionAndToken();
+      if (generatedToken) {
+        tokenToSend = generatedToken;
+      }
+    } catch (e) {
+      console.error("Failed to request permission or token during sign in:", e);
+    }
 
     const loginPayload = {
       email: values.email,
       password: values.password,
-      // ...(tokenToSend ? { fcmToken: tokenToSend } : {}),
+      ...(tokenToSend ? { deviceToken: tokenToSend } : {}),
     };
 
     loginMutation.mutate(loginPayload);

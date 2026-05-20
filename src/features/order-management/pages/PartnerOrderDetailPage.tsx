@@ -5,17 +5,8 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { Container } from "@/components/common/container";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { usePartnerOrderDetailQuery, usePartnerDispatchMutation } from "../hooks/useOrderDetailMutations";
+import { usePartnerOrderDetailQuery } from "../hooks/useOrderDetailMutations";
 import type { AdminOrderListItem } from "../types/order.types";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { OrderTransactionSummary } from "../components/OrderTransactionSummary";
 import { OrderStakeholderCards } from "../components/OrderStakeholderCards";
 import { OrderAuditTrail } from "../components/OrderAuditTrail";
@@ -40,13 +31,11 @@ export function PartnerOrderDetailPage() {
   const { data: order, isLoading, isError, error } = usePartnerOrderDetailQuery(orderId);
 
   const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [dispatchMode, setDispatchMode] = useState<"schedule" | "dispatch">("dispatch");
   const [etaOpen, setEtaOpen] = useState(false);
-  const [dispatchConfirmTarget, setDispatchConfirmTarget] = useState<AdminOrderListItem | null>(null);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string | null>(null);
   const [selectedFoddermanId, setSelectedFoddermanId] = useState<string | null>(null);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
-
-  const dispatchMutation = usePartnerDispatchMutation(dispatchConfirmTarget?.id ?? "");
 
   const listShape = useMemo((): AdminOrderListItem | null => {
     if (!order) return null;
@@ -78,6 +67,7 @@ export function PartnerOrderDetailPage() {
   const handleScheduleAction = () => {
     if (!order) return;
     if (partnerCanDispatch(order.orderStatus, order.orderStatusApiRaw)) {
+      setDispatchMode("schedule");
       setDispatchOpen(true);
     } else if (partnerCanReviseEta(order.orderStatus)) {
       setEtaOpen(true);
@@ -85,17 +75,8 @@ export function PartnerOrderDetailPage() {
   };
 
   const handleQuickDispatchAction = () => {
-    if (order) setDispatchConfirmTarget(listShape);
-  };
-
-  const confirmQuickDispatch = async () => {
-    if (!dispatchConfirmTarget) return;
-    try {
-      await dispatchMutation.mutateAsync();
-      setDispatchConfirmTarget(null);
-    } catch {
-      // toast is handled in hook
-    }
+    setDispatchMode("dispatch");
+    setDispatchOpen(true);
   };
 
   useEffect(() => {
@@ -144,7 +125,7 @@ export function PartnerOrderDetailPage() {
                 onClick={handleScheduleAction}
               >
                 <Calendar className="h-3.5 w-3.5" />
-                Schedule delivery
+                Reschedule Delivery
               </Button>
             ) : null}
             {showDispatch ? (
@@ -212,31 +193,9 @@ export function PartnerOrderDetailPage() {
         <OrderAuditTrail id="partner-order-timeline" entries={order.auditTrail} />
       </div>
 
-      <PartnerDispatchModal order={listShape} open={dispatchOpen} onOpenChange={setDispatchOpen} />
+      <PartnerDispatchModal order={listShape} open={dispatchOpen} onOpenChange={setDispatchOpen} mode={dispatchMode} />
       <PartnerEtaRevisionModal order={listShape} open={etaOpen} onOpenChange={setEtaOpen} />
 
-      <AlertDialog open={Boolean(dispatchConfirmTarget)} onOpenChange={(open) => !open && setDispatchConfirmTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Dispatch Order — {dispatchConfirmTarget?.orderNumber}</AlertDialogTitle>
-            <AlertDialogDescription className="text-left text-sm">
-              Are you sure you want to mark this order as <strong>Dispatched</strong>?
-              <br />
-              This will notify the farmer that their order is on the way.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button
-              type="button"
-              onClick={confirmQuickDispatch}
-              disabled={dispatchMutation.isPending}
-            >
-              {dispatchMutation.isPending ? "Dispatching..." : "Confirm Dispatch"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <FarmerDetailModal
         isOpen={Boolean(selectedFarmerId)}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useForm, SubmitHandler, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -65,24 +65,6 @@ export function FoddermanForm({
     },
   });
 
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        firstName: initialData.firstName,
-        lastName: initialData.lastName,
-        email: initialData.email || "",
-        mobileNumber: initialData.mobileNumber,
-        languagePreference: initialData.languagePreference,
-        stateId: initialData.stateId,
-        districtId: initialData.districtId,
-        talukaId: initialData.talukaId,
-        pinCode: initialData.pinCode,
-        partnerId: initialData.partnerId || "",
-        villageIds: initialData.villageIds,
-      });
-    }
-  }, [initialData, form]);
-
   const selectedStateId = form.watch("stateId");
   const selectedDistrictId = form.watch("districtId");
   const selectedTalukaId = form.watch("talukaId");
@@ -99,6 +81,58 @@ export function FoddermanForm({
     selectedDistrictId || undefined,
     selectedStateId || undefined,
   );
+
+  const hasPrefilledRef = useRef(false);
+
+  useEffect(() => {
+    if (initialData && !hasPrefilledRef.current) {
+      const initialVillageNames = new Set(
+        (initialData.villages || []).map((v) => v.name.toLowerCase().trim())
+      );
+      
+      const matchedIdsFromOptions = (villageOptions || [])
+        .filter((opt) => opt.label && initialVillageNames.has(opt.label.toLowerCase().trim()))
+        .map((opt) => opt.value);
+
+      const uniqueIds = Array.from(
+        new Set([
+          ...(initialData.villageIds || []).filter((id) => id && id.length > 20),
+          ...matchedIdsFromOptions
+        ])
+      );
+
+      const currentVillageIds = form.getValues("villageIds") || [];
+      const isSame =
+        currentVillageIds.length === uniqueIds.length &&
+        [...currentVillageIds].sort().join(",") === [...uniqueIds].sort().join(",");
+
+      const isFormInitialized = form.getValues("firstName") !== "";
+
+      if (!isFormInitialized) {
+        form.reset({
+          firstName: initialData.firstName,
+          lastName: initialData.lastName,
+          email: initialData.email || "",
+          mobileNumber: initialData.mobileNumber,
+          languagePreference: initialData.languagePreference,
+          stateId: initialData.stateId,
+          districtId: initialData.districtId,
+          talukaId: initialData.talukaId,
+          pinCode: initialData.pinCode,
+          partnerId: initialData.partnerId || "",
+          villageIds: uniqueIds,
+        });
+      } else if (!isSame) {
+        form.setValue("villageIds", uniqueIds, { shouldDirty: false, shouldValidate: true });
+      }
+
+      // Once options are loaded and we have successfully resolved/mapped all village IDs, mark as prefilled
+      const isOptionsLoaded = (villageOptions || []).length > 0;
+      if (isOptionsLoaded) {
+        hasPrefilledRef.current = true;
+      }
+    }
+  }, [initialData, form, villageOptions]);
 
   const states = useMemo(() => statesResponse?.data ?? [], [statesResponse?.data]);
   const districts = useMemo(() => districtsResponse?.data ?? [], [districtsResponse?.data]);

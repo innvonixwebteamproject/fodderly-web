@@ -6,20 +6,23 @@ import { QueryProvider } from "@/app/providers/QueryProvider";
 import { StoreProvider } from "@/app/providers/StoreProvider";
 import { ThemeProvider } from "@/app/providers/ThemeProvider";
 import { AppRouter } from "@/app/router";
-// import { useFirebaseMessaging } from "@/hooks/useFirebaseMessaging";
+import { useFirebaseMessaging } from "@/hooks/useFirebaseMessaging";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 const { BASE_URL } = import.meta.env;
 
 function AppContent() {
-  // Initialize Firebase Messaging service
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  // Initialize Firebase Messaging service only when authenticated
   // Auto-initializes and requests permission on first visit
   // Token will be generated automatically once permission is granted
-  // useFirebaseMessaging({
-  //   autoInit: true,
-  //   autoRequestPermission: true,
-  //   autoGenerateToken: true,
-  // });
+  useFirebaseMessaging({
+    autoInit: isAuthenticated,
+    autoRequestPermission: isAuthenticated,
+    autoGenerateToken: isAuthenticated,
+  });
 
   return <AppRouter />;
 }

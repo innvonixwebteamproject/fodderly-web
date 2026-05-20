@@ -67,9 +67,7 @@ export function OrderDeliverySummaryCard({
                 Delayed
               </Badge>
             ) : (
-              <Badge variant="secondary" appearance="light" size="sm" shape="circle">
-                On track
-              </Badge>
+              <span className="font-medium text-muted-foreground">N/A</span>
             )}
           </div>
         </div>

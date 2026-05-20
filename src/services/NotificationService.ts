@@ -300,6 +300,17 @@ class NotificationService {
       return false;
     }
 
+    // Check Secure Context (HTTPS or localhost)
+    if (!window.isSecureContext && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      this.logWarn("Insecure context detected! Browser blocks Push Notifications on HTTP IP addresses.");
+      this.setState({
+        isSupported: false,
+        permissionState: "unsupported",
+        error: "Push notifications require a secure context (HTTPS) or localhost. Modern browsers block notifications on HTTP IP addresses.",
+      });
+      return false;
+    }
+
     // Check Notification API
     if (!("Notification" in window)) {
       this.logWarn("Notification API not supported");
@@ -730,6 +741,28 @@ class NotificationService {
     const body = payload.notification?.body || "";
     const image = payload.notification?.image;
     const link = payload.fcmOptions?.link;
+
+    // Show native browser notification if permission is granted
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      try {
+        new Notification(title, {
+          body,
+          icon: image || "/media/app/favicon.ico",
+        });
+      } catch (error) {
+        this.logWarn("Failed to show native Notification constructor, trying Service Worker fallback", error);
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification(title, {
+              body,
+              icon: image || "/media/app/favicon.ico",
+            });
+          }).catch((swError) => {
+            this.logError("Failed to show native foreground notification via service worker", swError);
+          });
+        }
+      }
+    }
 
     // Create a custom styled notification toast with gradient background
     toast.custom(

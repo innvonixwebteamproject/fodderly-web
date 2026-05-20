@@ -56,7 +56,7 @@ export function NotificationItem({
             variant === "card" ? "text-sm line-clamp-3" : "text-xs line-clamp-2",
           )}
         >
-          {notification.message || "-"}
+          {notification.message || (notification.body as string) || "-"}
         </p>
         <p className="text-muted-foreground mt-1 text-xs">
           {formatNotificationTime(createdAt)}

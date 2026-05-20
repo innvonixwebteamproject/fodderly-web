@@ -92,7 +92,7 @@ export function OrderDetailPage() {
             {canScheduleDelivery ? (
               <Button variant="outline" size="sm" className="h-8.5 gap-1.5 text-[13px]" onClick={() => setQuickOpen(true)}>
                 <Calendar className="h-3.5 w-3.5" />
-                Schedule delivery
+                Reschedule Delivery
               </Button>
             ) : null}
             {canAdminCancel ? (

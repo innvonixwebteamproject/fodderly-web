@@ -108,7 +108,7 @@ export function OrderQuickUpdateModal({ order, open, onOpenChange }: OrderQuickU
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Schedule delivery — {order.orderNumber}</DialogTitle>
+            <DialogTitle>Reschedule Delivery — {order.orderNumber}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -184,9 +184,9 @@ export function OrderQuickUpdateModal({ order, open, onOpenChange }: OrderQuickU
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Schedule delivery — {order.orderNumber}</AlertDialogTitle>
+            <AlertDialogTitle>Reschedule Delivery — {order.orderNumber}</AlertDialogTitle>
             <AlertDialogDescription className="text-left text-sm">
-              Are you sure you want to schedule delivery for this order with an Expected Delivery Date of{" "}
+              Are you sure you want to reschedule delivery for this order with an Expected Delivery Date of{" "}
               <strong>{displayDate() || "—"}</strong>? The farmer will be notified.
             </AlertDialogDescription>
           </AlertDialogHeader>

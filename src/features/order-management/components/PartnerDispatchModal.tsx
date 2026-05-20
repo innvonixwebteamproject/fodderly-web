@@ -34,9 +34,10 @@ interface PartnerDispatchModalProps {
   order: AdminOrderListItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode?: "schedule" | "dispatch";
 }
 
-export function PartnerDispatchModal({ order, open, onOpenChange }: PartnerDispatchModalProps) {
+export function PartnerDispatchModal({ order, open, onOpenChange, mode = "dispatch" }: PartnerDispatchModalProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const mutation = usePartnerExpectedDeliveryMutation(order?.id ?? "");
 
@@ -73,7 +74,10 @@ export function PartnerDispatchModal({ order, open, onOpenChange }: PartnerDispa
       return;
     }
     mutation.mutate(
-      { expectedDelivery: ok.data.expectedDeliveryDate.trim() },
+      {
+        expectedDelivery: ok.data.expectedDeliveryDate.trim(),
+        ...(mode === "dispatch" ? { dispatched: true } : {}),
+      },
       {
         onSuccess: () => {
           setConfirmOpen(false);
@@ -96,7 +100,9 @@ export function PartnerDispatchModal({ order, open, onOpenChange }: PartnerDispa
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Schedule delivery — {order.orderNumber}</DialogTitle>
+            <DialogTitle>
+              {mode === "dispatch" ? "Dispatch order" : "Reschedule Delivery"} — {order.orderNumber}
+            </DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -199,10 +205,21 @@ export function PartnerDispatchModal({ order, open, onOpenChange }: PartnerDispa
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Schedule delivery — {order.orderNumber}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {mode === "dispatch" ? "Dispatch order" : "Reschedule Delivery"} — {order.orderNumber}
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-left text-sm">
-              Are you sure you want to dispatch this order with an Expected Delivery Date of{" "}
-              <strong>{displayDate() || "—"}</strong>?
+              {mode === "dispatch" ? (
+                <>
+                  Are you sure you want to dispatch this order with an Expected Delivery Date of{" "}
+                  <strong>{displayDate() || "—"}</strong>? This will notify the farmer that their order is on the way.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to reschedule delivery for this order with an Expected Delivery Date of{" "}
+                  <strong>{displayDate() || "—"}</strong>?
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

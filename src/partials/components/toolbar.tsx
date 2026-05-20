@@ -129,7 +129,6 @@ function ToolbarBreadcrumbs() {
 const ToolbarHeading = () => {
   const { actions } = useToolbarStore();
   const role = useAuthStore((state) => state.role);
-  const isAdmin = role === "admin";
 
   return (
     <div className="flex items-center justify-between flex-wrap gap-4 w-full">
@@ -139,7 +138,7 @@ const ToolbarHeading = () => {
 
       <div className="flex items-center gap-2">
         {actions}
-        {isAdmin && <NotificationBell />}
+        {(role === "admin" || role === "partner") && <NotificationBell />}
       </div>
     </div>
   );

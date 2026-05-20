@@ -35,16 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
+import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 import { getApiSortParams } from "@/lib/api-sorting";
 import type {
   AdminOrderListApiStatus,
@@ -68,8 +59,6 @@ import {
   partnerOrderNeedsDispatchHighlight,
 } from "../utils/partner-order-rules";
 import { RETURN_QUERY_SESSION_KEY } from "../utils/partner-order-history-url";
-import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
-import { usePartnerDispatchMutation } from "../hooks/useOrderDetailMutations";
 
 const formatPlacedAt = (value: string) => {
   const d = new Date(value);
@@ -96,9 +85,9 @@ export function PartnerOrderListPage() {
   const [statusFilter, setStatusFilter] = useState<AdminOrderListApiStatus | "">("");
   const [dispatchTarget, setDispatchTarget] = useState<AdminOrderListItem | null>(null);
   const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [dispatchMode, setDispatchMode] = useState<"schedule" | "dispatch">("dispatch");
   const [etaTarget, setEtaTarget] = useState<AdminOrderListItem | null>(null);
   const [etaOpen, setEtaOpen] = useState(false);
-  const [dispatchConfirmTarget, setDispatchConfirmTarget] = useState<AdminOrderListItem | null>(null);
 
   // Date range filter state
   const [dateFilter, setDateFilter] = useState<"last_7_days" | "custom" | "">("");
@@ -112,8 +101,6 @@ export function PartnerOrderListPage() {
   const [draftDateFilter, setDraftDateFilter] = useState<"last_7_days" | "custom" | "">("");
   const [draftFromDate, setDraftFromDate] = useState<string>("");
   const [draftToDate, setDraftToDate] = useState<string>("");
-
-  const dispatchMutation = usePartnerDispatchMutation(dispatchConfirmTarget?.id ?? "");
 
   useEffect(() => {
     sessionStorage.removeItem(RETURN_QUERY_SESSION_KEY);
@@ -202,6 +189,7 @@ export function PartnerOrderListPage() {
   const handleScheduleDelivery = useCallback((order: AdminOrderListItem) => {
     if (partnerCanDispatch(order.orderStatus, order.orderStatusApiRaw)) {
       setDispatchTarget(order);
+      setDispatchMode("schedule");
       setDispatchOpen(true);
       return;
     }
@@ -222,18 +210,10 @@ export function PartnerOrderListPage() {
   }, []);
 
   const handleQuickDispatch = useCallback((order: AdminOrderListItem) => {
-    setDispatchConfirmTarget(order);
+    setDispatchTarget(order);
+    setDispatchMode("dispatch");
+    setDispatchOpen(true);
   }, []);
-
-  const confirmQuickDispatch = useCallback(async () => {
-    if (!dispatchConfirmTarget) return;
-    try {
-      await dispatchMutation.mutateAsync();
-      setDispatchConfirmTarget(null);
-    } catch {
-      // toast is handled in hook
-    }
-  }, [dispatchConfirmTarget, dispatchMutation]);
 
   const handleOpenDatePopover = useCallback(() => {
     setDraftDateFilter(dateFilter);
@@ -390,12 +370,10 @@ export function PartnerOrderListPage() {
           const delayed = row.original.orderStatus === "DELAYED" || Boolean(row.original.isDelayed);
           return delayed ? (
             <Badge variant="warning" appearance="light" size="sm" shape="circle">
-              Delayed
+              Delay
             </Badge>
           ) : (
-            <Badge variant="success" appearance="light" size="sm" shape="circle">
-              On track
-            </Badge>
+            <span className="text-muted-foreground pl-4">—</span>
           );
         },
         size: 100,
@@ -415,7 +393,7 @@ export function PartnerOrderListPage() {
                 <ActionButton
                   actionType="edit"
                   icon={Calendar}
-                  tooltip="Schedule delivery"
+                  tooltip="Reschedule Delivery"
                   onClick={() => handleScheduleDelivery(order)}
                 />
               ) : null}
@@ -426,7 +404,6 @@ export function PartnerOrderListPage() {
                   tooltip="Mark as Dispatched"
                   className="hover:-translate-y-0.5"
                   onClick={() => handleQuickDispatch(order)}
-                  disabled={dispatchMutation.isPending && dispatchConfirmTarget?.id === order.id}
                 />
               ) : null}
             </div>
@@ -438,8 +415,6 @@ export function PartnerOrderListPage() {
     [
       handleScheduleDelivery,
       handleQuickDispatch,
-      dispatchMutation.isPending,
-      dispatchConfirmTarget?.id,
     ],
   );
 
@@ -708,31 +683,9 @@ export function PartnerOrderListPage() {
         </Card>
       </div>
 
-      <PartnerDispatchModal order={dispatchTarget} open={dispatchOpen} onOpenChange={handleDispatchModalOpenChange} />
+      <PartnerDispatchModal order={dispatchTarget} open={dispatchOpen} onOpenChange={handleDispatchModalOpenChange} mode={dispatchMode} />
       <PartnerEtaRevisionModal order={etaTarget} open={etaOpen} onOpenChange={handleEtaModalOpenChange} />
 
-      <AlertDialog open={Boolean(dispatchConfirmTarget)} onOpenChange={(open) => !open && setDispatchConfirmTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Dispatch Order — {dispatchConfirmTarget?.orderNumber}</AlertDialogTitle>
-            <AlertDialogDescription className="text-left text-sm">
-              Are you sure you want to mark this order as <strong>Dispatched</strong>?
-              <br />
-              This will notify the farmer that their order is on the way.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button
-              type="button"
-              onClick={confirmQuickDispatch}
-              disabled={dispatchMutation.isPending}
-            >
-              {dispatchMutation.isPending ? "Dispatching..." : "Confirm Dispatch"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Container>
   );
 }

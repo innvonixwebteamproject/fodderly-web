@@ -386,11 +386,15 @@ export function PartnerForm({
                 <FormField
                   control={form.control}
                   name="companyCertificate"
-                  render={({ field }) => (
+                  render={({ field }) => {
+                    const hasFile = field.value instanceof File;
+                    const hasUrl = typeof field.value === "string" && field.value;
+                    return (
                     <FormItem>
                       <FormLabel required>Certificate</FormLabel>
                       <FormControl>
                         <Input
+                          id="partner-certificate-input"
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png"
                           onChange={(event) => {
@@ -399,12 +403,12 @@ export function PartnerForm({
                           }}
                         />
                       </FormControl>
-                      {typeof field.value === "string" && field.value ? (
+                      {hasUrl ? (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>
                             Current file:{" "}
                             <a
-                              href={field.value}
+                              href={field.value as string}
                               target="_blank"
                               rel="noreferrer"
                               className="text-primary hover:underline"
@@ -419,9 +423,32 @@ export function PartnerForm({
                             onClick={() => {
                               field.onChange("");
                               form.clearErrors("companyCertificate");
+                              const el = document.getElementById("partner-certificate-input") as HTMLInputElement | null;
+                              if (el) el.value = "";
                             }}
                             aria-label="Remove current certificate"
                             title="Remove current certificate"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ) : hasFile ? (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>
+                            Selected: <strong>{(field.value as File).name}</strong>
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              field.onChange("");
+                              form.clearErrors("companyCertificate");
+                              const el = document.getElementById("partner-certificate-input") as HTMLInputElement | null;
+                              if (el) el.value = "";
+                            }}
+                            aria-label="Remove selected certificate"
+                            title="Remove selected certificate"
                           >
                             <X className="h-3.5 w-3.5" />
                           </Button>
@@ -432,7 +459,8 @@ export function PartnerForm({
                       </p>
                       <FormMessage />
                     </FormItem>
-                  )}
+                    );
+                  }}
                 />
               </div>
             </CardContent>

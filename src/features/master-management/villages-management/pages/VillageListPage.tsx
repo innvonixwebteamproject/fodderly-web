@@ -302,7 +302,7 @@ export function VillageListPage() {
                 <SearchableSelect options={districtOptions} value={districtFilter}
                   onValueChange={(val) => { setDistrictFilter(val); setTalukaFilter(""); }}
                   placeholder={stateFilter ? "District" : "Select State"}
-                  disabled={isLoadingDistricts && !!stateFilter}
+                  disabled={!stateFilter || isLoadingDistricts}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start" />
@@ -310,7 +310,7 @@ export function VillageListPage() {
               <div className="w-[130px]">
                 <SearchableSelect options={talukaOptions} value={talukaFilter} onValueChange={setTalukaFilter}
                   placeholder={districtFilter ? "Taluka" : "Select District"}
-                  disabled={isLoadingTalukas && !!districtFilter}
+                  disabled={!districtFilter || isLoadingTalukas}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start" />

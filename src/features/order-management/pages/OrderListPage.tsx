@@ -439,7 +439,7 @@ export function OrderListPage() {
                 <ActionButton
                   actionType="edit"
                   icon={Calendar}
-                  tooltip="Schedule delivery"
+                  tooltip="Reschedule Delivery"
                   onClick={() => setQuickOrder(order)}
                 />
               ) : null}

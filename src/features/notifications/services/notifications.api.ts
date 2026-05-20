@@ -37,6 +37,31 @@ const unwrapCollection = (
   if (
     response.data &&
     typeof response.data === "object" &&
+    "notifications" in response.data
+  ) {
+    const dataObj = response.data as Record<string, unknown>;
+    if (Array.isArray(dataObj.notifications)) {
+      const notificationsArray = dataObj.notifications as NotificationItem[];
+      const total = typeof dataObj.total === "number" ? dataObj.total : notificationsArray.length;
+      return {
+        items: notificationsArray,
+        meta: {
+          page: 1,
+          limit: total || 10,
+          total,
+          totalPages: total > 0 ? 1 : 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+          unread: typeof dataObj.unread === "number" ? dataObj.unread : 0,
+          read: typeof dataObj.read === "number" ? dataObj.read : 0,
+        },
+      };
+    }
+  }
+
+  if (
+    response.data &&
+    typeof response.data === "object" &&
     "data" in response.data &&
     Array.isArray(response.data.data)
   ) {
@@ -58,10 +83,12 @@ const unwrapCollection = (
 const unwrapItem = (
   response: WrappedResponse<NotificationItem | null>,
 ): NotificationItem | null => {
-  if (response.data && typeof response.data === "object" && "data" in response.data) {
-    return response.data.data || null;
+  if (!response.data) return null;
+  const dataObj = response.data as Record<string, unknown>;
+  if (typeof dataObj === "object" && dataObj !== null && "data" in dataObj) {
+    return (dataObj.data as NotificationItem) || null;
   }
-  return response.data || null;
+  return (response.data as NotificationItem) || null;
 };
 
 export const getNotifications = async (): Promise<NotificationsApiResponse> => {

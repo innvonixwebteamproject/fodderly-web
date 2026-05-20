@@ -60,7 +60,7 @@ export function AdminCancelOrderModal({ orderId, open, onOpenChange }: AdminCanc
                 <FormItem>
                   <FormLabel>Reason <span className="text-destructive">*</span></FormLabel>
                   <FormControl>
-                    <Textarea {...field} value={field.value ?? ""} rows={3} className="resize-none text-[13px]" />
+                    <Textarea {...field} value={field.value ?? ""} rows={3} className="resize-none text-[13px] custom-scrollbar overflow-y-auto" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

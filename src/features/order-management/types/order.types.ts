@@ -254,17 +254,20 @@ export interface OrderDetailResponse {
 /** App shape for schedule delivery; API wire format is `{ expected_delivery: "YYYY-MM-DD" }` (see `serializeUpdateExpectedDeliveryBody`). */
 export interface UpdateExpectedDeliveryPayload {
   expectedDelivery: string;
+  dispatched?: boolean;
 }
 
 /** Backend `UpdateExpectedDeliveryDto` — snake_case in JSON. */
 export type UpdateExpectedDeliveryRequestBody = {
   expected_delivery: string;
+  dispatched?: boolean;
 };
 
 export const serializeUpdateExpectedDeliveryBody = (
   payload: UpdateExpectedDeliveryPayload,
 ): UpdateExpectedDeliveryRequestBody => ({
   expected_delivery: payload.expectedDelivery.trim(),
+  ...(payload.dispatched ? { dispatched: true } : {}),
 });
 
 /** Request body for `PATCH .../admin-cancel` — free-text `reason` from the admin. */

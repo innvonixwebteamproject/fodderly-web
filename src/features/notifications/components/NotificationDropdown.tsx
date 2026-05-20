@@ -20,7 +20,7 @@ export function NotificationDropdown() {
   const markRead = useMarkNotificationReadMutation();
 
   const notifications = data?.data ?? [];
-  const unreadCount = notifications.filter(
+  const unreadCount = data?.meta?.unread ?? notifications.filter(
     (item) => item.receiver?.status === "unread" || item.isRead === false,
   ).length;
 

@@ -23,6 +23,8 @@ export interface NotificationMeta {
   totalPages: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
+  unread?: number;
+  read?: number;
 }
 
 export interface NotificationsApiResponse {

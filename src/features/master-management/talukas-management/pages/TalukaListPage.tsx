@@ -270,7 +270,7 @@ export function TalukaListPage() {
               <div className="w-[150px]">
                 <SearchableSelect options={districtOptions} value={districtFilter} onValueChange={setDistrictFilter}
                   placeholder={stateFilter ? "Select District" : "Select State first"}
-                  disabled={isLoadingDistricts && !!stateFilter}
+                  disabled={!stateFilter || isLoadingDistricts}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start"

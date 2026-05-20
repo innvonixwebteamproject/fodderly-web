@@ -61,7 +61,11 @@ export const partnerEtaRevisionDateSchema = z
 export type PartnerEtaRevisionDateFormValues = z.infer<typeof partnerEtaRevisionDateSchema>;
 
 export const adminCancelOrderSchema = z.object({
-  reason: z.string().min(1, "Reason is required").max(2000),
+  reason: z
+    .string()
+    .min(1, "Reason is required.")
+    .min(2, "Reason must be at least 2 characters.")
+    .max(2000, "Reason must be at most 2000 characters long."),
 });
 
 export type AdminCancelOrderFormValues = z.infer<typeof adminCancelOrderSchema>;

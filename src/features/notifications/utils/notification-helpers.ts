@@ -4,6 +4,9 @@ export const getNotificationCreatedAt = (notification: NotificationItem): string
   notification.createdAt || notification.created_at || "";
 
 export const isNotificationUnread = (notification: NotificationItem): boolean => {
+  if (typeof notification.is_read === "boolean") {
+    return !notification.is_read;
+  }
   if (notification.receiver?.status) {
     return notification.receiver.status === "unread";
   }

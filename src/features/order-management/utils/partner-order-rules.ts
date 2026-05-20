@@ -31,7 +31,8 @@ export function partnerCanScheduleDelivery(order: {
   orderStatusApiRaw?: string | null;
 }): boolean {
   const { orderStatus: status, orderStatusApiRaw: raw } = order;
-  return partnerCanDispatch(status, raw) || partnerCanReviseEta(status);
+  const rawLower = raw?.trim().toLowerCase();
+  return status === "ORDER_DISPATCH" || rawLower === "dispatched" || rawLower === "dispatch";
 }
 
 /** Partner must not use admin quick-update for these transitions. */

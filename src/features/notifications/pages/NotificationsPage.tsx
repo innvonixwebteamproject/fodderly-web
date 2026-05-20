@@ -36,6 +36,8 @@ function NotificationListSkeleton() {
   );
 }
 
+import { useFirebaseMessaging } from "@/hooks/useFirebaseMessaging";
+
 export function NotificationsPage() {
   const [tab, setTab] = useState<TabValue>("unread");
   const [notificationPreference, setNotificationPreference] = useState(() => {
@@ -46,8 +48,14 @@ export function NotificationsPage() {
   const markRead = useMarkNotificationReadMutation();
   const markAllRead = useMarkAllNotificationsReadMutation();
 
+  const { permissionState, requestPermissionAndToken } = useFirebaseMessaging({
+    autoInit: true,
+    autoRequestPermission: false,
+    autoGenerateToken: true,
+  });
+
   const notifications = useMemo(() => data?.data ?? [], [data?.data]);
-  const unreadCount = notifications.filter((item) => isNotificationUnread(item)).length;
+  const unreadCount = data?.meta?.unread ?? notifications.filter((item) => isNotificationUnread(item)).length;
   const unreadNotifications = useMemo(
     () => notifications.filter((item) => isNotificationUnread(item)),
     [notifications],
@@ -63,6 +71,64 @@ export function NotificationsPage() {
 
   return (
     <Container className="py-6">
+      {permissionState === "default" && (
+        <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 text-primary">
+              <Bell className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">
+                Enable Push Notifications
+              </h4>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Don't miss important updates. Please allow push notifications in your browser.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={async () => {
+              await requestPermissionAndToken();
+            }}
+          >
+            Allow Notifications
+          </Button>
+        </div>
+      )}
+
+      {permissionState === "denied" && (
+        <div className="mb-6 rounded-xl border border-destructive/20 bg-destructive/5 p-4 flex items-center gap-3">
+          <div className="rounded-lg bg-destructive/10 p-2 text-destructive">
+            <AlertCircle className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">
+              Notifications Blocked
+            </h4>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Browser push notifications are currently blocked. Please enable them in your browser settings to receive real-time updates.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {permissionState === "unsupported" && (
+        <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3">
+          <div className="rounded-lg bg-amber-500/10 p-2 text-amber-600">
+            <AlertCircle className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-foreground">
+              Push Notifications Disabled (Insecure Network HTTP Origin)
+            </h4>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Modern browsers **disable** Push Notifications and Service Workers when accessed via an HTTP IP address (e.g., `http://192.168.137.128:5173`). To enable notifications, test on **`http://localhost:5173`** or enable secure origin override in Chrome settings.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="mb-6 rounded-lg border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">

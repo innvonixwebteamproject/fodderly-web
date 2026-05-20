@@ -138,6 +138,24 @@ export function AllocateProductModal({
     [allocatedQuantity, combinedUnitPrice],
   );
 
+  const adminTotalAvailableQuantity = useMemo(() => {
+    if (selectedProducts.length === 0) return "";
+    const product = selectedProducts[0];
+    if (product.admin_available_quantity === undefined || product.admin_available_quantity === null) {
+      return "";
+    }
+    let quantity = Number(product.admin_available_quantity);
+    const adminUnit = product.admin_unit ?? INVENTORY_UNITS.KG;
+    const currentUnit = selectedUnit === "" || selectedUnit === undefined ? adminUnit : Number(selectedUnit);
+
+    if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
+      quantity = quantity * 1000;
+    } else if (adminUnit === INVENTORY_UNITS.KG && currentUnit === INVENTORY_UNITS.TON) {
+      quantity = quantity / 1000;
+    }
+    return quantity.toLocaleString();
+  }, [selectedProducts, selectedUnit]);
+
   const maxAvailableStock = useMemo(() => {
     if (selectedProducts.length === 0) return Number.POSITIVE_INFINITY;
     return Math.min(
@@ -224,7 +242,7 @@ export function AllocateProductModal({
               {isPartnerLocked ? (
                 <FormItem>
                   <FormLabel>Partner Name</FormLabel>
-                  <Input readOnly value={lockedPartnerLabel || "-"} />
+                  <Input disabled value={lockedPartnerLabel || "-"} />
                 </FormItem>
               ) : (
                 <FormField
@@ -251,7 +269,7 @@ export function AllocateProductModal({
 
               <FormItem>
                 <FormLabel>Company Name</FormLabel>
-                <Input readOnly value={selectedPartner?.companyName || "-"} />
+                <Input disabled value={selectedPartner?.companyName || "-"} />
               </FormItem>
 
               <FormField
@@ -278,30 +296,18 @@ export function AllocateProductModal({
                 <FormItem>
                   <FormLabel>Inventory Name</FormLabel>
                   <Input
-                    readOnly
+                    disabled
                     value={inventoryNames.length > 0 ? inventoryNames.join(", ") : "Auto-populated"}
                   />
                 </FormItem>
-                <FormField
-                  control={form.control}
-                  name="allocated_quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Allocated Quantity</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={1}
-                          step="1"
-                          placeholder="Enter allocated quantity"
-                          {...field}
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <FormItem>
+                  <FormLabel>Total Available Quantity</FormLabel>
+                  <Input
+                    disabled
+                    value={adminTotalAvailableQuantity}
+                    placeholder="Auto-populated"
+                  />
+                </FormItem>
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -329,13 +335,36 @@ export function AllocateProductModal({
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="allocated_quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Allocated Quantity</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          step="1"
+                          placeholder="Enter allocated quantity"
+                          {...field}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormItem>
                   <FormLabel>Price Per Unit</FormLabel>
-                  <Input readOnly value={`₹${combinedUnitPrice.toLocaleString()}`} />
+                  <Input disabled value={`₹${combinedUnitPrice.toLocaleString()}`} />
                 </FormItem>
                 <FormItem>
                   <FormLabel>Total Allocation Price</FormLabel>
-                  <Input readOnly value={`₹${totalAllocationPrice.toLocaleString()}`} />
+                  <Input disabled value={`₹${totalAllocationPrice.toLocaleString()}`} />
                 </FormItem>
               </div>
 

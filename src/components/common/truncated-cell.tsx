@@ -113,8 +113,8 @@ export function TruncatedCell({
           </div>
         </TooltipTrigger>
         {(isTruncated || alwaysShowTooltip) && (
-          <TooltipContent className={cn("max-w-[90vw] whitespace-normal break-words", tooltipClassName)}>
-            <p>{displayValue}</p>
+          <TooltipContent className={cn("max-w-[90vw] max-h-60 overflow-y-auto custom-scrollbar whitespace-normal break-words", tooltipClassName)}>
+            <p className="pr-1">{displayValue}</p>
           </TooltipContent>
         )}
       </Tooltip>

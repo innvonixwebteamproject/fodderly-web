@@ -82,7 +82,9 @@ export interface AuthTokens {
 export interface LoginRequest {
   email: string;
   password: string;
-  fcmToken?: string;
+  role?: "admin" | "partner";
+  phone?: string;
+  deviceToken?: string;
 }
 
 export type UserRole = "admin" | "partner";

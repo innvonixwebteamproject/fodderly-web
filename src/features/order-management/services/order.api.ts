@@ -887,15 +887,28 @@ export const updateAdminExpectedDelivery = async (
   return getAdminOrderById(id);
 };
 
-/** `PATCH /orders/partner/:id/expected-delivery` — resolves to `/api/v1/orders/partner/{id}/expected-delivery` with default client. */
+/** `PATCH /orders/partner/:id` (on dispatch) or `PATCH /orders/partner/:id/expected-delivery` (on update expected delivery date). */
 export const updatePartnerExpectedDelivery = async (
   id: string,
   payload: UpdateExpectedDeliveryPayload,
 ): Promise<AdminOrderDetail> => {
-  await api.patch<{ message?: string; order?: Record<string, unknown> }>(
-    `/orders/partner/${encodeURIComponent(id)}/expected-delivery`,
-    serializeUpdateExpectedDeliveryBody(payload),
-  );
+  const isDispatch = Boolean(payload.dispatched);
+  if (isDispatch) {
+    await api.patch<{ message?: string; order?: Record<string, unknown> }>(
+      `/orders/partner/${encodeURIComponent(id)}`,
+      {
+        expected_delivery_date: payload.expectedDelivery.trim(),
+        dispatched: true,
+      },
+    );
+  } else {
+    await api.patch<{ message?: string; order?: Record<string, unknown> }>(
+      `/orders/partner/${encodeURIComponent(id)}/expected-delivery`,
+      {
+        expected_delivery: payload.expectedDelivery.trim(),
+      },
+    );
+  }
   return getPartnerOrderById(id);
 };
 
