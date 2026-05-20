@@ -66,6 +66,10 @@ const pickOrderUuidFromCancelledRow = (raw: Record<string, unknown>): string => 
   for (const c of candidates) {
     if (c && looksLikeUuid(c)) return c.trim();
   }
+  // Fallback: If no candidate is a valid UUID, return the first non-empty candidate
+  for (const c of candidates) {
+    if (c?.trim()) return c.trim();
+  }
   return "";
 };
 
@@ -75,6 +79,7 @@ const pickHumanOrderNumberFromCancelledRow = (raw: Record<string, unknown>, orde
   const explicit =
     pickString(raw.order_number) ??
     pickString(raw.orderNumber) ??
+    pickString(raw.user_orderId) ??
     pickString(raw.user_order_id) ??
     pickString(raw.userOrderId) ??
     (nestedOrder ? pickString(nestedOrder.orderNumber) ?? pickString(nestedOrder.order_number) : undefined);

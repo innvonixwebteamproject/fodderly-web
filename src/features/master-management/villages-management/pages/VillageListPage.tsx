@@ -289,7 +289,7 @@ export function VillageListPage() {
                 Villages
               </CardTitle>
               <SearchInput value={searchTerm} onChange={setSearchTerm} tooltip="Search by village name"
-                className="w-full sm:max-w-[200px]" inputClassName="h-9 text-[13px]" />
+                className="w-full sm:max-w-[160px]" inputClassName="h-9 text-[13px]" />
               <div className="w-[130px]">
                 <SearchableSelect options={stateOptions} value={stateFilter}
                   onValueChange={(val) => { setStateFilter(val); setDistrictFilter(""); setTalukaFilter(""); }}
@@ -298,18 +298,18 @@ export function VillageListPage() {
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start" />
               </div>
-              <div className="w-[130px]">
+              <div className="w-[155px]">
                 <SearchableSelect options={districtOptions} value={districtFilter}
                   onValueChange={(val) => { setDistrictFilter(val); setTalukaFilter(""); }}
-                  placeholder={stateFilter ? "District" : "Select State"}
+                  placeholder={stateFilter ? "District" : "Select state first"}
                   disabled={!stateFilter || isLoadingDistricts}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start" />
               </div>
-              <div className="w-[130px]">
+              <div className="w-[155px]">
                 <SearchableSelect options={talukaOptions} value={talukaFilter} onValueChange={setTalukaFilter}
-                  placeholder={districtFilter ? "Taluka" : "Select District"}
+                  placeholder={districtFilter ? "Taluka" : "Select district first"}
                   disabled={!districtFilter || isLoadingTalukas}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
