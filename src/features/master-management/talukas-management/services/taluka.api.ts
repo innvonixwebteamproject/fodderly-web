@@ -173,7 +173,6 @@ export const streamTalukaImport = async (
 
 export const downloadTalukaImportErrorSheet = async (jobId: string) => {
   const response = await api.get(`/talukas/import/${jobId}/error-sheet`, {
-    params: { t: Date.now() },
     responseType: "blob",
   });
   return response.data;

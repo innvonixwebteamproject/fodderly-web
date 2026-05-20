@@ -168,7 +168,6 @@ export const streamDistrictImport = async (
 
 export const downloadDistrictImportErrorSheet = async (jobId: string) => {
   const response = await api.get(`/districts/import/${jobId}/error-sheet`, {
-    params: { t: Date.now() },
     responseType: "blob",
   });
   return response.data;

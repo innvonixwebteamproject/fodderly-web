@@ -163,7 +163,6 @@ export const streamStateImport = async (
 
 export const downloadStateImportErrorSheet = async (jobId: string) => {
   const response = await api.get(`/states/import/${jobId}/error-sheet`, {
-    params: { t: Date.now() },
     responseType: "blob",
   });
   return response.data;

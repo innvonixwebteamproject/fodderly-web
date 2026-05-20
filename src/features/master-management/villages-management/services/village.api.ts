@@ -133,7 +133,6 @@ export const streamVillageImport = async (
 
 export const downloadVillageImportErrorSheet = async (jobId: string) => {
   const response = await api.get(`/villages/import/${jobId}/error-sheet`, {
-    params: { t: Date.now() },
     responseType: "blob",
   });
   return response.data;
