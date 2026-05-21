@@ -41,17 +41,17 @@ export const partnerSchema = z.object({
   companyName: z
     .string()
     .trim()
-    .nonempty("Company Name is required,")
+    .nonempty("Company Name is required.")
     .min(2, "Company Name must be at least 2 characters long.")
     .max(100, "Company Name cannot exceed 100 characters."),
   companyCertificate: z
     .custom<File | string>((value) => value instanceof File || typeof value === "string", {
-      message: "Certificate upload is required",
+      message: "Certificate upload is required.",
     })
     .refine((value) => {
       if (typeof value === "string") return value.trim().length > 0;
       return true;
-    }, "Certificate upload is required")
+    }, "Certificate upload is required.")
     .refine((value) => {
       if (!(value instanceof File)) return true;
       return allowedCertificateTypes.includes(value.type);
@@ -63,12 +63,12 @@ export const partnerSchema = z.object({
   gstNumber: z
     .string()
     .trim()
-    .nonempty("GST Number is required,")
+    .nonempty("GST Number is required.")
     .regex(gstRegex, "Please enter a valid 15-character GST Number."),
   cinNumber: z
     .string()
     .trim()
-    .nonempty("CIN Number is required,")
+    .nonempty("CIN Number is required.")
     .regex(cinRegex, "Please enter a valid 21-character CIN Number."),
 });
 

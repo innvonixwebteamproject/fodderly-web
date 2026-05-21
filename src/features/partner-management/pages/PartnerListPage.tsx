@@ -566,7 +566,7 @@ This action will update the partner's status immediately.`
                 children: <Link to={`/admin/partners/edit/${row.original.id}`} />,
               },
               {
-                label: "Partner allocations",
+                label: "Product allocations",
                 actionType: "view",
                 icon: Package,
                 asChild: true,

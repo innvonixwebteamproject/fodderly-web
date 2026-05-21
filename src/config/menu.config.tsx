@@ -90,6 +90,12 @@ export const MENU_SIDEBAR: MenuConfig = [
     allowedRoles: ["partner"],
   },
   {
+    title: "Notifications",
+    icon: Bell,
+    path: "/partner/notifications",
+    allowedRoles: ["partner"],
+  },
+  {
     title: "Inventory",
     icon: Warehouse,
     path: "/admin/inventory",

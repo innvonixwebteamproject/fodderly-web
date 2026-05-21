@@ -162,7 +162,7 @@ export function FoddermanForm({
   const partnerOptions = useMemo(
     () =>
       (partnersData?.data || []).map((partner) => ({
-        label: partner.fullName || `${partner.firstName || ""} ${partner.lastName || ""}`.trim(),
+        label: `${partner.fullName || `${partner.firstName || ""} ${partner.lastName || ""}`.trim()} (${partner.phone})`,
         value: partner.id,
       })),
     [partnersData?.data],
@@ -497,6 +497,7 @@ export function FoddermanForm({
                             value={field.value || ""}
                             onValueChange={field.onChange}
                             placeholder="Select Partner"
+                            triggerClassName="min-w-[300px]"
                           />
                         </FormControl>
                         <FormMessage />

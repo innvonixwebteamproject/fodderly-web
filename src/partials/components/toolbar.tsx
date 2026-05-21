@@ -40,7 +40,7 @@ function ToolbarBreadcrumbs() {
     add: "Add",
     edit: "Edit",
     details: "Details",
-    allocations: "Partner Allocations",
+    allocations: "Product Allocations",
   };
 
   // Extract path parts

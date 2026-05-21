@@ -392,7 +392,7 @@ export function PartnerAllocationListPage() {
           <div className="flex items-center gap-3 min-w-0">
             <CardTitle className="text-lg flex items-center gap-2 whitespace-nowrap shrink-0">
               <Link2 className="h-4.5 w-4.5 text-primary" />
-              Partner Allocations
+              Product Allocations
             </CardTitle>
             <div className="hidden lg:block h-5 w-px bg-border mx-1" />
             <SearchInput
@@ -466,7 +466,7 @@ export function PartnerAllocationListPage() {
             table={table}
             recordCount={filteredRows.length}
             isLoading={isTableLoading}
-            emptyMessage="No partner allocations found."
+            emptyMessage="No product allocations found."
             tableLayout={{
               dense: true,
               headerSticky: true,

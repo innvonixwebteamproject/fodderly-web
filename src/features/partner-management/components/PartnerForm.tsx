@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -45,6 +45,15 @@ export function PartnerForm({
 }: PartnerFormProps) {
   const isEditing = !!initialData;
   const navigate = useNavigate();
+  const [certificatePreview, setCertificatePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (certificatePreview) {
+        URL.revokeObjectURL(certificatePreview);
+      }
+    };
+  }, [certificatePreview]);
 
   const form = useForm<PartnerSchemaType>({
     resolver: zodResolver(partnerSchema),
@@ -399,6 +408,12 @@ export function PartnerForm({
                           accept=".pdf,.jpg,.jpeg,.png"
                           onChange={(event) => {
                             const file = event.target.files?.[0];
+                            if (file) {
+                              const previewUrl = URL.createObjectURL(file);
+                              setCertificatePreview(previewUrl);
+                            } else {
+                              setCertificatePreview(null);
+                            }
                             field.onChange(file || "");
                           }}
                         />
@@ -433,25 +448,40 @@ export function PartnerForm({
                           </Button>
                         </div>
                       ) : hasFile ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            Selected: <strong>{(field.value as File).name}</strong>
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => {
-                              field.onChange("");
-                              form.clearErrors("companyCertificate");
-                              const el = document.getElementById("partner-certificate-input") as HTMLInputElement | null;
-                              if (el) el.value = "";
-                            }}
-                            aria-label="Remove selected certificate"
-                            title="Remove selected certificate"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>
+                              Selected: <strong>{(field.value as File).name}</strong>
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => {
+                                field.onChange("");
+                                form.clearErrors("companyCertificate");
+                                setCertificatePreview(null);
+                                const el = document.getElementById("partner-certificate-input") as HTMLInputElement | null;
+                                if (el) el.value = "";
+                              }}
+                              aria-label="Remove selected certificate"
+                              title="Remove selected certificate"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          {certificatePreview && (
+                            <div className="mt-2">
+                              <a
+                                href={certificatePreview}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-primary hover:underline"
+                              >
+                                Preview certificate
+                              </a>
+                            </div>
+                          )}
                         </div>
                       ) : null}
                       <p className="text-xs text-muted-foreground">
