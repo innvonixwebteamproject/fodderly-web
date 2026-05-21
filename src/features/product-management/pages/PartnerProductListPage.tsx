@@ -17,6 +17,7 @@ import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
 import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -359,23 +360,25 @@ export function PartnerProductListPage() {
           }
 
           return (
-            <div className="flex items-center gap-1">
-              <ActionButton
-                actionType="edit"
-                tooltip="Update stock"
-                onClick={() => startEdit(row.original)}
-                disabled={Boolean(editingRowId) || updateStockMutation.isPending}
-              />
-              <ActionButton
-                actionType="view"
-                tooltip="View product details"
-                onClick={() => {
-                  setSelectedProductId(row.original.product_uuid);
-                  setIsProductDetailOpen(true);
-                }}
-                disabled={Boolean(editingRowId)}
-              />
-            </div>
+            <RowActionsMenu
+              items={[
+                {
+                  label: "Update stock",
+                  actionType: "edit",
+                  onSelect: () => startEdit(row.original),
+                  disabled: Boolean(editingRowId) || updateStockMutation.isPending,
+                },
+                {
+                  label: "View product details",
+                  actionType: "view",
+                  onSelect: () => {
+                    setSelectedProductId(row.original.product_uuid);
+                    setIsProductDetailOpen(true);
+                  },
+                  disabled: Boolean(editingRowId),
+                },
+              ]}
+            />
           );
         },
         size: 110,

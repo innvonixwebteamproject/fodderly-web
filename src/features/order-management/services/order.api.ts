@@ -186,6 +186,26 @@ const pickNumber = (v: unknown): number => {
   return 0;
 };
 
+/** `delayStatus` from order detail API — undefined when field omitted. */
+const parseApiDelayStatus = (raw: Record<string, unknown>): boolean | undefined => {
+  if (raw.delayStatus === undefined || raw.delayStatus === null) {
+    return undefined;
+  }
+  return Boolean(raw.delayStatus);
+};
+
+const resolveOrderDelayFlags = (
+  raw: Record<string, unknown>,
+  fallbackDelayed?: boolean | null,
+): { delayStatus: boolean | null; isDelayed: boolean } => {
+  const delayStatus = parseApiDelayStatus(raw);
+  if (delayStatus !== undefined) {
+    return { delayStatus, isDelayed: delayStatus };
+  }
+  const isDelayed = Boolean(raw.isDelayed ?? raw.delayed ?? raw.delayFlag ?? fallbackDelayed);
+  return { delayStatus: null, isDelayed };
+};
+
 const mapStakeholder = (
   raw: unknown,
 ): { id: string; name: string; mobile?: string | null; villageName?: string | null; stateName?: string | null } | null => {
@@ -629,30 +649,50 @@ const mapPipelineAuditStatusToEventType = (status: string): AuditEventType => {
   return "STATUS_CHANGED";
 };
 
+/** Maps API `orderAudits` in response order (no sorting). */
 const mapAudit = (raw: unknown): AdminOrderDetail["auditTrail"] => {
   if (!Array.isArray(raw)) return [];
   return raw.map((entry, index) => {
     const o = entry && typeof entry === "object" ? (entry as Record<string, unknown>) : {};
+    const actorRaw = o.actor ?? o.user ?? o.performedBy;
+    const actorObj =
+      actorRaw && typeof actorRaw === "object" ? (actorRaw as Record<string, unknown>) : null;
     const auditStatus = pickString(o.status) ?? pickString(o.orderStatus) ?? null;
-    const descRaw = o.description ?? o.message;
+    const descRaw = o.description ?? o.message ?? o.note;
     const description = pickLocalizedDescription(descRaw) || pickString(descRaw) || "";
 
-    const explicitEvent = pickString(o.eventType);
+    const explicitEvent = pickString(o.eventType) ?? pickString(o.event_type);
     const eventType: AuditEventType =
       explicitEvent && AUDIT_EVENT_TYPES.has(explicitEvent as AuditEventType)
         ? (explicitEvent as AuditEventType)
         : mapPipelineAuditStatusToEventType(auditStatus ?? "");
 
     return {
-      id: pickString(o.id) ?? `audit-${index}`,
-      createdAt: pickString(o.createdAt) ?? pickString(o.timestamp) ?? new Date().toISOString(),
+      id: pickString(o.id) ?? pickString(o.uuid) ?? `audit-${index}`,
+      createdAt:
+        pickString(o.createdAt) ??
+        pickString(o.created_at) ??
+        pickString(o.timestamp) ??
+        new Date().toISOString(),
       eventType,
       description,
-      actorRole: pickString(o.actorRole) ?? pickString(o.role) ?? "",
-      actorName: pickString(o.actorName) ?? pickString(o.userName) ?? "",
+      actorRole:
+        pickString(o.actorRole) ??
+        pickString(o.actor_role) ??
+        pickString(o.role) ??
+        pickString(actorObj?.role) ??
+        "",
+      actorName:
+        pickString(o.actorName) ??
+        pickString(o.actor_name) ??
+        pickString(o.userName) ??
+        pickString(o.user_name) ??
+        pickString(actorObj?.name) ??
+        pickString(actorObj?.fullName) ??
+        "",
       auditStatus,
-      deviceInfo: pickString(o.deviceInfo) ?? pickString(o.device) ?? null,
-      ipAddress: pickString(o.ipAddress) ?? pickString(o.ip) ?? null,
+      deviceInfo: pickString(o.deviceInfo) ?? pickString(o.device_info) ?? pickString(o.device) ?? null,
+      ipAddress: pickString(o.ipAddress) ?? pickString(o.ip_address) ?? pickString(o.ip) ?? null,
       metadata: o.metadata && typeof o.metadata === "object" ? (o.metadata as Record<string, unknown>) : null,
     };
   });
@@ -672,6 +712,7 @@ export const mapDetailOrder = (raw: Record<string, unknown>): AdminOrderDetail =
     } as const);
 
   const reason = pickString(raw.cancellationReason) as OrderCancellationReason | undefined;
+  const { delayStatus, isDelayed } = resolveOrderDelayFlags(raw, base.isDelayed);
 
   return {
     ...base,
@@ -687,6 +728,8 @@ export const mapDetailOrder = (raw: Record<string, unknown>): AdminOrderDetail =
     cancellationNotes: pickString(raw.cancellationNotes) ?? null,
     cancelledAt: pickString(raw.cancelledAt) ?? null,
     deliveryEtaHistory: mapDeliveryEtaHistory(raw.deliveryEtaHistory ?? raw.deliveryEtaRevisions ?? raw.etaHistory),
+    delayStatus,
+    isDelayed,
   };
 };
 
@@ -705,6 +748,7 @@ export const mapAdminDetailApiToAdminOrderDetail = (raw: Record<string, unknown>
     } as const);
 
   const reason = pickString(raw.cancellationReason) as OrderCancellationReason | undefined;
+  const { delayStatus, isDelayed } = resolveOrderDelayFlags(raw, base.isDelayed);
 
   return {
     ...base,
@@ -724,10 +768,8 @@ export const mapAdminDetailApiToAdminOrderDetail = (raw: Record<string, unknown>
       base.dispatchedAt ??
       null,
     deliveredAt: pickString(raw.deliveredAt) ?? pickString(raw.deliveredAtUtc) ?? base.deliveredAt ?? null,
-    isDelayed:
-      raw.isDelayed != null || raw.delayed != null || raw.delayFlag != null || raw.delayStatus != null
-        ? Boolean(raw.isDelayed ?? raw.delayed ?? raw.delayFlag ?? raw.delayStatus)
-        : base.isDelayed,
+    delayStatus,
+    isDelayed,
     productNamesSummary:
       base.productNamesSummary ?? pickString(raw.productNamesSummary) ?? pickString(raw.productsSummary) ?? null,
     productCategoriesSummary:

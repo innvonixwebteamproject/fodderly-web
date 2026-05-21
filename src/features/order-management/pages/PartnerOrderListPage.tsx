@@ -9,7 +9,7 @@ import { Calendar, ClipboardList, Info, RotateCcw, Truck } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container } from "@/components/common/container";
-import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
 import { SearchInput } from "@/components/common/search-input";
 import { TruncatedCell } from "@/components/common/truncated-cell";
@@ -343,11 +343,11 @@ export function PartnerOrderListPage() {
           const pending = partnerOrderNeedsDispatchHighlight(row.original.orderStatus, row.original.orderStatusApiRaw);
           return (
             <div className="flex flex-wrap items-center gap-1.5">
-              <OrderStatusBadge status={row.original.orderStatus} />
+              <OrderStatusBadge status={row.original.orderStatus} labelFromApi={row.original.orderStatusApiRaw} />
               {pending ? (
                 <Badge variant="warning" appearance="light" size="sm" className="gap-0.5 font-normal">
                   <Truck className="h-3 w-3" />
-                  Dispatch
+                  Ready to dispatch
                 </Badge>
               ) : null}
             </div>
@@ -385,31 +385,33 @@ export function PartnerOrderListPage() {
           const order = row.original;
           const canSchedule = partnerCanScheduleDelivery(order);
           return (
-            <div className="flex items-center gap-1">
-              <ActionButton actionType="view" tooltip="View details" asChild>
-                <Link to={`/partner/orders/${order.id}`} />
-              </ActionButton>
-              {canSchedule ? (
-                <ActionButton
-                  actionType="edit"
-                  icon={Calendar}
-                  tooltip="Reschedule Delivery"
-                  onClick={() => handleScheduleDelivery(order)}
-                />
-              ) : null}
-              {partnerCanDispatch(order.orderStatus, order.orderStatusApiRaw) ? (
-                <ActionButton
-                  actionType="edit"
-                  icon={Truck}
-                  tooltip="Mark as Dispatched"
-                  className="hover:-translate-y-0.5"
-                  onClick={() => handleQuickDispatch(order)}
-                />
-              ) : null}
-            </div>
+            <RowActionsMenu
+              items={[
+                {
+                  label: "View details",
+                  actionType: "view",
+                  asChild: true,
+                  children: <Link to={`/partner/orders/${order.id}`} />,
+                },
+                {
+                  label: "Reschedule Delivery",
+                  actionType: "edit",
+                  icon: Calendar,
+                  hidden: !canSchedule,
+                  onSelect: () => handleScheduleDelivery(order),
+                },
+                {
+                  label: "Mark as Dispatched",
+                  actionType: "edit",
+                  icon: Truck,
+                  hidden: !partnerCanDispatch(order.orderStatus, order.orderStatusApiRaw),
+                  onSelect: () => handleQuickDispatch(order),
+                },
+              ]}
+            />
           );
         },
-        size: 120,
+        size: 72,
       },
     ],
     [

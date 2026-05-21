@@ -6,6 +6,7 @@ import { isNotificationUnread } from "../utils/notification-helpers";
 interface NotificationListProps {
   notifications: TNotificationItem[];
   onMarkRead?: (id: string) => void;
+  onAfterNavigate?: () => void;
   onlyUnread?: boolean;
   interactive?: boolean;
   variant?: "compact" | "card";
@@ -16,6 +17,7 @@ interface NotificationListProps {
 export function NotificationList({
   notifications,
   onMarkRead,
+  onAfterNavigate,
   onlyUnread = false,
   interactive = true,
   variant = "compact",
@@ -43,6 +45,7 @@ export function NotificationList({
           <NotificationItem
             notification={notification}
             onMarkRead={onMarkRead}
+            onAfterNavigate={onAfterNavigate}
             interactive={interactive}
             variant={variant}
           />

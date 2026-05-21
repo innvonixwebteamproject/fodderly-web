@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Circle, Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { SearchInput } from "@/components/common/search-input";
 import { TruncatedCell } from "@/components/common/truncated-cell";
@@ -136,7 +137,7 @@ export function InventoryCategoryAdminPanel() {
 
       setStatusPendingId(item.id);
       try {
-        await toggleStatusMutation.mutateAsync(item.id);
+        await toggleStatusMutation.mutateAsync({ id: item.id, status: nextStatus });
       } finally {
         setStatusPendingId((currentId) => (currentId === item.id ? null : currentId));
       }
@@ -210,23 +211,25 @@ export function InventoryCategoryAdminPanel() {
         header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <ActionButton
-              actionType="edit"
-              tooltip="Edit category"
-              onClick={() => {
-                setSelectedCategory(row.original);
-                setIsDialogOpen(true);
-              }}
-            />
-            <ActionButton
-              actionType="delete"
-              tooltip="Delete category"
-              onClick={() => setDeleteTarget(row.original)}
-            />
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                label: "Edit category",
+                actionType: "edit",
+                onSelect: () => {
+                  setSelectedCategory(row.original);
+                  setIsDialogOpen(true);
+                },
+              },
+              {
+                label: "Delete category",
+                actionType: "delete",
+                onSelect: () => setDeleteTarget(row.original),
+              },
+            ]}
+          />
         ),
-        size: 88,
+        size: 72,
       },
     ],
     [handleStatusChange, statusPendingId],

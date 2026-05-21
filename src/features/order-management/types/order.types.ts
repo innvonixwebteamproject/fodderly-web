@@ -94,6 +94,8 @@ export interface AdminOrderListItem {
   deliveredAt?: string | null;
   /** Backend may set when ETA is revised after dispatch. */
   isDelayed?: boolean | null;
+  /** Detail API `delayStatus` — show delay UI only when `true`. */
+  delayStatus?: boolean | null;
   /** Comma-separated unique product names when list payload includes line items. */
   productNamesSummary?: string | null;
   /** Comma-separated unique category names from line items when available. */

@@ -1,3 +1,4 @@
+import { normalizeInventoryUnit } from "@/constants/unit.constants";
 import { api } from "@/lib/axios.interceptors";
 import type {
   AllocateProductPayload,
@@ -36,7 +37,6 @@ type RawAllocation = {
   unit?: number;
   admin_available_quantity?: number;
   admin_unit?: number;
-  allocated_price?: string | number;
   price_per_unit?: string | number;
   price?: string | number;
   sold_quantity?: number;
@@ -128,7 +128,7 @@ const normalizeAllocation = (raw: RawAllocation, partnerName?: string): Allocati
     total_allocated_price: totalAllocatedPrice,
     unit: Number(raw.unit ?? 0),
     admin_available_quantity: Number(raw.admin_available_quantity ?? 0),
-    admin_unit: Number(raw.admin_unit ?? raw.unit ?? 0),
+    admin_unit: normalizeInventoryUnit(raw.admin_unit ?? raw.unit ?? 0),
     price_per_unit: unitPrice,
     sold_quantity: Number(raw.sold_quantity ?? 0),
     createdAt: raw.createdAt || raw.created_at,

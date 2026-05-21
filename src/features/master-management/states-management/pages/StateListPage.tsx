@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { AlertCircle, Loader2, Map, RotateCcw, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Container } from "@/components/common/container";
 import { SearchInput } from "@/components/common/search-input";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
@@ -137,26 +138,28 @@ export function StateListPage() {
         ),
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <ActionButton
-              actionType="view"
-              tooltip="View State Details"
-              onClick={() => {
-                setSelectedState(row.original);
-                setViewOnly(true);
-                setIsDialogOpen(true);
-              }}
-            />
-            <ActionButton
-              actionType="edit"
-              tooltip="Edit State"
-              onClick={() => {
-                setSelectedState(row.original);
-                setViewOnly(false);
-                setIsDialogOpen(true);
-              }}
-            />
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                label: "View State Details",
+                actionType: "view",
+                onSelect: () => {
+                  setSelectedState(row.original);
+                  setViewOnly(true);
+                  setIsDialogOpen(true);
+                },
+              },
+              {
+                label: "Edit State",
+                actionType: "edit",
+                onSelect: () => {
+                  setSelectedState(row.original);
+                  setViewOnly(false);
+                  setIsDialogOpen(true);
+                },
+              },
+            ]}
+          />
         ),
         size: 100,
       },

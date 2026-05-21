@@ -15,6 +15,7 @@ import { SearchInput } from "@/components/common/search-input";
 import { TruncatedCell } from "@/components/common/truncated-cell";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
@@ -376,29 +377,32 @@ export function FarmerListPage() {
       id: "actions",
       header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <ActionButton
-            actionType="view"
-            tooltip="View Farmer Details"
-            onClick={() => handleOpenDetailModal(row.original.id)}
-          />
-          {!isPartnerUser && (
-            <>
-              <ActionButton actionType="edit" tooltip="View / Edit Farmer" asChild>
-                <Link to={`/admin/farmers/edit/${row.original.id}`} />
-              </ActionButton>
-              <ActionButton
-                actionType="view"
-                icon={UserRoundCog}
-                tooltip="Assign / Reassign Fodderman"
-                onClick={() => handleOpenAssignModal(row.original)}
-              />
-            </>
-          )}
-        </div>
+        <RowActionsMenu
+          items={[
+            {
+              label: "View Farmer Details",
+              actionType: "view",
+              onSelect: () => handleOpenDetailModal(row.original.id),
+            },
+            {
+              label: "Edit Farmer",
+              actionType: "edit",
+              hidden: isPartnerUser,
+              asChild: true,
+              children: <Link to={`/admin/farmers/edit/${row.original.id}`} />,
+            },
+            {
+              label: "Assign / Reassign Fodderman",
+              actionType: "view",
+              icon: UserRoundCog,
+              hidden: isPartnerUser,
+              onSelect: () => handleOpenAssignModal(row.original),
+            },
+          ]}
+        />
       ),
       enableSorting: false,
-      size: isPartnerUser ? 76 : 126,
+      size: isPartnerUser ? 72 : 72,
     });
 
     return baseColumns;

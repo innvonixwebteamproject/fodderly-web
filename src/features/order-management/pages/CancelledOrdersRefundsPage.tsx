@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-table";
 import DatePicker from "@/components/ui/date-picker";
 import { format } from "date-fns";
-import { Ban, BadgeCheck, ClipboardList, Filter, Landmark, RotateCcw } from "lucide-react";
+import { Ban, ClipboardList, Filter, Landmark, RotateCcw } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container } from "@/components/common/container";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 import type { AdminCancelledOrdersSortBy, CancellationRefundListFilters, RefundQueueItem } from "../types/refund.types";
@@ -38,18 +38,13 @@ import { useCancelledRefundsInfiniteQuery } from "../hooks/useCancelledRefundsQu
 import { RefundStatusBadge } from "../components/RefundStatusBadge";
 
 const ProcessRefundConfirmDialog = lazy(() => import("../components/ProcessRefundConfirmDialog"));
-const RefundManualModal = lazy(() => import("../components/RefundManualModal"));
 import {
   ADMIN_CANCELLED_PAYMENT_MODE_FILTER_OPTIONS,
   ADMIN_CANCELLED_REFUND_STATUS_FILTER_OPTIONS,
 } from "../constants/cancellation-refund.constants";
 import { CANCELLATION_REASON_OPTIONS } from "../constants/order.constants";
 
-import {
-  canShowManualRefundAction,
-  canShowProcessRefundAction,
-  isCashPayment,
-} from "../utils/cancellation-rules";
+import { canShowProcessRefundAction, isCashPayment } from "../utils/cancellation-rules";
 import { PaymentModeBadge } from "../components/PaymentModeBadge";
 
 const formatTs = (value: string) => {
@@ -89,7 +84,6 @@ export function CancelledOrdersRefundsPage() {
   const [refundTo, setRefundTo] = useState("");
 
   const [processRow, setProcessRow] = useState<RefundQueueItem | null>(null);
-  const [manualRow, setManualRow] = useState<RefundQueueItem | null>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedSearch(searchTerm.trim()), 400);
@@ -274,27 +268,20 @@ export function CancelledOrdersRefundsPage() {
           const r = row.original;
           const cash = isCashPayment(r.paymentMode);
           const showProcess = canShowProcessRefundAction(r);
-          const showManual = canShowManualRefundAction(r);
 
           return (
-            <div className="flex flex-wrap items-center gap-1">
-              {!cash && showProcess ? (
-                <ActionButton
-                  actionType="edit"
-                  icon={Landmark}
-                  tooltip="Process online refund (gateway)"
-                  onClick={() => setProcessRow(r)}
-                />
-              ) : null}
-              {!cash && showManual ? (
-                <ActionButton
-                  actionType="edit"
-                  icon={BadgeCheck}
-                  tooltip="Mark manually refunded"
-                  onClick={() => setManualRow(r)}
-                />
-              ) : null}
-            </div>
+            <RowActionsMenu
+              singleActionAsIcon
+              items={[
+                {
+                  label: "Process online refund (gateway)",
+                  actionType: "edit",
+                  icon: Landmark,
+                  hidden: cash || !showProcess,
+                  onSelect: () => setProcessRow(r),
+                },
+              ]}
+            />
           );
         },
         size: 100,
@@ -485,18 +472,6 @@ export function CancelledOrdersRefundsPage() {
       <Suspense fallback={null}>
         <ProcessRefundConfirmDialog row={processRow} open={Boolean(processRow)} onOpenChange={(o) => !o && setProcessRow(null)} />
       </Suspense>
-      {manualRow ? (
-        <Suspense fallback={null}>
-          <RefundManualModal
-            orderId={manualRow.orderId}
-            orderNumber={manualRow.orderNumber}
-            open
-            onOpenChange={(o) => {
-              if (!o) setManualRow(null);
-            }}
-          />
-        </Suspense>
-      ) : null}
     </Container>
   );
 }

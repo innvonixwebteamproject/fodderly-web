@@ -23,7 +23,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { INVENTORY_UNIT_OPTIONS, INVENTORY_UNITS } from "@/constants/unit.constants";
+import {
+  getInventoryUnitLabel,
+  INVENTORY_UNIT_OPTIONS,
+  INVENTORY_UNITS,
+  normalizeInventoryUnit,
+} from "@/constants/unit.constants";
 import { getLanguageLabel } from "../services/product.api";
 import type { IPartner } from "@/features/partner-management/types";
 import type { ProductRecord } from "../types";
@@ -121,8 +126,13 @@ export function AllocateProductModal({
   const combinedUnitPrice = useMemo(() => {
     return selectedProducts.reduce((sum, product) => {
       let price = Number(product.price || 0);
-      const adminUnit = product.admin_unit ?? INVENTORY_UNITS.KG;
-      const currentUnit = selectedUnit === "" || selectedUnit === undefined ? adminUnit : Number(selectedUnit);
+      const adminUnit = normalizeInventoryUnit(
+        product.admin_unit ?? product.quantity_indicator,
+      );
+      const currentUnit =
+        selectedUnit === "" || selectedUnit === undefined
+          ? adminUnit
+          : normalizeInventoryUnit(selectedUnit);
 
       if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
         price = price / 1000;
@@ -144,25 +154,25 @@ export function AllocateProductModal({
     if (product.admin_available_quantity === undefined || product.admin_available_quantity === null) {
       return "";
     }
-    let quantity = Number(product.admin_available_quantity);
-    const adminUnit = product.admin_unit ?? INVENTORY_UNITS.KG;
-    const currentUnit = selectedUnit === "" || selectedUnit === undefined ? adminUnit : Number(selectedUnit);
-
-    if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
-      quantity = quantity * 1000;
-    } else if (adminUnit === INVENTORY_UNITS.KG && currentUnit === INVENTORY_UNITS.TON) {
-      quantity = quantity / 1000;
-    }
-    return quantity.toLocaleString();
-  }, [selectedProducts, selectedUnit]);
+    const quantity = Number(product.admin_available_quantity);
+    const adminUnit = normalizeInventoryUnit(
+      product.admin_unit ?? product.quantity_indicator,
+    );
+    return `${quantity.toLocaleString()} ${getInventoryUnitLabel(adminUnit)}`;
+  }, [selectedProducts]);
 
   const maxAvailableStock = useMemo(() => {
     if (selectedProducts.length === 0) return Number.POSITIVE_INFINITY;
     return Math.min(
       ...selectedProducts.map((product) => {
         let stock = Number(product.stock || 0);
-        const adminUnit = product.admin_unit ?? INVENTORY_UNITS.KG;
-        const currentUnit = selectedUnit === "" || selectedUnit === undefined ? adminUnit : Number(selectedUnit);
+        const adminUnit = normalizeInventoryUnit(
+          product.admin_unit ?? product.quantity_indicator,
+        );
+        const currentUnit =
+          selectedUnit === "" || selectedUnit === undefined
+            ? adminUnit
+            : normalizeInventoryUnit(selectedUnit);
 
         if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
           stock = stock * 1000;
@@ -205,8 +215,10 @@ export function AllocateProductModal({
 
     const product = products.find((item) => item.id === values.product_uuid);
     let unitPrice = Number(product?.price || 0);
-    const adminUnit = product?.admin_unit ?? INVENTORY_UNITS.KG;
-    const currentUnit = values.unit;
+    const adminUnit = normalizeInventoryUnit(
+      product?.admin_unit ?? product?.quantity_indicator,
+    );
+    const currentUnit = normalizeInventoryUnit(values.unit);
 
     if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
       unitPrice = unitPrice / 1000;
@@ -233,7 +245,7 @@ export function AllocateProductModal({
         <DialogHeader>
           <DialogTitle>Allocate Product</DialogTitle>
           <DialogDescription>
-            Assign one or more products to a partner with real-time pricing calculation.
+            Assign one product to a partner with real-time pricing calculation.
           </DialogDescription>
         </DialogHeader>
         <DialogBody>

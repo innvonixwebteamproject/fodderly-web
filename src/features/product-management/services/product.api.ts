@@ -1,3 +1,4 @@
+import { normalizeInventoryUnit } from "@/constants/unit.constants";
 import { api } from "@/lib/axios.interceptors";
 import {
   ProductFormValues,
@@ -123,8 +124,10 @@ const normalizeProduct = (raw: Partial<ProductRecord>): ProductRecord => ({
       : Number(raw.admin_available_quantity),
   admin_unit:
     raw.admin_unit === undefined || raw.admin_unit === null
-      ? undefined
-      : Number(raw.admin_unit),
+      ? raw.quantity_indicator === undefined || raw.quantity_indicator === null
+        ? undefined
+        : normalizeInventoryUnit(raw.quantity_indicator)
+      : normalizeInventoryUnit(raw.admin_unit),
   allocated_quantity:
     raw.allocated_quantity === undefined || raw.allocated_quantity === null
       ? undefined
@@ -203,7 +206,7 @@ const normalizeProductPartnerAllocation = (
   admin_unit:
     raw.admin_unit === undefined || raw.admin_unit === null
       ? undefined
-      : Number(raw.admin_unit),
+      : normalizeInventoryUnit(raw.admin_unit),
   category_name:
     typeof raw.category_name === "string"
       ? raw.category_name

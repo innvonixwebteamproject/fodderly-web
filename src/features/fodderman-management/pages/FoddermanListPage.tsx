@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { Circle, Filter, Info, RotateCcw, UserCheck } from "lucide-react";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { getApiSortParams } from "@/lib/api-sorting";
@@ -424,8 +425,14 @@ export function FoddermanListPage() {
             readOnly={isPartnerUser}
             showConfirmation={true}
             confirmationTitle="Confirm Status Change"
-            getConfirmationMessage={() =>
-              "Are you sure you want to change the status of this Fodderman?"
+            getConfirmationMessage={(fodderman, newStatus: boolean) =>
+              newStatus
+                ? `Are you sure you want to activate ${fodderman.fullName}? This will restore their access to the system.`
+                : `Are you sure you want to deactivate ${fodderman.fullName}?
+
+This action will immediately freeze all connected Farmers. To continue smooth supply chain operations, please select a replacement Fodderman for this village before proceeding.
+
+This action will update the fodderman's status immediately.`
             }
           />
         ),
@@ -436,25 +443,27 @@ export function FoddermanListPage() {
       id: "actions",
       header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <ActionButton
-            actionType="view"
-            tooltip="View Profile"
-            onClick={() => {
-              setSelectedFoddermanId(row.original.id);
-              setIsDetailsModalOpen(true);
-            }}
-          />
-          {!isPartnerUser && (
-            <>
-              <ActionButton actionType="edit" tooltip="Edit Profile" asChild>
-                <Link to={`/admin/fodderman/edit/${row.original.id}`} />
-              </ActionButton>
-            </>
-          )}
-        </div>
+        <RowActionsMenu
+          items={[
+            {
+              label: "View Profile",
+              actionType: "view",
+              onSelect: () => {
+                setSelectedFoddermanId(row.original.id);
+                setIsDetailsModalOpen(true);
+              },
+            },
+            {
+              label: "Edit Profile",
+              actionType: "edit",
+              hidden: isPartnerUser,
+              asChild: true,
+              children: <Link to={`/admin/fodderman/edit/${row.original.id}`} />,
+            },
+          ]}
+        />
       ),
-      size: isPartnerUser ? 70 : 120,
+      size: 72,
     });
 
     return baseColumns;

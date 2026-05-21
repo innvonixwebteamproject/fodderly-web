@@ -5,13 +5,26 @@ export interface NotificationReceiver {
   [key: string]: unknown;
 }
 
+export interface NotificationData {
+  order_id?: string;
+  user_order_id?: string;
+  farmer_name?: string;
+  template_code?: string;
+  redirection_link?: string;
+  [key: string]: unknown;
+}
+
 export interface NotificationItem {
   id: string;
   title: string;
-  message: string;
+  message?: string;
+  body?: string;
   createdAt?: string;
   created_at?: string;
   isRead?: boolean;
+  is_read?: boolean;
+  event_type?: string;
+  data?: NotificationData | null;
   receiver?: NotificationReceiver;
   [key: string]: unknown;
 }

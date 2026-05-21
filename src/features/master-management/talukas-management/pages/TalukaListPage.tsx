@@ -10,6 +10,7 @@ import { format } from "date-fns";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Container } from "@/components/common/container";
 import { SearchInput } from "@/components/common/search-input";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
@@ -187,12 +188,30 @@ export function TalukaListPage() {
       header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <ActionButton actionType="view" tooltip="View Taluka" onClick={() => { setSelectedTaluka(row.original); setViewOnly(true); setIsDialogOpen(true); }} />
-          <ActionButton actionType="edit" tooltip="Edit Taluka" onClick={() => { setSelectedTaluka(row.original); setViewOnly(false); setIsDialogOpen(true); }} />
-        </div>
+        <RowActionsMenu
+          items={[
+            {
+              label: "View Taluka",
+              actionType: "view",
+              onSelect: () => {
+                setSelectedTaluka(row.original);
+                setViewOnly(true);
+                setIsDialogOpen(true);
+              },
+            },
+            {
+              label: "Edit Taluka",
+              actionType: "edit",
+              onSelect: () => {
+                setSelectedTaluka(row.original);
+                setViewOnly(false);
+                setIsDialogOpen(true);
+              },
+            },
+          ]}
+        />
       ),
-      size: 100,
+      size: 72,
     },
   ], []);
 

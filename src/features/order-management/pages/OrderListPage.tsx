@@ -10,7 +10,7 @@ import { Ban, Calendar, ClipboardList, Download, FileSpreadsheet, Filter, Info, 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Container } from "@/components/common/container";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
 import { SearchInput } from "@/components/common/search-input";
@@ -432,32 +432,32 @@ export function OrderListPage() {
           const canAdminCancel = canAdminCancelOrder(order);
           const canScheduleDelivery = canAdminScheduleDelivery(order);
           return (
-            <div className="flex items-center gap-1">
-              <ActionButton
-                actionType="view"
-                tooltip="View details"
-                onClick={() => navigate(`/admin/orders/${order.id}`)}
-              />
-              {canScheduleDelivery ? (
-                <ActionButton
-                  actionType="edit"
-                  icon={Calendar}
-                  tooltip="Reschedule Delivery"
-                  onClick={() => setQuickOrder(order)}
-                />
-              ) : null}
-              {canAdminCancel ? (
-                <ActionButton
-                  actionType="delete"
-                  icon={Ban}
-                  tooltip="Cancel order"
-                  onClick={() => setCancelOrder(order)}
-                />
-              ) : null}
-            </div>
+            <RowActionsMenu
+              items={[
+                {
+                  label: "View details",
+                  actionType: "view",
+                  onSelect: () => navigate(`/admin/orders/${order.id}`),
+                },
+                {
+                  label: "Reschedule Delivery",
+                  actionType: "edit",
+                  icon: Calendar,
+                  hidden: !canScheduleDelivery,
+                  onSelect: () => setQuickOrder(order),
+                },
+                {
+                  label: "Cancel order",
+                  actionType: "delete",
+                  icon: Ban,
+                  hidden: !canAdminCancel,
+                  onSelect: () => setCancelOrder(order),
+                },
+              ]}
+            />
           );
         },
-        size: 120,
+        size: 72,
       },
     ],
     [navigate, setQuickOrder, setCancelOrder],

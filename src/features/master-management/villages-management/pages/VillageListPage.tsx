@@ -10,6 +10,7 @@ import { format } from "date-fns";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Container } from "@/components/common/container";
 import { SearchInput } from "@/components/common/search-input";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
@@ -220,12 +221,30 @@ export function VillageListPage() {
       header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <ActionButton actionType="view" tooltip="View Village" onClick={() => { setSelectedVillage(row.original); setViewOnly(true); setIsDialogOpen(true); }} />
-          <ActionButton actionType="edit" tooltip="Edit Village" onClick={() => { setSelectedVillage(row.original); setViewOnly(false); setIsDialogOpen(true); }} />
-        </div>
+        <RowActionsMenu
+          items={[
+            {
+              label: "View Village",
+              actionType: "view",
+              onSelect: () => {
+                setSelectedVillage(row.original);
+                setViewOnly(true);
+                setIsDialogOpen(true);
+              },
+            },
+            {
+              label: "Edit Village",
+              actionType: "edit",
+              onSelect: () => {
+                setSelectedVillage(row.original);
+                setViewOnly(false);
+                setIsDialogOpen(true);
+              },
+            },
+          ]}
+        />
       ),
-      size: 100,
+      size: 72,
     },
   ], []);
 

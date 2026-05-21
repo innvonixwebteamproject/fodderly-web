@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Container } from "@/components/common/container";
 import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { SearchInput } from "@/components/common/search-input";
@@ -491,33 +492,33 @@ export function CategoryCmsPage() {
         ),
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <ActionButton
-              actionType="view"
-              tooltip="View category"
-              onClick={() => {
-                setSelectedProductCategoryForView(row.original);
-                setIsProductViewDialogOpen(true);
-              }}
-            />
-            <ActionButton
-              actionType="edit"
-              tooltip="Edit category"
-              onClick={() => {
-                setSelectedProductCategory(row.original);
-                setIsProductDialogOpen(true);
-              }}
-            />
-            <ActionButton
-              actionType="delete"
-              tooltip="Delete category"
-              onClick={() =>
-                setDeleteTarget({ type: "product", item: row.original })
-              }
-            />
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                label: "View category",
+                actionType: "view",
+                onSelect: () => {
+                  setSelectedProductCategoryForView(row.original);
+                  setIsProductViewDialogOpen(true);
+                },
+              },
+              {
+                label: "Edit category",
+                actionType: "edit",
+                onSelect: () => {
+                  setSelectedProductCategory(row.original);
+                  setIsProductDialogOpen(true);
+                },
+              },
+              {
+                label: "Delete category",
+                actionType: "delete",
+                onSelect: () => setDeleteTarget({ type: "product", item: row.original }),
+              },
+            ]}
+          />
         ),
-        size: 88,
+        size: 72,
       },
     ],
     [handleProductStatusChange, productStatusPendingId],
@@ -602,23 +603,23 @@ export function CategoryCmsPage() {
         ),
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <ActionButton
-              actionType="edit"
-              tooltip="Edit category"
-              onClick={() => {
-                setSelectedInventoryCategory(row.original);
-                setIsInventoryDialogOpen(true);
-              }}
-            />
-            <ActionButton
-              actionType="delete"
-              tooltip="Delete category"
-              onClick={() =>
-                setDeleteTarget({ type: "inventory", item: row.original })
-              }
-            />
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                label: "Edit category",
+                actionType: "edit",
+                onSelect: () => {
+                  setSelectedInventoryCategory(row.original);
+                  setIsInventoryDialogOpen(true);
+                },
+              },
+              {
+                label: "Delete category",
+                actionType: "delete",
+                onSelect: () => setDeleteTarget({ type: "inventory", item: row.original }),
+              },
+            ]}
+          />
         ),
         size: 88,
       },

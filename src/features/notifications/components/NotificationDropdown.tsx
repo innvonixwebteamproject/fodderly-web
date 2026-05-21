@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
 import {
@@ -9,23 +10,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useMarkNotificationReadMutation, useNotifications } from "../hooks";
+import { isNotificationUnread } from "../utils/notification-helpers";
 import { NotificationList } from "./NotificationList";
 
 const getNotificationRoute = (role: "admin" | "partner" | null) =>
   role === "partner" ? "/partner/notifications" : "/admin/notifications";
 
 export function NotificationDropdown() {
+  const [open, setOpen] = useState(false);
   const role = useAuthStore((state) => state.role);
   const { data, isLoading, isError } = useNotifications();
   const markRead = useMarkNotificationReadMutation();
 
   const notifications = data?.data ?? [];
-  const unreadCount = data?.meta?.unread ?? notifications.filter(
-    (item) => item.receiver?.status === "unread" || item.isRead === false,
-  ).length;
+  const unreadCount =
+    data?.meta?.unread ?? notifications.filter((item) => isNotificationUnread(item)).length;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"}
@@ -62,6 +64,7 @@ export function NotificationDropdown() {
               <NotificationList
                 notifications={notifications}
                 onMarkRead={(id) => markRead.mutate(id)}
+                onAfterNavigate={() => setOpen(false)}
                 onlyUnread
                 interactive
                 emptyMessage="No unread notifications"

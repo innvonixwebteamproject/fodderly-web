@@ -24,6 +24,7 @@ import {
   StatusDropdown,
 } from "@/components/common/status-dropdown";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { PartnerStatus } from "@/lib/enum";
 import {
   usePartnerDistrictsQuery,
@@ -521,7 +522,13 @@ export function PartnerListPage() {
             showConfirmation={true}
             confirmationTitle="Confirm Status Change"
             getConfirmationMessage={(partner, newStatus: boolean) =>
-              `Are you sure you want to ${newStatus ? "activate" : "deactivate"} partner "${partner.fullName}"? This will affect their access to the system.`
+              newStatus
+                ? `Are you sure you want to activate partner "${partner.fullName}"? This will restore their access to the system.`
+                : `Are you sure you want to deactivate ${partner.fullName}?
+
+This action will immediately freeze their inventory and all connected Foddermen. To continue smooth supply chain operations, please select a replacement Partner for this district before proceeding.
+
+This action will update the partner's status immediately.`
             }
           />
         ),
@@ -533,45 +540,42 @@ export function PartnerListPage() {
           <DataGridColumnHeader title="Actions" column={column} />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            {!row.original.forcePasswordChange && (
-              <ActionButton
-                actionType="view"
-                icon={RefreshCw}
-                tooltip="Resend Activation Email"
-                onClick={() => handleResendActivationEmail(row.original.id)}
-                disabled={resendingPartnerId === row.original.id}
-                iconClassName={
-                  resendingPartnerId === row.original.id ? "animate-spin" : ""
-                }
-              />
-            )}
-            <ActionButton
-              actionType="view"
-              tooltip="View Partner Details"
-              onClick={() => {
-                setSelectedPartnerId(row.original.id);
-                setIsDetailsModalOpen(true);
-              }}
-            />
-            <ActionButton 
-              actionType="edit" 
-              tooltip="Edit Partner" 
-              asChild
-            >
-              <Link to={`/admin/partners/edit/${row.original.id}`} />
-            </ActionButton>
-            <ActionButton
-              actionType="view"
-              icon={Package}
-              tooltip="Partner allocations"
-              asChild
-            >
-              <Link to={`/admin/partners/${row.original.id}/allocations`} />
-            </ActionButton>
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                key: "resend-activation",
+                label: "Resend Activation Email",
+                actionType: "view",
+                icon: RefreshCw,
+                hidden: row.original.forcePasswordChange,
+                disabled: resendingPartnerId === row.original.id,
+                onSelect: () => handleResendActivationEmail(row.original.id),
+              },
+              {
+                label: "View Partner Details",
+                actionType: "view",
+                onSelect: () => {
+                  setSelectedPartnerId(row.original.id);
+                  setIsDetailsModalOpen(true);
+                },
+              },
+              {
+                label: "Edit Partner",
+                actionType: "edit",
+                asChild: true,
+                children: <Link to={`/admin/partners/edit/${row.original.id}`} />,
+              },
+              {
+                label: "Partner allocations",
+                actionType: "view",
+                icon: Package,
+                asChild: true,
+                children: <Link to={`/admin/partners/${row.original.id}/allocations`} />,
+              },
+            ]}
+          />
         ),
-        size: 88,
+        size: 72,
       },
     ],
     [confirmStatusChange, districtNameMap, handleResendActivationEmail, resendingPartnerId],

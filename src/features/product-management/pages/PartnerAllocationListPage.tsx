@@ -15,6 +15,7 @@ import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { SearchInput } from "@/components/common/search-input";
 import { TruncatedCell } from "@/components/common/truncated-cell";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { DataGrid } from "@/components/ui/data-grid";
@@ -333,40 +334,41 @@ export function PartnerAllocationListPage() {
         header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <ActionButton
-              actionType="view"
-              tooltip="View product details"
-              onClick={() => {
-                setSelectedProductId(row.original.product_uuid);
-                setIsProductDetailOpen(true);
-              }}
-            />
-            <ActionButton
-              actionType="edit"
-              tooltip="Edit allocation quantity"
-              onClick={() => {
-                setSelectedAllocation(row.original);
-                setIsEditModalOpen(true);
-              }}
-              disabled={updateMutation.isPending}
-            />
-            <ActionButton
-              actionType="delete"
-              tooltip={
-                row.original.sold_quantity > 0
-                  ? "Cannot remove mapping once sold quantity exists"
-                  : "Remove mapping"
-              }
-              disabled={row.original.sold_quantity > 0 || deleteMutation.isPending}
-              onClick={() => {
-                if (row.original.sold_quantity > 0) return;
-                setDeleteTarget(row.original);
-              }}
-            />
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                label: "View product details",
+                actionType: "view",
+                onSelect: () => {
+                  setSelectedProductId(row.original.product_uuid);
+                  setIsProductDetailOpen(true);
+                },
+              },
+              {
+                label: "Edit allocation quantity",
+                actionType: "edit",
+                onSelect: () => {
+                  setSelectedAllocation(row.original);
+                  setIsEditModalOpen(true);
+                },
+                disabled: updateMutation.isPending,
+              },
+              {
+                label:
+                  row.original.sold_quantity > 0
+                    ? "Cannot remove mapping once sold quantity exists"
+                    : "Remove mapping",
+                actionType: "delete",
+                onSelect: () => {
+                  if (row.original.sold_quantity > 0) return;
+                  setDeleteTarget(row.original);
+                },
+                disabled: row.original.sold_quantity > 0 || deleteMutation.isPending,
+              },
+            ]}
+          />
         ),
-        size: 90,
+        size: 72,
       },
     ],
     [deleteMutation, updateMutation],

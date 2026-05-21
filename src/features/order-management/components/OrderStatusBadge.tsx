@@ -1,36 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { OrderStatus } from "../types/order.types";
 import { formatApiPipelineLabel, getOrderStatusLabel } from "../utils/order-labels";
-
-type BadgeVariant = "success" | "destructive" | "warning" | "info" | "secondary";
-
-/** Admin list API pipeline labels → badge variant (semantic, not internal enum). */
-function variantForOrderApiLabel(raw: string): BadgeVariant {
-  const s = raw.trim().toLowerCase();
-  if (
-    s === "rejected" ||
-    s === "reject" ||
-    s === "cancelled" ||
-    s === "cancel" ||
-    s === "canceled" ||
-    s.startsWith("cancel_")
-  ) {
-    return "destructive";
-  }
-  if (s === "approved" || s === "approve" || s === "delivered" || s === "order_delivered") {
-    return "success";
-  }
-  if (s === "dispatch" || s === "dispatched" || s.includes("dispatch")) {
-    return "info";
-  }
-  if (s === "delayed" || s === "delay") {
-    return "warning";
-  }
-  if (s === "unpaid" || s === "pending" || s === "pending_order") {
-    return "warning";
-  }
-  return "secondary";
-}
+import { variantForOrderPipelineStatus } from "../utils/order-pipeline-badge";
 
 export function OrderStatusBadge({
   status,
@@ -44,7 +15,7 @@ export function OrderStatusBadge({
   const label = trimmed ? formatApiPipelineLabel(trimmed) : getOrderStatusLabel(status);
 
   if (trimmed) {
-    const variant = variantForOrderApiLabel(trimmed);
+    const variant = variantForOrderPipelineStatus(trimmed);
     return (
       <Badge variant={variant} appearance="light" size="sm" shape="circle">
         {label}

@@ -20,6 +20,7 @@ import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
 import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
@@ -353,31 +354,38 @@ export function AdminProductListPage() {
         header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <ActionButton actionType="view" tooltip="View details" onClick={() => {
-              setSelectedProductId(row.original.id);
-              setIsDetailModalOpen(true);
-            }} />
-            <ActionButton actionType="edit" tooltip="Edit product" onClick={() => {
-              navigate(`/admin/products/edit/${row.original.id}`);
-            }} />
-            <ActionButton
-              actionType="view"
-              icon={Link2}
-              tooltip="View Partner Allocations"
-              onClick={() =>
-                navigate(
-                  `/admin/products/${row.original.id}/partner-allocations?productName=${encodeURIComponent(getLanguageLabel(row.original.name))}`,
-                )
-              }
-            />
-            <ActionButton
-              actionType="delete"
-              tooltip="Delete product"
-              onClick={() => setDeleteTarget(row.original)}
-              disabled={deleteMutation.isPending}
-            />
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                label: "View details",
+                actionType: "view",
+                onSelect: () => {
+                  setSelectedProductId(row.original.id);
+                  setIsDetailModalOpen(true);
+                },
+              },
+              {
+                label: "Edit product",
+                actionType: "edit",
+                onSelect: () => navigate(`/admin/products/edit/${row.original.id}`),
+              },
+              {
+                label: "View Partner Allocations",
+                actionType: "view",
+                icon: Link2,
+                onSelect: () =>
+                  navigate(
+                    `/admin/products/${row.original.id}/partner-allocations?productName=${encodeURIComponent(getLanguageLabel(row.original.name))}`,
+                  ),
+              },
+              {
+                label: "Delete product",
+                actionType: "delete",
+                onSelect: () => setDeleteTarget(row.original),
+                disabled: deleteMutation.isPending,
+              },
+            ]}
+          />
         ),
       },
     ],

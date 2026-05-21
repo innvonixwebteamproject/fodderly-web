@@ -106,7 +106,9 @@ export const ADMIN_ORDER_LIST_STATUS_FILTER_OPTIONS: { value: AdminOrderListApiS
 
 /** Partner `POST /orders/partner/list` — `status` body uses values matching the response slugs. */
 export const PARTNER_DAILY_ORDER_STATUS_FILTER_OPTIONS: { value: AdminOrderListApiStatus | ""; label: string }[] = [
+  { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
   { value: "cancelled", label: "Cancelled" },
   { value: "dispatched", label: "Dispatched" },
   { value: "delivered", label: "Delivered" },

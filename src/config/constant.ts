@@ -7,3 +7,11 @@ export const STORAGE_KEYS = {
   ACCESS_TOKEN: "sid",
   REFRESH_TOKEN: "rid",
 };
+
+/** Re-export: API `admin_unit` / `unit` — 0 = KG, 1 = TON */
+export {
+  ADMIN_UNIT,
+  INVENTORY_UNITS,
+  getInventoryUnitLabel,
+  normalizeInventoryUnit,
+} from "@/constants/unit.constants";

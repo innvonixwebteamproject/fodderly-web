@@ -11,6 +11,7 @@ import { format } from "date-fns";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Container } from "@/components/common/container";
 import { SearchInput } from "@/components/common/search-input";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
@@ -146,12 +147,30 @@ export function DistrictListPage() {
       header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <ActionButton actionType="view" tooltip="View District" onClick={() => { setSelectedDistrict(row.original); setViewOnly(true); setIsDialogOpen(true); }} />
-          <ActionButton actionType="edit" tooltip="Edit District" onClick={() => { setSelectedDistrict(row.original); setViewOnly(false); setIsDialogOpen(true); }} />
-        </div>
+        <RowActionsMenu
+          items={[
+            {
+              label: "View District",
+              actionType: "view",
+              onSelect: () => {
+                setSelectedDistrict(row.original);
+                setViewOnly(true);
+                setIsDialogOpen(true);
+              },
+            },
+            {
+              label: "Edit District",
+              actionType: "edit",
+              onSelect: () => {
+                setSelectedDistrict(row.original);
+                setViewOnly(false);
+                setIsDialogOpen(true);
+              },
+            },
+          ]}
+        />
       ),
-      size: 100,
+      size: 72,
     },
   ], []);
 

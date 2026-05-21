@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { Loader2, RotateCcw, Warehouse } from "lucide-react";
 import { ActionButton } from "@/components/common/action-button";
+import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Container } from "@/components/common/container";
 import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
@@ -309,17 +310,23 @@ export function InventoryListPage() {
         header: ({ column }) => <DataGridColumnHeader title="Actions" column={column} />,
         enableSorting: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1">
-            <ActionButton actionType="edit" tooltip="Edit inventory" onClick={() => openEdit(row.original)} />
-            <ActionButton
-              actionType="delete"
-              tooltip="Delete inventory"
-              onClick={() => setDeleteTarget(row.original)}
-              disabled={deleteMutation.isPending}
-            />
-          </div>
+          <RowActionsMenu
+            items={[
+              {
+                label: "Edit inventory",
+                actionType: "edit",
+                onSelect: () => openEdit(row.original),
+              },
+              {
+                label: "Delete inventory",
+                actionType: "delete",
+                onSelect: () => setDeleteTarget(row.original),
+                disabled: deleteMutation.isPending,
+              },
+            ]}
+          />
         ),
-        size: 88,
+        size: 72,
       });
     }
 

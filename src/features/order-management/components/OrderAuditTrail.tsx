@@ -1,9 +1,16 @@
-import { useMemo } from "react";
 import { History, Check, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { OrderAuditLogEntry } from "../types/order.types";
+import { formatApiPipelineLabel } from "../utils/order-labels";
+import {
+  isDeliveredPipelineStatus,
+  isFailedPipelineStatus,
+  pipelineStepDotClass,
+  pipelineStepMarkerClass,
+  variantForOrderPipelineStatus,
+} from "../utils/order-pipeline-badge";
 
 interface OrderAuditTrailProps {
   entries: OrderAuditLogEntry[];
@@ -11,48 +18,12 @@ interface OrderAuditTrailProps {
   id?: string;
 }
 
-const PIPELINE_STATUS_LABEL: Record<string, string> = {
-  unpaid: "Unpaid",
-  pending: "Pending",
-  approve: "Approved",
-  approved: "Approved",
-  reject: "Rejected",
-  rejected: "Rejected",
-  cancel: "Cancelled",
-  cancelled: "Cancelled",
-  dispatch: "Dispatched",
-  dispatched: "Dispatched",
-  delivered: "Delivered",
-};
-
-function pipelineStatusLabel(status: string | null | undefined): string {
-  if (!status?.trim()) return "";
-  const key = status.toLowerCase();
-  return PIPELINE_STATUS_LABEL[key] ?? status;
-}
-
-function pipelineBadgeVariant(
-  status: string | null | undefined,
-): "primary" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" {
-  const s = (status ?? "").toLowerCase();
-  if (s === "reject" || s === "cancel" || s === "rejected" || s === "cancelled") return "destructive";
-  if (s === "delivered") return "success";
-  if (s === "dispatch" || s === "dispatched") return "info";
-  if (s === "pending" || s === "unpaid") return "warning";
-  if (s === "approve" || s === "approved") return "success";
-  return "outline";
-}
-
 export function OrderAuditTrail({ entries, id }: OrderAuditTrailProps) {
-  const sortedEntries = useMemo(() => {
-    return [...entries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [entries]);
-
   return (
     <Card id={id} className="overflow-hidden border-border/80 shadow-sm">
       <CardHeader className="border-b border-border/60 bg-muted/20 py-4">
         <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-          <History className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+          <History className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
           Audit trail
         </CardTitle>
       </CardHeader>
@@ -62,44 +33,34 @@ export function OrderAuditTrail({ entries, id }: OrderAuditTrailProps) {
         ) : (
           <div className="max-h-[500px] overflow-y-auto custom-scrollbar pb-6">
             <ol className="m-0 list-none px-4 sm:px-6" aria-label="Order progress timeline">
-              {sortedEntries.map((entry, index) => {
+              {entries.map((entry, index) => {
                 const hasActor = Boolean(entry.actorName?.trim() || entry.actorRole?.trim());
-                const statusLabel = pipelineStatusLabel(entry.auditStatus);
-                const isLastStep = index === sortedEntries.length - 1;
-                const statusLower = entry.auditStatus?.toLowerCase() ?? "";
-                const isDeliveredLast = index === 0 && statusLower === "delivered";
-                const isFailedLast =
-                  index === 0 &&
-                  (statusLower === "reject" ||
-                    statusLower === "cancel" ||
-                    statusLower === "rejected" ||
-                    statusLower === "cancelled");
+                const statusVariant = variantForOrderPipelineStatus(entry.auditStatus);
+                const statusLabel = formatApiPipelineLabel(entry.auditStatus);
+                const isLastStep = index === entries.length - 1;
+                const isDeliveredStep = isDeliveredPipelineStatus(entry.auditStatus);
+                const isFailedStep = isFailedPipelineStatus(entry.auditStatus);
 
                 return (
                   <li
                     key={entry.id}
                     className={cn("relative flex gap-3 sm:gap-4", !isLastStep && "pb-0")}
                   >
-                    {/* Rail + step marker */}
                     <div className="flex w-7 shrink-0 flex-col items-center sm:w-8" aria-hidden>
                       <div
                         className={cn(
                           "relative z-[1] flex h-6 w-6 shrink-0 items-center justify-center rounded-full border sm:h-7 sm:w-7",
-                          isDeliveredLast &&
-                            "border-green-600 bg-green-600 text-white shadow-sm dark:border-green-500 dark:bg-green-600",
-                          isFailedLast &&
-                            "border-destructive bg-destructive text-destructive-foreground shadow-sm",
-                          !isDeliveredLast &&
-                            !isFailedLast &&
-                            "border-primary/70 bg-background text-primary shadow-sm text-primary",
+                          pipelineStepMarkerClass(statusVariant),
                         )}
                       >
-                        {isDeliveredLast ? (
+                        {isDeliveredStep ? (
                           <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
-                        ) : isFailedLast ? (
+                        ) : isFailedStep ? (
                           <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2.5} />
                         ) : (
-                          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          <span
+                            className={cn("h-1.5 w-1.5 rounded-full", pipelineStepDotClass(statusVariant))}
+                          />
                         )}
                       </div>
                       {!isLastStep ? (
@@ -107,7 +68,6 @@ export function OrderAuditTrail({ entries, id }: OrderAuditTrailProps) {
                       ) : null}
                     </div>
 
-                    {/* Content */}
                     <div
                       className={cn(
                         "min-w-0 flex-1 border-b border-border/50 pb-6",
@@ -117,9 +77,10 @@ export function OrderAuditTrail({ entries, id }: OrderAuditTrailProps) {
                       <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
                         {entry.auditStatus ? (
                           <Badge
-                            variant={pipelineBadgeVariant(entry.auditStatus)}
+                            variant={statusVariant}
                             appearance="light"
                             size="sm"
+                            shape="circle"
                             className="w-fit text-[11px] font-semibold leading-none"
                           >
                             {statusLabel}

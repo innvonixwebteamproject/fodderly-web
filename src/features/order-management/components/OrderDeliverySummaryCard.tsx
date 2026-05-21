@@ -37,7 +37,7 @@ export function OrderDeliverySummaryCard({
   order,
   hideHistory = false,
 }: OrderDeliverySummaryCardProps) {
-  const delayed = order.orderStatus === "DELAYED" || Boolean(order.isDelayed);
+  const showDelayStatus = order.delayStatus === true;
   const history = order.deliveryEtaHistory ?? [];
 
   return (
@@ -60,19 +60,17 @@ export function OrderDeliverySummaryCard({
               {formatSafeDate(order.dispatchedAt, true)}
             </p>
           </div>
-          <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
-            <p className="text-xs font-medium text-muted-foreground">Delay status</p>
-            {delayed ? (
+          {showDelayStatus ? (
+            <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-muted-foreground">Delay status</p>
               <Badge variant="warning" appearance="light" size="sm" shape="circle">
                 Delayed
               </Badge>
-            ) : (
-              <span className="font-medium text-muted-foreground">N/A</span>
-            )}
-          </div>
+            </div>
+          ) : null}
         </div>
 
-        {!hideHistory && delayed && order.expectedDeliveryDate ? (
+        {!hideHistory && showDelayStatus && order.expectedDeliveryDate ? (
           <div className="rounded-md border border-amber-200 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
             <span className="flex items-start gap-2">
               <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" />
