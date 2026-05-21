@@ -306,10 +306,14 @@ export const StatusDropdown = <
               <AlertDialogTitle>{confirmationTitle}</AlertDialogTitle>
               <AlertDialogDescription className="break-words">
                 {getDefaultConfirmationMessage()}
-                <br />
-                <span className="text-xs text-muted-foreground mt-2 block">
-                  This action will update the {entityType}'s status immediately.
-                </span>
+                {!getConfirmationMessage && (
+                  <>
+                    <br />
+                    <span className="text-xs text-muted-foreground mt-2 block">
+                      This action will update the {entityType}'s status immediately.
+                    </span>
+                  </>
+                )}
                 {renderAdditionalConfirmation &&
                   pendingStatus !== null &&
                   renderAdditionalConfirmation(
