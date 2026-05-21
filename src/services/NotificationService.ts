@@ -742,27 +742,8 @@ class NotificationService {
     const image = payload.notification?.image;
     const link = payload.fcmOptions?.link;
 
-    // Show native browser notification if permission is granted
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      try {
-        new Notification(title, {
-          body,
-          icon: image || "/media/app/favicon.ico",
-        });
-      } catch (error) {
-        this.logWarn("Failed to show native Notification constructor, trying Service Worker fallback", error);
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.ready.then((registration) => {
-            registration.showNotification(title, {
-              body,
-              icon: image || "/media/app/favicon.ico",
-            });
-          }).catch((swError) => {
-            this.logError("Failed to show native foreground notification via service worker", swError);
-          });
-        }
-      }
-    }
+    // Note: Native browser notifications are only shown by the service worker
+    // when the app is in the background. In foreground, we show the in-app toast below.
 
     // Create a custom styled notification toast with gradient background
     toast.custom(

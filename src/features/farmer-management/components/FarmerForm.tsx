@@ -30,6 +30,7 @@ import {
 } from "../hooks";
 import type { IFarmer, FarmerFormSchemaType } from "../types/farmer.types";
 import { farmerFormSchema } from "../types/farmer.types";
+import { LANGUAGE_OPTIONS } from "../constants";
 
 interface FarmerFormProps {
   initialData?: IFarmer | null;
@@ -114,6 +115,7 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
       firstName: initialData.firstName || "",
       lastName: initialData.lastName || "",
       phone: initialData.phone || "",
+      languagePreference: initialData.languagePreference || "",
       pincode: initialData.pincode || "",
       address: initialData.address || "",
       stateId: initialData.stateId || "",
@@ -230,6 +232,24 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                         <FormLabel required>Last Name</FormLabel>
                         <FormControl>
                           <Input placeholder="Enter Last Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="languagePreference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>Language Preference</FormLabel>
+                        <FormControl>
+                          <SearchableSelect
+                            options={LANGUAGE_OPTIONS}
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            placeholder="Select Language"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

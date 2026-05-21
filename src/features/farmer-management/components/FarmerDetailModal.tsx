@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MapPin, Phone, Tractor, UserRound } from "lucide-react";
+import { Globe, MapPin, Phone, Tractor, UserRound } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollContainer } from "@/components/common/scroll-container";
 import {
@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useFarmerQuery } from "../hooks";
+import { LANGUAGE_OPTIONS } from "../constants";
 
 interface FarmerDetailModalProps {
   isOpen: boolean;
@@ -81,6 +82,10 @@ function DetailValue({ value, fallback = "-" }: { value?: string; fallback?: str
 export function FarmerDetailModal({ isOpen, onClose, farmerId }: FarmerDetailModalProps) {
   const { data, isLoading } = useFarmerQuery(farmerId || undefined);
   const farmer = data?.data;
+  const languageLabel =
+    LANGUAGE_OPTIONS.find((language) => language.value === farmer?.languagePreference)?.label ||
+    farmer?.languagePreference ||
+    "-";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -145,6 +150,10 @@ export function FarmerDetailModal({ isOpen, onClose, farmerId }: FarmerDetailMod
                     <p className="flex items-center gap-1.5 min-w-0 whitespace-nowrap">
                       <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <DetailValue value={farmer.mobile} />
+                    </p>
+                    <p className="flex items-center gap-1.5 min-w-0 whitespace-nowrap">
+                      <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <DetailValue value={languageLabel} />
                     </p>
                     <p className="flex items-center gap-2 min-w-0 whitespace-nowrap">
                       <span className="shrink-0 text-muted-foreground">Registration Source:</span>

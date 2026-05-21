@@ -48,6 +48,7 @@ type RawFarmer = {
   lastName?: string;
   fullName?: string;
   phone?: unknown;
+  languagePreference?: unknown;
   pincode?: unknown;
   stateId?: string;
   districtId?: string;
@@ -146,6 +147,14 @@ export const mapFarmer = (raw: RawFarmer): IFarmer => {
     raw.fodderman?.fullName ||
     `${raw.fodderman?.firstName || ""} ${raw.fodderman?.lastName || ""}`.trim() ||
     undefined;
+  const languagePreference = (getPrimitiveString(raw.languagePreference) || "en") as
+    | "en"
+    | "hi"
+    | "gu"
+    | "mr"
+    | "te"
+    | "pa"
+    | "ml";
 
   return {
     id: raw.id || "",
@@ -154,6 +163,7 @@ export const mapFarmer = (raw: RawFarmer): IFarmer => {
     fullName,
     mobile,
     phone: mobile,
+    languagePreference,
     stateId: raw.stateId || raw.state?.id || "",
     districtId: raw.districtId || raw.district?.id || "",
     talukaId: talukaId || raw.taluka?.id || "",
@@ -539,6 +549,7 @@ export type FarmerPatchPayload = Partial<{
   firstName: string;
   lastName: string;
   phone: string;
+  languagePreference: "en" | "hi" | "gu" | "mr" | "te" | "pa" | "ml";
   pincode: string;
   villageId: string;
   foddermanId: string;
@@ -552,6 +563,7 @@ export const createFarmer = async (
     firstName: data.firstName,
     lastName: data.lastName,
     phone: data.phone,
+    languagePreference: data.languagePreference,
     pincode: data.pincode,
     villageId: data.villageId,
     ...(data.address?.trim() ? { address: data.address.trim() } : {}),
@@ -578,6 +590,7 @@ export const updateFarmer = async (
     firstName: data.firstName,
     lastName: data.lastName,
     phone: data.phone,
+    languagePreference: data.languagePreference,
     pincode: data.pincode,
     villageId: data.villageId,
     ...(data.address?.trim() ? { address: data.address.trim() } : {}),

@@ -22,6 +22,9 @@ export const farmerFormSchema = z.object({
     .trim()
     .nonempty("Mobile Number is required.")
     .regex(mobileRegex, "Mobile Number must be 10 digits."),
+  languagePreference: z.enum(["en", "hi", "gu", "mr", "te", "pa", "ml"], {
+    errorMap: () => ({ message: "Please select Language Preference." }),
+  }),
   pincode: z
     .string()
     .trim()
@@ -45,6 +48,7 @@ export interface Farmer {
   firstName: string;
   lastName: string;
   mobile: string;
+  languagePreference: "en" | "hi" | "gu" | "mr" | "te" | "pa" | "ml";
   stateId: string;
   districtId: string;
   talukaId: string;
