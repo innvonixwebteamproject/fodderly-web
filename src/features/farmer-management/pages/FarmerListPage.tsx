@@ -308,7 +308,7 @@ export function FarmerListPage() {
         enableSorting: false,
         cell: ({ row }) => {
           if (!row.original.foddermanName) {
-            return <span className="text-muted-foreground italic">Unassigned</span>;
+            return <span className="text-muted-foreground italic">-</span>;
           }
           return <TruncatedCell value={row.original.foddermanName} maxWidth="max-w-[200px]" />;
         },
@@ -525,7 +525,7 @@ export function FarmerListPage() {
                       options={foddermanOptions}
                       value={foddermanFilter}
                       onValueChange={setFoddermanFilter}
-                      placeholder="All Foddermen"
+                      placeholder="All Fodderman"
                       searchPlaceholder="Search Fodderman..."
                       searchInputClassName="text-xs placeholder:text-xs"
                       disabled={isLoadingFoddermen}

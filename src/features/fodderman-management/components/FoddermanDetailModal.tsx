@@ -119,7 +119,7 @@ export function FoddermanDetailModal({
                     <p className="text-xs text-muted-foreground">
                       Assigned Partner:{" "}
                       <span className="inline-flex min-w-0 max-w-[70%] align-middle font-medium text-foreground">
-                        <DetailValue value={fodderman.partnerName} />
+                        <DetailValue value={fodderman.partnerName} fallback="-" />
                       </span>
                     </p>
                   </div>

@@ -526,7 +526,7 @@ export function PartnerListPage() {
                 ? `Are you sure you want to activate partner "${partner.fullName}"? This will restore their access to the system.`
                 : `Are you sure you want to deactivate ${partner.fullName}?
 
-This action will immediately freeze their inventory and all connected Foddermen. To continue smooth supply chain operations, please select a replacement Partner for this district before proceeding.
+This action will immediately freeze their inventory and all connected Fodderman. To continue smooth supply chain operations, please select a replacement Partner for this district before proceeding.
 
 This action will update the partner's status immediately.`
             }

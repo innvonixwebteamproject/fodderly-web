@@ -537,7 +537,7 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                               !foddermanGeoEnabled
                                 ? "Select state first"
                                 : isLoadingFoddermen
-                                  ? "Loading foddermen..."
+                                  ? "Loading fodderman..."
                                   : "Select fodderman"
                             }
                             searchPlaceholder="Search Fodderman..."

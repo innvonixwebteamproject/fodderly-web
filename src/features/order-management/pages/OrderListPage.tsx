@@ -584,7 +584,7 @@ export function OrderListPage() {
                       options={foddermanOptions}
                       value={foddermanFilter}
                       onValueChange={setFoddermanFilter}
-                      placeholder="All foddermen"
+                      placeholder="All fodderman"
                       searchPlaceholder="Search fodderman…"
                       searchInputClassName="text-xs placeholder:text-xs"
                       disabled={isLoadingFoddermen}

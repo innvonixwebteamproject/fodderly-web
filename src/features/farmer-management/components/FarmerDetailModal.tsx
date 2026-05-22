@@ -204,7 +204,7 @@ export function FarmerDetailModal({ isOpen, onClose, farmerId }: FarmerDetailMod
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                   <p className="flex items-center gap-2 min-w-0 whitespace-nowrap">
                     <span className="shrink-0 text-muted-foreground">Assigned Fodderman:</span>
-                    <DetailValue value={farmer.foddermanName} fallback="Unassigned" />
+                    <DetailValue value={farmer.foddermanName} fallback="-" />
                   </p>
                   <p className="flex items-center gap-2 min-w-0 whitespace-nowrap">
                     <span className="shrink-0 text-muted-foreground">Fodderman Contact:</span>

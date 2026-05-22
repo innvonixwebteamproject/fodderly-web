@@ -486,7 +486,7 @@ This action will update the fodderman's status immediately.`
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <CardTitle className="text-xl flex items-center gap-2 whitespace-nowrap shrink-0">
                 <UserCheck className="h-6 w-6 text-primary" />
-                {isFetching && !isFetchingNextPage ? "Loading..." : "Foddermen"}
+                {isFetching && !isFetchingNextPage ? "Loading..." : "Fodderman"}
               </CardTitle>
               <SearchInput
                 value={searchTerm}
