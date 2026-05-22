@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-table";
 import DatePicker from "@/components/ui/date-picker";
 import { format } from "date-fns";
-import { Ban, ClipboardList, Filter, Landmark, RotateCcw } from "lucide-react";
+import { Ban, ClipboardList, Eye, Filter, Landmark, RotateCcw } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container } from "@/components/common/container";
@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/dialog";
 
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 import type { AdminCancelledOrdersSortBy, CancellationRefundListFilters, RefundQueueItem } from "../types/refund.types";
@@ -50,7 +49,7 @@ import { PaymentModeBadge } from "../components/PaymentModeBadge";
 const formatTs = (value: string) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return format(d, "dd MMM yyyy, HH:mm");
+  return format(d, "dd/MM/yyyy hh:mm a");
 };
 
 function cancelledByLabel(row: RefundQueueItem): string {
@@ -270,18 +269,18 @@ export function CancelledOrdersRefundsPage() {
           const showProcess = canShowProcessRefundAction(r);
 
           return (
-            <RowActionsMenu
-              singleActionAsIcon
-              items={[
-                {
-                  label: "Process online refund (gateway)",
-                  actionType: "edit",
-                  icon: Landmark,
-                  hidden: cash || !showProcess,
-                  onSelect: () => setProcessRow(r),
-                },
-              ]}
-            />
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                <Link to={`/admin/orders/cancelled-refunds/${r.orderId}`}>
+                  <Eye className="h-4 w-4" />
+                </Link>
+              </Button>
+              {!cash && showProcess && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setProcessRow(r)}>
+                  <Landmark className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           );
         },
         size: 100,

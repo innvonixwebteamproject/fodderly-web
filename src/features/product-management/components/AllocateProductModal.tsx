@@ -331,7 +331,7 @@ export function AllocateProductModal({
                       <FormLabel required>Unit</FormLabel>
                       <FormControl>
                         <SearchableSelect
-                          options={INVENTORY_UNIT_OPTIONS.filter((option) => Number(option.value) === INVENTORY_UNITS.KG)}
+                          options={[...INVENTORY_UNIT_OPTIONS]}
                           value={
                             field.value === undefined || field.value === null || field.value === ""
                               ? ""
@@ -340,7 +340,6 @@ export function AllocateProductModal({
                           onValueChange={(value) => field.onChange(Number(value))}
                           placeholder="Select unit"
                           isClearable={false}
-                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -357,9 +356,36 @@ export function AllocateProductModal({
                         <Input
                           type="number"
                           min={1}
-                          step="1"
+                          step={selectedUnit === INVENTORY_UNITS.TON ? "any" : 1}
                           placeholder="Enter allocated quantity"
-                          {...field}
+                          value={field.value}
+                          onChange={(event) => {
+                            const raw = event.target.value;
+                            if (raw === "") {
+                              field.onChange("");
+                              return;
+                            }
+                            const n = Number(raw);
+                            if (!Number.isFinite(n)) return;
+                            if (selectedUnit === INVENTORY_UNITS.TON) {
+                              field.onChange(n);
+                            } else {
+                              const next = Math.trunc(n);
+                              field.onChange(next);
+                            }
+                          }}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                          onKeyDown={(event) => {
+                            if (selectedUnit === INVENTORY_UNITS.KG && [".", ","].includes(event.key)) {
+                              event.preventDefault();
+                            }
+                            if (["e", "E", "+", "-"].includes(event.key)) {
+                              event.preventDefault();
+                            }
+                          }}
+                          onWheel={(event) => event.currentTarget.blur()}
                           disabled={isSubmitting}
                         />
                       </FormControl>

@@ -493,6 +493,10 @@ export const mapAdminListApiRowToItem = (raw: Record<string, unknown>): AdminOrd
     id,
     orderNumber,
     placedAt,
+    orderDate: pickString(raw.orderDate) ?? null,
+    orderTime: pickString(raw.orderTime) ?? null,
+    date: pickString(raw.date) ?? null,
+    time: pickString(raw.time) ?? null,
     farmer,
     fodderman: mapStakeholder(raw.fodderman ?? raw.foddermanProfile),
     partner: mapStakeholder(raw.partner ?? raw.partnerProfile),
@@ -727,6 +731,9 @@ export const mapDetailOrder = (raw: Record<string, unknown>): AdminOrderDetail =
     cancellationReason: reason ?? null,
     cancellationNotes: pickString(raw.cancellationNotes) ?? null,
     cancelledAt: pickString(raw.cancelledAt) ?? null,
+    cancelledDate: pickString(raw.cancelledDate) ?? null,
+    rejectedDate: pickString(raw.rejectedDate) ?? null,
+    deliveredDate: pickString(raw.deliveredDate) ?? null,
     deliveryEtaHistory: mapDeliveryEtaHistory(raw.deliveryEtaHistory ?? raw.deliveryEtaRevisions ?? raw.etaHistory),
     delayStatus,
     isDelayed,
@@ -752,6 +759,10 @@ export const mapAdminDetailApiToAdminOrderDetail = (raw: Record<string, unknown>
 
   return {
     ...base,
+    orderDate: pickString(raw.orderDate) ?? base.orderDate ?? null,
+    orderTime: pickString(raw.orderTime) ?? base.orderTime ?? null,
+    date: pickString(raw.date) ?? base.date ?? null,
+    time: pickString(raw.time) ?? base.time ?? null,
     expectedDeliveryDate: (() => {
       const expStr =
         pickString(raw.expectedDelivery) ??
@@ -788,6 +799,9 @@ export const mapAdminDetailApiToAdminOrderDetail = (raw: Record<string, unknown>
     cancellationReason: reason ?? null,
     cancellationNotes: pickString(raw.cancellationNotes) ?? null,
     cancelledAt: pickString(raw.cancelledAt) ?? null,
+    cancelledDate: pickString(raw.cancelledDate) ?? null,
+    rejectedDate: pickString(raw.rejectedDate) ?? null,
+    deliveredDate: pickString(raw.deliveredDate) ?? null,
     deliveryEtaHistory: mapDeliveryEtaHistory(raw.deliveryEtaHistory ?? raw.deliveryEtaRevisions ?? raw.etaHistory),
   };
 };

@@ -80,7 +80,7 @@ const AdminCancelOrderModal = lazy(() => import("../components/AdminCancelOrderM
 const formatPlacedAt = (value: string) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "-";
-  return format(d, "dd MMM yyyy, HH:mm");
+  return format(d, "dd/MM/yyyy hh:mm a");
 };
 
 export function OrderListPage() {

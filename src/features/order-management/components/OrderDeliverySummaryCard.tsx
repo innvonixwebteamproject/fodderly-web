@@ -6,23 +6,23 @@ import type { AdminOrderDetail } from "../types/order.types";
 
 function formatSafeDate(value: string | null | undefined, includeTime = false): string {
   if (!value) return "-";
-  
+
   // Try default parsing
   const d = new Date(value);
   if (!Number.isNaN(d.getTime())) {
-    return format(d, includeTime ? "dd MMM yyyy, HH:mm" : "dd MMM yyyy");
+    return format(d, includeTime ? "dd/MM/yyyy hh:mm a" : "dd/MM/yyyy");
   }
-  
+
   // Try parsing yyyy-MM-dd
   const parsedDash = parse(value, "yyyy-MM-dd", new Date());
   if (!Number.isNaN(parsedDash.getTime())) {
-    return format(parsedDash, "dd MMM yyyy");
+    return format(parsedDash, "dd/MM/yyyy");
   }
 
   // Try parsing dd/MM/yyyy
   const parsedSlash = parse(value, "dd/MM/yyyy", new Date());
   if (!Number.isNaN(parsedSlash.getTime())) {
-    return format(parsedSlash, "dd MMM yyyy");
+    return format(parsedSlash, "dd/MM/yyyy");
   }
 
   return value;
@@ -40,6 +40,46 @@ export function OrderDeliverySummaryCard({
   const showDelayStatus = order.delayStatus === true;
   const history = order.deliveryEtaHistory ?? [];
 
+  // Determine status-specific labels and dates
+  const getStatusInfo = () => {
+    const rawStatus = order.orderStatusApiRaw?.toLowerCase();
+    const status = order.orderStatus?.toLowerCase();
+    
+    if (rawStatus === "rejected" || status === "rejected") {
+      return {
+        label: "Rejected at",
+        date: order.rejectedDate,
+        statusLabel: "Rejected"
+      };
+    }
+    if (rawStatus === "cancelled" || status === "cancelled" || status === "cancelled_by_admin") {
+      return {
+        label: "Cancelled at",
+        date: order.cancelledDate,
+        statusLabel: "Cancelled"
+      };
+    }
+    if (rawStatus === "delivered" || status === "order_delivered") {
+      return {
+        label: "Delivered at",
+        date: order.deliveredDate,
+        statusLabel: "Delivered"
+      };
+    }
+    if (rawStatus === "failed" || status === "failed") {
+      return {
+        label: null,
+        date: null,
+        statusLabel: "Failed",
+        hideDeliveryInfo: true
+      };
+    }
+    return null;
+  };
+
+  const statusInfo = getStatusInfo();
+  const hasDeliveryInfo = order.expectedDeliveryDate || order.dispatchedAt;
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -50,16 +90,61 @@ export function OrderDeliverySummaryCard({
       </CardHeader>
       <CardContent className="space-y-4 text-[13px]">
         <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground">Expected delivery</p>
-            <p className="mt-0.5 font-medium">{formatSafeDate(order.expectedDeliveryDate)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-muted-foreground">Dispatched at</p>
-            <p className="mt-0.5">
-              {formatSafeDate(order.dispatchedAt, true)}
-            </p>
-          </div>
+          {statusInfo ? (
+            <>
+              {statusInfo.hideDeliveryInfo ? (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Status</p>
+                  <p className="mt-0.5 font-medium">{statusInfo.statusLabel}</p>
+                </div>
+              ) : hasDeliveryInfo ? (
+                <>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Expected delivery</p>
+                    <p className="mt-0.5 font-medium">{formatSafeDate(order.expectedDeliveryDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Dispatched at</p>
+                    <p className="mt-0.5">
+                      {formatSafeDate(order.dispatchedAt, true)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">{statusInfo.label}</p>
+                    <p className="mt-0.5 font-medium">{formatSafeDate(statusInfo.date)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Status</p>
+                    <p className="mt-0.5 font-medium">{statusInfo.statusLabel}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">{statusInfo.label}</p>
+                    <p className="mt-0.5 font-medium">{formatSafeDate(statusInfo.date)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Status</p>
+                    <p className="mt-0.5 font-medium">{statusInfo.statusLabel}</p>
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Expected delivery</p>
+                <p className="mt-0.5 font-medium">{formatSafeDate(order.expectedDeliveryDate)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Dispatched at</p>
+                <p className="mt-0.5">
+                  {formatSafeDate(order.dispatchedAt, true)}
+                </p>
+              </div>
+            </>
+          )}
           {showDelayStatus ? (
             <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
               <p className="text-xs font-medium text-muted-foreground">Delay status</p>

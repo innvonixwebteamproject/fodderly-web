@@ -114,7 +114,11 @@ export function PartnerOrderDetailPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-semibold tracking-tight">Order {order.orderNumber}</h1>
-            <p className="text-sm text-muted-foreground">Placed {format(new Date(order.placedAt), "dd MMM yyyy, HH:mm")}</p>
+            <p className="text-sm text-muted-foreground">
+              {order.orderDate && order.orderTime
+                ? `Placed on ${order.orderDate} at ${order.orderTime.toUpperCase()}`
+                : `Placed on ${format(new Date(order.placedAt), "dd/MM/yyyy")} at ${format(new Date(order.placedAt), "hh:mm a").toUpperCase()}`}
+            </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
             {canSchedule ? (

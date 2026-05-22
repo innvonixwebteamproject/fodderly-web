@@ -158,7 +158,7 @@ export const productFormSchema = z
       .refine((value) => Number.isInteger(value), "Price must be greater than zero.")
       .refine((value) => value <= 100_000_000, "Price cannot exceed 100000000"),
     stock: requiredNumber("Quantity is required.")
-      .refine((value) => Number.isInteger(value) && value > 0, "Quantity must be greater than zero.")
+      .refine((value) => value > 0, "Quantity must be greater than zero.")
       .refine((value) => value <= 10_000_000, "Quantity cannot exceed 10000000"),
     unit: z.enum(["kg", "ton"], { message: "Please select quantity unit." }),
     description: z.object({

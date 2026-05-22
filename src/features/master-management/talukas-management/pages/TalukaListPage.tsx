@@ -110,7 +110,7 @@ export function TalukaListPage() {
     if (!value) return "-";
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return "-";
-    return format(parsed, "dd MMM, yyyy");
+    return format(parsed, "dd/MM/yyyy");
   };
 
   // Build a set of district IDs that belong to the selected state (for reliable client-side filtering)

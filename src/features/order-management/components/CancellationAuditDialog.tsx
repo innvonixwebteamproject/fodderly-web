@@ -46,7 +46,7 @@ export function CancellationAuditDialog({
                 const ts = new Date(entry.performedAt);
                 const label = Number.isNaN(ts.getTime())
                   ? entry.performedAt
-                  : format(ts, "dd MMM yyyy, HH:mm:ss");
+                  : format(ts, "dd/MM/yyyy hh:mm:ss a");
                 return (
                   <li key={entry.id} className="relative">
                     <span className="absolute -start-[21px] mt-1.5 size-2.5 rounded-full border border-primary bg-background ring-2 ring-background" />

@@ -111,7 +111,7 @@ export function DateTimePicker({
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {dateValue ? format(dateValue, "PPP p") : <span>{placeholder}</span>}
+          {dateValue ? format(dateValue, "dd/MM/yyyy p") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

@@ -71,8 +71,8 @@ export const useAllocateProductsMutation = (onSuccess?: () => void) => {
 export const useUpdatePartnerAllocationMutation = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, allocated_quantity }: { id: string; allocated_quantity: number }) =>
-      updatePartnerAllocation(id, allocated_quantity),
+    mutationFn: ({ id, allocated_quantity, unit }: { id: string; allocated_quantity: number; unit?: number }) =>
+      updatePartnerAllocation(id, allocated_quantity, unit),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: [PARTNER_ALLOCATIONS_QUERY_KEY] });
       toast.success(response.message || "Partner allocation updated successfully.");

@@ -98,7 +98,7 @@ export function DistrictListPage() {
     if (!value) return "-";
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return "-";
-    return format(parsed, "dd MMM, yyyy");
+    return format(parsed, "dd/MM/yyyy");
   };
 
   const districtsData = useMemo(() => data?.pages.flatMap(p => p.data) || [], [data]);

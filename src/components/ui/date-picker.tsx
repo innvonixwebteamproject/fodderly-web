@@ -54,7 +54,7 @@ export function DatePicker({
           <div className="flex items-center min-w-0 flex-1">
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate">
-              {date ? format(date, "PPP") : placeholder}
+              {date ? format(date, "dd/MM/yyyy") : placeholder}
             </span>
           </div>
           {isClearable && date && !disabled && (

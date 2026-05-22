@@ -79,13 +79,13 @@ import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 const formatPlaced = (v: string) => {
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return "-";
-  return format(d, "dd MMM yyyy, HH:mm");
+  return format(d, "dd/MM/yyyy hh:mm a");
 };
 
 const formatDelivery = (row: AdminOrderListItem) => {
   if (row.orderStatus === "ORDER_DELIVERED" && row.deliveredAt) {
     const d = new Date(row.deliveredAt);
-    if (!Number.isNaN(d.getTime())) return format(d, "dd MMM yyyy, HH:mm");
+    if (!Number.isNaN(d.getTime())) return format(d, "dd/MM/yyyy hh:mm a");
   }
   return "—";
 };

@@ -98,25 +98,23 @@ export function timeAgo(date: Date | string): string {
 
 export function formatDate(input: Date | string | number): string {
   const date = new Date(input);
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 export function formatDateTime(input: Date | string | number): string {
   const date = new Date(input);
 
-  const datePart = date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const datePart = `${day}/${month}/${year}`;
 
   const timePart = date.toLocaleTimeString('en-US', {
     hour: 'numeric',
-    minute: 'numeric',
+    minute: '2-digit',
     hour12: true,
   });
 

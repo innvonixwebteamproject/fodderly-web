@@ -63,14 +63,14 @@ import { RETURN_QUERY_SESSION_KEY } from "../utils/partner-order-history-url";
 const formatPlacedAt = (value: string) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "-";
-  return format(d, "dd MMM yyyy, HH:mm");
+  return format(d, "dd/MM/yy hh:mm a");
 };
 
 const formatExpected = (value: string | null | undefined) => {
   if (!value) return "—";
   const d = new Date(value);
-  if (!Number.isNaN(d.getTime())) return format(d, "dd MMM yyyy");
-  if (value.length >= 10) return format(new Date(`${value.slice(0, 10)}T12:00:00`), "dd MMM yyyy");
+  if (!Number.isNaN(d.getTime())) return format(d, "dd/MM/yy");
+  if (value.length >= 10) return format(new Date(`${value.slice(0, 10)}T12:00:00`), "dd/MM/yy");
   return value;
 };
 
@@ -497,7 +497,7 @@ export function PartnerOrderListPage() {
                                 const fromD = new Date(fromDate);
                                 const toD = new Date(toDate);
                                 if (Number.isNaN(fromD.getTime()) || Number.isNaN(toD.getTime())) return "Custom Range";
-                                return `${format(fromD, "dd MMM")} - ${format(toD, "dd MMM yyyy")}`;
+                                return `${format(fromD, "dd/MM/yyyy")} - ${format(toD, "dd/MM/yyyy")}`;
                               } catch {
                                 return "Custom Range";
                               }

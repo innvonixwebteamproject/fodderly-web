@@ -306,7 +306,7 @@ export function FoddermanListPage() {
     if (!value) return "-";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
-    return format(date, "dd MMM,yyyy");
+    return format(date, "dd/MM/yyyy");
   };
 
   const columns = useMemo<ColumnDef<IFodderman>[]>(() => {

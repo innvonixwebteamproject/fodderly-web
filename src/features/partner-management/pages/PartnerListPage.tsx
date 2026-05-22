@@ -181,7 +181,7 @@ const formatCreatedDate = (value?: string) => {
     return "-";
   }
 
-  return format(date, "dd MMM,yyyy");
+  return format(date, "dd/MM/yyyy");
 };
 
 export function PartnerListPage() {

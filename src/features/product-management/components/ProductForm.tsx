@@ -69,12 +69,6 @@ const normalizeTranslation = (value?: Partial<Record<(typeof PRODUCT_LANGUAGES)[
 const MAX_PRICE = 100_000_000;
 const MAX_STOCK = 10_000_000;
 
-const parseIntFieldValue = (value: unknown, fallback = 0) => {
-  if (value === "" || value === null || value === undefined) return fallback;
-  const n = typeof value === "number" ? value : Number.parseInt(String(value), 10);
-  return Number.isFinite(n) ? n : fallback;
-};
-
 export function ProductForm({
   initialData,
   categoryOptions,
@@ -466,14 +460,14 @@ export function ProductForm({
                           type="number"
                           min={1}
                           max={MAX_PRICE}
-                          step={1}
+                          step="any"
                           className="tabular-nums"
                           autoComplete="off"
                           disabled={isLoading}
                           value={
                             field.value === "" || field.value === undefined || field.value === null
                               ? ""
-                              : parseIntFieldValue(field.value, 0)
+                              : field.value
                           }
                           onChange={(event) => {
                             const raw = event.target.value;
@@ -483,15 +477,14 @@ export function ProductForm({
                             }
                             const n = Number(raw);
                             if (!Number.isFinite(n)) return;
-                            const next = Math.trunc(n);
-                            if (next < 0 || next > MAX_PRICE) return;
-                            field.onChange(next);
+                            if (n < 0 || n > MAX_PRICE) return;
+                            field.onChange(n);
                           }}
                           onBlur={field.onBlur}
                           name={field.name}
                           ref={field.ref}
                           onKeyDown={(event) => {
-                            if (["e", "E", "+", "-", ".", ","].includes(event.key)) {
+                            if (["e", "E", "+", "-"].includes(event.key)) {
                               event.preventDefault();
                             }
                           }}
@@ -513,14 +506,14 @@ export function ProductForm({
                           type="number"
                           min={1}
                           max={MAX_STOCK}
-                          step={1}
+                          step="any"
                           className="tabular-nums"
                           autoComplete="off"
                           disabled={isLoading}
                           value={
                             field.value === "" || field.value === undefined || field.value === null
                               ? ""
-                              : parseIntFieldValue(field.value, 0)
+                              : field.value
                           }
                           onChange={(event) => {
                             const raw = event.target.value;
@@ -530,15 +523,14 @@ export function ProductForm({
                             }
                             const n = Number(raw);
                             if (!Number.isFinite(n)) return;
-                            const next = Math.trunc(n);
-                            if (next < 0 || next > MAX_STOCK) return;
-                            field.onChange(next);
+                            if (n < 0 || n > MAX_STOCK) return;
+                            field.onChange(n);
                           }}
                           onBlur={field.onBlur}
                           name={field.name}
                           ref={field.ref}
                           onKeyDown={(event) => {
-                            if (["e", "E", "+", "-", ".", ","].includes(event.key)) {
+                            if (["e", "E", "+", "-"].includes(event.key)) {
                               event.preventDefault();
                             }
                           }}

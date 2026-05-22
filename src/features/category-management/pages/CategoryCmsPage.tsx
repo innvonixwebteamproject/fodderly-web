@@ -102,7 +102,7 @@ const formatDateOnly = (value?: string) => {
     return "-";
   }
 
-  return format(parsedDate, "dd MMM,yyyy");
+  return format(parsedDate, "dd/MM/yyyy");
 };
 
 const getProductCategoryLabel = (item: ProductCategoryItem) =>

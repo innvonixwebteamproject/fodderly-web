@@ -22,14 +22,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import {
+  getInventoryUnitLabel,
+  INVENTORY_UNIT_OPTIONS,
+  INVENTORY_UNITS,
+  normalizeInventoryUnit,
+} from "@/constants/unit.constants";
 import type { AllocationItem } from "../types/allocation.types";
 
 const editAllocationSchema = z.object({
   allocated_quantity: z
     .coerce
     .number()
-    .refine((value) => Number.isInteger(value) && value > 0, "Allocated quantity must be greater than zero."),
+    .refine((value) => value > 0, "Allocated quantity must be greater than zero."),
+  unit: z.coerce.number(),
 });
 
 type EditAllocationFormValues = z.infer<typeof editAllocationSchema>;
@@ -38,7 +45,7 @@ interface EditAllocationQuantityModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   allocation: AllocationItem | null;
-  onSubmit: (values: { id: string; allocated_quantity: number }) => void;
+  onSubmit: (values: { id: string; allocated_quantity: number; unit: number }) => void;
   isSubmitting?: boolean;
 }
 
@@ -53,6 +60,7 @@ export function EditAllocationQuantityModal({
     resolver: zodResolver(editAllocationSchema),
     defaultValues: {
       allocated_quantity: allocation?.allocated_quantity ?? 1,
+      unit: normalizeInventoryUnit(allocation?.unit ?? allocation?.admin_unit ?? INVENTORY_UNITS.KG),
     },
     mode: "onChange",
     reValidateMode: "onChange",
@@ -62,9 +70,10 @@ export function EditAllocationQuantityModal({
     if (open) {
       form.reset({
         allocated_quantity: allocation?.allocated_quantity ?? 1,
+        unit: normalizeInventoryUnit(allocation?.unit ?? allocation?.admin_unit ?? INVENTORY_UNITS.KG),
       });
     }
-  }, [allocation?.allocated_quantity, form, open]);
+  }, [allocation?.allocated_quantity, allocation?.unit, allocation?.admin_unit, form, open]);
 
   const inventoryNames = useMemo(() => {
     if (!allocation) return "";
@@ -81,7 +90,7 @@ export function EditAllocationQuantityModal({
 
   const submitForm = (values: EditAllocationFormValues) => {
     if (!allocation) return;
-    onSubmit({ id: allocation.id, allocated_quantity: values.allocated_quantity });
+    onSubmit({ id: allocation.id, allocated_quantity: values.allocated_quantity, unit: values.unit });
   };
 
   return (
@@ -116,28 +125,77 @@ export function EditAllocationQuantityModal({
                   <FormField
                     control={form.control}
                     name="allocated_quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel required>Allocated Quantity</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={1}
-                            step="1"
-                            {...field}
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const selectedUnit = form.watch("unit");
+                      return (
+                        <FormItem>
+                          <FormLabel required>Allocated Quantity</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min={1}
+                              step={selectedUnit === INVENTORY_UNITS.TON ? "any" : 1}
+                              value={field.value}
+                              onChange={(event) => {
+                                const raw = event.target.value;
+                                if (raw === "") {
+                                  field.onChange("");
+                                  return;
+                                }
+                                const n = Number(raw);
+                                if (!Number.isFinite(n)) return;
+                                if (selectedUnit === INVENTORY_UNITS.TON) {
+                                  field.onChange(n);
+                                } else {
+                                  const next = Math.trunc(n);
+                                  field.onChange(next);
+                                }
+                              }}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              onKeyDown={(event) => {
+                                if (selectedUnit === INVENTORY_UNITS.KG && [".", ","].includes(event.key)) {
+                                  event.preventDefault();
+                                }
+                                if (["e", "E", "+", "-"].includes(event.key)) {
+                                  event.preventDefault();
+                                }
+                              }}
+                              onWheel={(event) => event.currentTarget.blur()}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
 
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <Input readOnly value={getInventoryUnitLabel(allocation.unit)} />
-                </FormItem>
+                <FormField
+                  control={form.control}
+                  name="unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Unit</FormLabel>
+                      <FormControl>
+                        <SearchableSelect
+                          options={[...INVENTORY_UNIT_OPTIONS]}
+                          value={
+                            field.value === undefined || field.value === null
+                              ? ""
+                              : String(field.value)
+                          }
+                          onValueChange={(value) => field.onChange(Number(value))}
+                          placeholder="Select unit"
+                          isClearable={false}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <DialogFooter>
                   <Button

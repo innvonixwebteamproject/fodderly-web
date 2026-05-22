@@ -107,7 +107,7 @@ export const allocationFormSchema = z.object({
     .any()
     .refine((value) => value !== "" && value !== null && value !== undefined, "Allocated quantity is required.")
     .transform((value) => Number(value))
-    .refine((value) => Number.isInteger(value) && value > 0, "Allocated quantity must be greater than zero."),
+    .refine((value) => value > 0, "Allocated quantity must be greater than zero."),
   unit: z
     .any()
     .refine((value) => value !== "" && value !== null && value !== undefined, "Please select a unit.")

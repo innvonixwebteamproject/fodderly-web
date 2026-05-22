@@ -99,7 +99,7 @@ export function OrderQuickUpdateModal({ order, open, onOpenChange }: OrderQuickU
     const v = form.watch("expectedDelivery");
     if (!v) return "";
     const d = new Date(`${v}T12:00:00`);
-    if (!Number.isNaN(d.getTime())) return format(d, "dd MMM yyyy");
+    if (!Number.isNaN(d.getTime())) return format(d, "dd/MM/yyyy");
     return v;
   };
 
@@ -141,7 +141,7 @@ export function OrderQuickUpdateModal({ order, open, onOpenChange }: OrderQuickU
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {validSelected ? format(validSelected, "PPP") : "Pick a date"}
+                              {validSelected ? format(validSelected, "dd/MM/yyyy") : "Pick a date"}
                             </Button>
                           </PopoverTrigger>
                           <PopoverPortal>

@@ -68,6 +68,14 @@ export interface AdminOrderListItem {
   id: string;
   orderNumber: string;
   placedAt: string;
+  /** Partner API: order date in dd/MM/yyyy format */
+  orderDate?: string | null;
+  /** Partner API: order time in hh:mm am/pm format */
+  orderTime?: string | null;
+  /** Admin API: date in dd/MM/yyyy format */
+  date?: string | null;
+  /** Admin API: time in hh:mm am/pm format */
+  time?: string | null;
   farmer: {
     id: string;
     name: string;
@@ -164,7 +172,18 @@ export interface AdminOrderDetail extends AdminOrderListItem {
   cancellationReason?: OrderCancellationReason | null;
   cancellationNotes?: string | null;
   cancelledAt?: string | null;
+  cancelledDate?: string | null;
+  rejectedDate?: string | null;
+  deliveredDate?: string | null;
   deliveryEtaHistory?: DeliveryEtaHistoryEntry[];
+  /** Partner API: order date in dd/MM/yyyy format */
+  orderDate?: string | null;
+  /** Partner API: order time in hh:mm am/pm format */
+  orderTime?: string | null;
+  /** Admin API: date in dd/MM/yyyy format */
+  date?: string | null;
+  /** Admin API: time in hh:mm am/pm format */
+  time?: string | null;
 }
 
 export type PartnerOrderHistoryStatusGroup = "DELIVERED" | "DISPATCHED" | "CANCELLED" | "PENDING";
