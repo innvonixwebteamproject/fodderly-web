@@ -99,6 +99,13 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
     () => districts.map((district) => ({ value: district.id, label: district.name })),
     [districts],
   );
+  const selectedStateName = useMemo(() => {
+    if (initialData?.stateName && isReadonlyInEdit) {
+      return initialData.stateName;
+    }
+    return stateOptions.find((state) => state.value === selectedStateId)?.label ?? "";
+  }, [stateOptions, initialData?.stateName, isReadonlyInEdit, selectedStateId]);
+
   const selectedDistrictName = useMemo(() => {
     if (initialData?.districtName && isReadonlyInEdit) {
       return initialData.districtName;
@@ -157,11 +164,11 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
       return true;
     }
 
-    if (!selectedDistrictName.trim()) {
+    if (!selectedDistrictName.trim() || !selectedStateName.trim()) {
       return true;
     }
 
-    const validation = await validatePincodeAgainstDistrict(pincode, selectedDistrictName);
+    const validation = await validatePincodeAgainstDistrict(pincode, selectedStateName, selectedDistrictName);
     if (validation.isValid) {
       form.clearErrors("pincode");
       return true;
@@ -175,10 +182,26 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
       return false;
     }
 
-    if (validation.reason === "mismatch" || validation.reason === "not_found") {
+    if (validation.reason === "state_mismatch") {
       form.setError("pincode", {
         type: "manual",
-        message: "The entered pincode does not belong to the selected district.",
+        message: `The entered pincode does not belong to ${selectedStateName}. Expected state: ${validation.matchedStates.join(", ")}`,
+      });
+      return false;
+    }
+
+    if (validation.reason === "district_mismatch") {
+      form.setError("pincode", {
+        type: "manual",
+        message: `The entered pincode does not belong to ${selectedDistrictName}. Expected district: ${validation.matchedDistricts.join(", ")}`,
+      });
+      return false;
+    }
+
+    if (validation.reason === "not_found") {
+      form.setError("pincode", {
+        type: "manual",
+        message: "The entered pincode is not valid.",
       });
       return false;
     }

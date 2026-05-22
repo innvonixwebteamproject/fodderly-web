@@ -143,6 +143,13 @@ export function FoddermanForm({
     () => districts.map((district) => ({ label: district.name, value: district.id })),
     [districts],
   );
+  const selectedStateName = useMemo(() => {
+    if (isEditing && initialData?.stateName) {
+      return initialData.stateName;
+    }
+    return stateOptions.find((state) => state.value === selectedStateId)?.label ?? "";
+  }, [stateOptions, initialData?.stateName, isEditing, selectedStateId]);
+
   const selectedDistrictName = useMemo(() => {
     if (isEditing && initialData?.districtName) {
       return initialData.districtName;
@@ -177,11 +184,11 @@ export function FoddermanForm({
       return true;
     }
 
-    if (!selectedDistrictName.trim()) {
+    if (!selectedDistrictName.trim() || !selectedStateName.trim()) {
       return true;
     }
 
-    const validation = await validatePincodeAgainstDistrict(pinCode, selectedDistrictName);
+    const validation = await validatePincodeAgainstDistrict(pinCode, selectedStateName, selectedDistrictName);
     if (validation.isValid) {
       form.clearErrors("pinCode");
       return true;
@@ -195,10 +202,26 @@ export function FoddermanForm({
       return false;
     }
 
-    if (validation.reason === "mismatch" || validation.reason === "not_found") {
+    if (validation.reason === "state_mismatch") {
       form.setError("pinCode", {
         type: "manual",
-        message: "The entered pincode does not belong to the selected district.",
+        message: `The entered pincode does not belong to ${selectedStateName}. Expected state: ${validation.matchedStates.join(", ")}`,
+      });
+      return false;
+    }
+
+    if (validation.reason === "district_mismatch") {
+      form.setError("pinCode", {
+        type: "manual",
+        message: `The entered pincode does not belong to ${selectedDistrictName}. Expected district: ${validation.matchedDistricts.join(", ")}`,
+      });
+      return false;
+    }
+
+    if (validation.reason === "not_found") {
+      form.setError("pinCode", {
+        type: "manual",
+        message: "The entered pincode is not valid.",
       });
       return false;
     }

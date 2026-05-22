@@ -275,6 +275,9 @@ class NotificationService {
       // Step 6: Register service worker
       await this.registerServiceWorker();
 
+      // Step 7: Setup foreground notifications
+      this.setupForegroundNotifications();
+
       this.setState({ isInitialized: true, isLoading: false });
       console.log(`${LOG_PREFIX} ✅ Initialization complete`);
       return true;
@@ -624,9 +627,6 @@ class NotificationService {
 
         this.log("Token generated successfully");
 
-        // Setup foreground notifications after token is generated
-        this.setupForegroundNotifications();
-
         return token;
       } else {
         this.logWarn("No token returned from Firebase");
@@ -737,6 +737,19 @@ class NotificationService {
   }
 
   private handleForegroundMessage(payload: MessagePayload): void {
+    // Check notification preference before showing popup
+    const notificationPreference = localStorage.getItem("notification.preference");
+    if (notificationPreference === "false") {
+      console.log(`${LOG_PREFIX} Notification preference is disabled, skipping popup`);
+      // Still dispatch event to refresh notification list
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent(FCM_NOTIFICATION_RECEIVED_EVENT, { detail: payload }),
+        );
+      }
+      return;
+    }
+
     const title = payload.notification?.title || "New Notification";
     const body = payload.notification?.body || "";
     const image = payload.notification?.image;

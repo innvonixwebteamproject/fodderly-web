@@ -363,7 +363,7 @@ const partnerListProductNamesSummary = (raw: unknown): string | null => {
 /** Partner `POST /orders/partner/list` pipeline slugs → `OrderStatus` (rows must pass `isPartnerListVisibleStatus` on daily list). */
 const PARTNER_LIST_PIPELINE_TO_ORDER_STATUS: Record<string, OrderStatus> = {
   unpaid: "PENDING_ORDER",
-  pending: "PENDING_ORDER",
+  pending: "ORDER_RECEIVED",  // Changed from PENDING_ORDER to ORDER_RECEIVED to show in partner list
   /** Fodderman-approved; partner list API only returns these — map to a visible lifecycle state. */
   approve: "ORDER_RECEIVED",
   approved: "ORDER_RECEIVED",

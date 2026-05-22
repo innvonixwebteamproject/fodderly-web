@@ -7,16 +7,27 @@ export const PARTNER_LIST_EXCLUDED_STATUSES: readonly OrderStatus[] = [
 ];
 
 export function isPartnerListVisibleStatus(status: OrderStatus): boolean {
+  // Show all statuses except the pre-verification ones
+  // This ensures pending, approved, rejected, cancelled, dispatched, delivered are all visible
   return !PARTNER_LIST_EXCLUDED_STATUSES.includes(status);
 }
 
 export function partnerOrderNeedsDispatchHighlight(status: OrderStatus, rawStatus?: string | null): boolean {
-  return status === "ORDER_RECEIVED" || rawStatus === "approved";
+  const rawLower = rawStatus?.trim().toLowerCase();
+  // Don't show "Ready to dispatch" for pending orders
+  if (rawLower === "pending") {
+    return false;
+  }
+  return status === "ORDER_RECEIVED" || rawLower === "approved";
 }
 
 export function partnerCanDispatch(status: OrderStatus, rawStatus?: string | null): boolean {
   const rawLower = rawStatus?.trim().toLowerCase();
   if (rawLower === "cancelled" || status === "CANCELLED" || status === "CANCELLED_BY_ADMIN") {
+    return false;
+  }
+  // Don't allow dispatch for pending orders
+  if (rawLower === "pending") {
     return false;
   }
   return status === "ORDER_RECEIVED" || rawLower === "approved";
