@@ -72,7 +72,7 @@ export const SearchableSelectMulti = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 max-h-72 overflow-y-auto custom-scrollbar"
+        className="w-[var(--radix-popper-anchor-width)] min-w-[200px] max-w-[500px] p-0 max-h-72 overflow-y-auto custom-scrollbar"
         side="bottom"
         align="start"
       >
@@ -116,7 +116,7 @@ export const SearchableSelectMulti = ({
                   onSelect={() => handleSelect(option.value)}
                 >
                   <Check className="mr-2 h-4 w-4 opacity-0" />
-                  <span className="truncate max-w-[300px]" title={option.label}>
+                  <span className="break-words whitespace-normal" title={option.label}>
                     {option.label}
                   </span>
                 </CommandItem>

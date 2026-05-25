@@ -5,6 +5,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { Circle, Filter, Info, RotateCcw, UserCheck } from "lucide-react";
@@ -19,6 +20,14 @@ import { TruncatedCell } from "@/components/common/truncated-cell";
 import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +38,8 @@ import {
   useFoddermenInfiniteQuery,
   useUpdateFoddermanStatusMutation,
 } from "../hooks";
+import { getFarmers } from "@/features/farmer-management/services/farmer.api";
+import type { IFarmer } from "@/features/farmer-management/types/farmer.types";
 import { InfiniteScrollContainer } from "@/components/common/infinite-scroll-container";
 import { IFodderman } from "../types";
 import {
@@ -40,14 +51,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { STATUS_OPTIONS } from "../constants";
 import {
   usePartnerDistrictsQuery,
@@ -147,6 +159,103 @@ function VillagesModal({ isOpen, onOpenChange, fodderman }: VillagesModalProps) 
   );
 }
 
+interface FarmersModalProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  fodderman: IFodderman | null;
+}
+
+function FarmersModal({ isOpen, onOpenChange, fodderman }: FarmersModalProps) {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ["fodderman-farmers", fodderman?.id],
+    queryFn: ({ pageParam = 1 }) =>
+      getFarmers(pageParam, 20, undefined, {
+        foddermanId: fodderman?.id,
+        sortBy: "createdAt",
+        sortOrder: "DESC",
+      }),
+    enabled: isOpen && !!fodderman?.id,
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.page < lastPage.meta.totalPages) {
+        return lastPage.meta.page + 1;
+      }
+      return undefined;
+    },
+  });
+
+  const farmers = data?.pages.flatMap((page) => page.data) || [];
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 50) {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle>Assigned Farmers</DialogTitle>
+        </DialogHeader>
+
+        <DialogBody className="min-h-0">
+          {isLoading ? (
+            <div className="flex min-h-[160px] items-center justify-center rounded-md border bg-muted/30">
+              <p className="text-sm text-muted-foreground">Loading farmers...</p>
+            </div>
+          ) : farmers.length === 0 ? (
+            <div className="flex min-h-[160px] items-center justify-center rounded-md border bg-muted/30">
+              <p className="text-sm text-muted-foreground">No farmers assigned</p>
+            </div>
+          ) : (
+            <Table
+              wrapperClassName="max-h-[70vh] custom-scrollbar rounded-md border"
+              className="text-[12px]"
+              onScroll={handleScroll}
+            >
+              <TableHeader>
+                <TableRow className="[&>th]:h-9 [&>th]:px-2.5">
+                  <TableHead className="text-xs font-semibold">#</TableHead>
+                  <TableHead className="text-xs font-semibold">Farmer Name</TableHead>
+                  <TableHead className="text-xs font-semibold">Mobile Number</TableHead>
+                  <TableHead className="text-xs font-semibold">Village</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {farmers.map((farmer: IFarmer, index: number) => (
+                  <TableRow key={farmer.id} className="[&>td]:px-2.5 [&>td]:py-2">
+                    <TableCell className="text-[12px] font-medium">{index + 1}</TableCell>
+                    <TableCell className="text-[12px] font-medium">{farmer.fullName}</TableCell>
+                    <TableCell className="text-[12px] font-normal">{farmer.phone || "—"}</TableCell>
+                    <TableCell className="text-[12px] font-normal">{farmer.villageName || "—"}</TableCell>
+                  </TableRow>
+                ))}
+                {isFetchingNextPage && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">
+                      <p className="text-xs text-muted-foreground">Loading more farmers...</p>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function FoddermanListPage() {
   const role = useAuthStore((state) => state.role);
   const isPartnerUser = role === "partner";
@@ -160,8 +269,12 @@ export function FoddermanListPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isVillagesModalOpen, setIsVillagesModalOpen] = useState(false);
+  const [isFarmersModalOpen, setIsFarmersModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedVillagesFodderman, setSelectedVillagesFodderman] = useState<IFodderman | null>(
+    null,
+  );
+  const [selectedFarmersFodderman, setSelectedFarmersFodderman] = useState<IFodderman | null>(
     null,
   );
   const [selectedFoddermanId, setSelectedFoddermanId] = useState<string | null>(null);
@@ -376,6 +489,57 @@ export function FoddermanListPage() {
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <p>Click to view all villages</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </button>
+          );
+        },
+      },
+      {
+        id: "partner",
+        header: ({ column }) => <DataGridColumnHeader title="Assigned Partner" column={column} />,
+        cell: ({ row }) => (
+          <TruncatedCell 
+            value={row.original.partnerName || "-"} 
+            className="text-[13px]" 
+            maxWidth="max-w-[150px]" 
+          />
+        ),
+      },
+      {
+        id: "farmers",
+        header: ({ column }) => <DataGridColumnHeader title="Assigned Farmers" column={column} />,
+        cell: ({ row }) => {
+          const farmerCount = row.original.totalAllocatedFarmers ?? (row.original.farmers?.length || 0);
+
+          if (!farmerCount) {
+            return <span className="text-[13px] text-muted-foreground">0 farmers</span>;
+          }
+
+          return (
+            <button
+              onClick={() => {
+                setSelectedFarmersFodderman(row.original);
+                setIsFarmersModalOpen(true);
+              }}
+              className="group flex cursor-pointer items-center gap-1.5 text-primary transition-colors hover:text-primary/80"
+            >
+              <span className="font-semibold">
+                {farmerCount}
+              </span>
+              <span className="text-[13px]">
+                farmers
+              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex shrink-0 cursor-pointer">
+                      <Info className="h-3.5 w-3.5 opacity-40 transition-opacity group-hover:opacity-100" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <p>Click to view all farmers</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -686,6 +850,11 @@ This action will update the fodderman's status immediately.`
         isOpen={isVillagesModalOpen}
         onOpenChange={setIsVillagesModalOpen}
         fodderman={selectedVillagesFodderman}
+      />
+      <FarmersModal
+        isOpen={isFarmersModalOpen}
+        onOpenChange={setIsFarmersModalOpen}
+        fodderman={selectedFarmersFodderman}
       />
       <FoddermanDetailModal
         isOpen={isDetailsModalOpen}

@@ -85,7 +85,7 @@ export const SearchableSelect = ({
           align={align}
           onWheel={(event) => event.stopPropagation()}
           className={cn(
-            "z-[110] w-[var(--radix-popper-anchor-width)] max-h-[min(55vh,420px)] overflow-hidden p-0",
+            "z-[110] w-[var(--radix-popper-anchor-width)] min-w-[200px] max-w-[500px] max-h-[min(55vh,420px)] overflow-hidden p-0",
             contentClassName,
           )}
         >

@@ -116,7 +116,7 @@ export function FilterDropdown({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("w-[200px] p-0", className)} align="start">
+      <PopoverContent className={cn("w-[200px] min-w-[200px] max-w-[500px] p-0", className)} align="start">
         <Command>
           <CommandInput placeholder={placeholder || title} />
           <CommandList>
@@ -140,9 +140,9 @@ export function FilterDropdown({
                       <Check className={cn("h-4 w-4")} />
                     </div>
                     {option.icon && (
-                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
                     )}
-                    <span>{option.label}</span>
+                    <span className="break-words whitespace-normal">{option.label}</span>
                   </CommandItem>
                 );
               })}

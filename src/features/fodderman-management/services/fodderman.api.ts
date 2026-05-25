@@ -2,6 +2,7 @@ import { api } from "@/lib/axios.interceptors";
 import {
   FoddermanSchemaType,
   IFodderman,
+  IFoddermanFarmer,
   IFoddermanFilters,
   IFoddermanListMeta,
   IFoddermanListResponse,
@@ -49,13 +50,22 @@ type RawPartner = {
   lastName?: string;
   fullName?: string;
 };
+type RawFarmer = {
+  id?: string;
+  name?: string;
+  fullName?: string;
+  mobile?: string;
+  villageName?: string;
+};
 type RawFodderman = Partial<IFodderman> & {
   isActive?: boolean;
   status?: boolean;
   pincode?: string;
   total_allocated_villages?: number;
   allocated_villages?: string[];
+  total_farmers?: number;
   partner?: RawPartner | null;
+  farmers?: Array<RawFarmer | string>;
   state?: { id?: string; name?: string } | null;
   district?: { id?: string; name?: string } | null;
   taluka?: { id?: string; name?: string } | null;
@@ -149,6 +159,22 @@ const mapFodderman = (item: RawFodderman): IFodderman => {
     `${item.partner?.firstName || ""} ${item.partner?.lastName || ""}`.trim() ||
     undefined;
 
+  const farmersSource = item.farmers || [];
+  const farmers: IFoddermanFarmer[] = farmersSource.map((farmer) =>
+    typeof farmer === "string"
+      ? { id: farmer, name: farmer }
+      : {
+          id: farmer.id || "",
+          name: farmer.name || "",
+          mobile: farmer.mobile,
+          villageName: farmer.villageName,
+        },
+  );
+  const totalAllocatedFarmers =
+    typeof item.total_farmers === "number"
+      ? item.total_farmers
+      : farmers.length;
+
   return {
     id: item.id || "",
     firstName,
@@ -170,6 +196,8 @@ const mapFodderman = (item: RawFodderman): IFodderman => {
     villages,
     allocatedVillages,
     totalAllocatedVillages,
+    farmers,
+    totalAllocatedFarmers,
     isActive,
     status: isActive ? "ACTIVE" : "INACTIVE",
     createdAt: item.createdAt || "",

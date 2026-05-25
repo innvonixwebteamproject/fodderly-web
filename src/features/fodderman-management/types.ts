@@ -59,6 +59,13 @@ export interface IFoddermanPartner {
   isActive?: boolean;
 }
 
+export interface IFoddermanFarmer {
+  id: string;
+  name: string;
+  mobile?: string;
+  villageName?: string;
+}
+
 export interface IFodderman {
   id: string;
   firstName: string;
@@ -80,6 +87,8 @@ export interface IFodderman {
   villages: IFoddermanVillage[];
   allocatedVillages: string[];
   totalAllocatedVillages: number;
+  farmers?: IFoddermanFarmer[];
+  totalAllocatedFarmers?: number;
   isActive: boolean;
   status: FoddermanStatus;
   createdAt: string;

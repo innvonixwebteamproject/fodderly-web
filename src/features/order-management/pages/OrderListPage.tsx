@@ -43,6 +43,7 @@ import { getApiSortParams } from "@/lib/api-sorting";
 import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 import { canAdminCancelOrder, canAdminScheduleDelivery } from "../utils/order-schedule-rules";
 import {
+  useFarmerOptionsQuery,
   useFoddermanOptionsQuery,
   useTalukaOptionsQuery,
   useVillageOptionsQuery,
@@ -94,6 +95,7 @@ export function OrderListPage() {
   const [talukaFilter, setTalukaFilter] = useState("");
   const [villageFilter, setVillageFilter] = useState("");
   const [partnerFilter, setPartnerFilter] = useState("");
+  const [farmerFilter, setFarmerFilter] = useState("");
   const [foddermanFilter, setFoddermanFilter] = useState("");
   const [adminStatusFilter, setAdminStatusFilter] = useState<"" | AdminOrderListApiStatus>("");
   const [adminPaymentModeFilter, setAdminPaymentModeFilter] = useState<"" | AdminOrderListApiPaymentMode>("");
@@ -115,17 +117,20 @@ export function OrderListPage() {
     setDistrictFilter("");
     setTalukaFilter("");
     setVillageFilter("");
+    setFarmerFilter("");
     setFoddermanFilter("");
   }, [stateFilter]);
 
   useEffect(() => {
     setTalukaFilter("");
     setVillageFilter("");
+    setFarmerFilter("");
     setFoddermanFilter("");
   }, [districtFilter]);
 
   useEffect(() => {
     setVillageFilter("");
+    setFarmerFilter("");
     setFoddermanFilter("");
   }, [talukaFilter]);
 
@@ -140,6 +145,12 @@ export function OrderListPage() {
     districtFilter || undefined,
     stateFilter || undefined,
   );
+  const { data: farmerOptions, isLoading: isLoadingFarmers } = useFarmerOptionsQuery({
+    stateId: stateFilter || undefined,
+    districtId: districtFilter || undefined,
+    talukaId: talukaFilter || undefined,
+    villageId: villageFilter || undefined,
+  });
   const { data: foddermanOptions, isLoading: isLoadingFoddermen } = useFoddermanOptionsQuery({
     stateId: stateFilter || undefined,
     districtId: districtFilter || undefined,
@@ -180,6 +191,7 @@ export function OrderListPage() {
       talukaId: talukaFilter || undefined,
       villageId: villageFilter || undefined,
       partnerId: partnerFilter || undefined,
+      farmerId: farmerFilter || undefined,
       foddermanId: foddermanFilter || undefined,
       adminListStatus: adminStatusFilter || undefined,
       adminListPaymentMode: adminPaymentModeFilter || undefined,
@@ -192,6 +204,7 @@ export function OrderListPage() {
       talukaFilter,
       villageFilter,
       partnerFilter,
+      farmerFilter,
       foddermanFilter,
       adminStatusFilter,
       adminPaymentModeFilter,
@@ -230,6 +243,7 @@ export function OrderListPage() {
     setTalukaFilter("");
     setVillageFilter("");
     setPartnerFilter("");
+    setFarmerFilter("");
     setFoddermanFilter("");
     setAdminStatusFilter("");
     setAdminPaymentModeFilter("");
@@ -242,6 +256,7 @@ export function OrderListPage() {
     talukaFilter,
     villageFilter,
     partnerFilter,
+    farmerFilter,
     foddermanFilter,
     adminStatusFilter,
     adminPaymentModeFilter,
@@ -577,6 +592,17 @@ export function OrderListPage() {
                       placeholder="All partners"
                       searchPlaceholder="Search partner…"
                       searchInputClassName="text-xs placeholder:text-xs"
+                      triggerClassName="h-9 bg-background text-[13px]"
+                      contentClassName="!w-[280px]"
+                    />
+                    <SearchableSelect
+                      options={farmerOptions}
+                      value={farmerFilter}
+                      onValueChange={setFarmerFilter}
+                      placeholder="All farmers"
+                      searchPlaceholder="Search farmer…"
+                      searchInputClassName="text-xs placeholder:text-xs"
+                      disabled={isLoadingFarmers}
                       triggerClassName="h-9 bg-background text-[13px]"
                       contentClassName="!w-[280px]"
                     />

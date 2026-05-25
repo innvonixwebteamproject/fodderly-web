@@ -257,7 +257,7 @@ export const StatusDropdown = <
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="start" className="min-w-[122px]">
+        <DropdownMenuContent align="start" className="min-w-[122px] max-w-[400px]">
           <div className="px-2 py-1">
             <p className="mb-0.5 text-[11px] font-medium text-muted-foreground">
               Change Status
@@ -280,11 +280,11 @@ export const StatusDropdown = <
                 className="cursor-pointer px-2 py-1.5"
               >
                 <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <div className={statusConfig.color}>
                       {statusConfig.icon || defaultIcon}
                     </div>
-                    <span className="text-[12px]">{statusConfig.label}</span>
+                    <span className="text-[12px] break-words whitespace-normal">{statusConfig.label}</span>
                   </div>
                   {isCurrentStatus && (
                     <Check className="h-3 w-3 text-muted-foreground" />

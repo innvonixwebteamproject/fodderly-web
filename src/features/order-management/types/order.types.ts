@@ -227,6 +227,7 @@ export interface OrderListFilters {
   villageId?: string;
   partnerId?: string;
   foddermanId?: string;
+  farmerId?: string;
   orderStatus?: OrderStatus | "";
   paymentMode?: PaymentMode | "";
   paymentStatus?: PaymentStatus | "";

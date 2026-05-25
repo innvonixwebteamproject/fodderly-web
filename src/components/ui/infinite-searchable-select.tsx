@@ -301,7 +301,7 @@ export function InfiniteSearchableSelect<T>({
 
       <PopoverPortal>
         <PopoverContent
-          className="w-(--radix-popper-anchor-width) p-0"
+          className="w-[var(--radix-popper-anchor-width)] min-w-[200px] max-w-[400px] p-0"
           align="start"
         >
           <div className="flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
@@ -350,7 +350,7 @@ export function InfiniteSearchableSelect<T>({
                           isSelected && "bg-accent/50",
                         )}
                       >
-                        <span className="truncate pe-8">{opt.label}</span>
+                        <span className="break-words whitespace-normal pe-8">{opt.label}</span>
                         {isSelected && (
                           <Check className="h-4 w-4 ms-auto text-primary shrink-0" />
                         )}
