@@ -877,6 +877,7 @@ const buildAdminListRequestBody = (
   if (filters.talukaId) body.talukaIds = [filters.talukaId];
   if (filters.villageId) body.villageIds = [filters.villageId];
   if (filters.partnerId) body.partnerIds = [filters.partnerId];
+  if (filters.farmerId) body.farmerUuid = filters.farmerId;
   if (filters.foddermanId) body.foddermanIds = [filters.foddermanId];
   if (filters.adminListStatus) body.statuses = [filters.adminListStatus];
   if (filters.adminListPaymentMode) body.paymentModes = [filters.adminListPaymentMode];
