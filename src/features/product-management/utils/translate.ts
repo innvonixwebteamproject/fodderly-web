@@ -1,5 +1,6 @@
 import { ENV } from "@/config/env";
 import type { ProductLanguageCode } from "../types";
+import { preprocessText } from "@/utils/abbreviationPreprocessor";
 
 const GOOGLE_CLOUD_TRANSLATE_API =
   "https://translation.googleapis.com/language/translate/v2";
@@ -41,13 +42,15 @@ export const translateEnglishText = async (
   const url = new URL(GOOGLE_CLOUD_TRANSLATE_API);
   url.searchParams.set("key", apiKey);
 
+  const preprocessedText = preprocessText(normalizedText);
+
   const response = await fetch(url.toString(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      q: normalizedText,
+      q: preprocessedText,
       source: "en",
       target: targetLanguage,
       format: "text",

@@ -15,6 +15,7 @@ import {
   Bell,
   ClipboardList,
   Ban,
+  DollarSign,
 } from "lucide-react";
 import { type MenuConfig } from "./types";
 
@@ -122,6 +123,25 @@ export const MENU_SIDEBAR: MenuConfig = [
         title: "Cancel & Refund",
         icon: Ban,
         path: "/admin/orders/cancelled-refunds",
+        allowedRoles: ["admin"],
+      },
+    ],
+  },
+  {
+    title: "Financials",
+    icon: DollarSign,
+    allowedRoles: ["admin"],
+    children: [
+      {
+        title: "Payouts",
+        icon: DollarSign,
+        path: "/admin/financials/refunds",
+        allowedRoles: ["admin"],
+      },
+      {
+        title: "Commission",
+        icon: DollarSign,
+        path: "/admin/financials/commission",
         allowedRoles: ["admin"],
       },
     ],
