@@ -214,8 +214,24 @@ export interface PartnerDailyOrderListFilters {
   /** OpenAPI `status` in POST body; omit or empty string = all. */
   status?: AdminOrderListApiStatus | "";
   search?: string;
-  dateFilter?: "last_7_days" | "custom" | "";
+  /**
+   * Date preset key sent in the POST body as `dateFilter`.
+   * API receives the slug (e.g. `"today"`, `"last_7_days"`, `"custom"`).
+   */
+  dateFilter?:
+    | "today"
+    | "yesterday"
+    | "this_week"
+    | "last_week"
+    | "last_7_days"
+    | "last_30_days"
+    | "this_month"
+    | "last_month"
+    | "custom"
+    | "";
+  /** `yyyy-MM-dd` — always sent alongside `dateFilter` so the API can range-filter. */
   fromDate?: string;
+  /** `yyyy-MM-dd` — always sent alongside `dateFilter`. */
   toDate?: string;
 }
 

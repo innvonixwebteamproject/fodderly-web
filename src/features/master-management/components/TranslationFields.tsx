@@ -1,6 +1,7 @@
 import { Languages } from "lucide-react";
 import { FieldValues, UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useRef } from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,6 +36,27 @@ export function TranslationFields({
   isLoading,
   viewOnly,
 }: TranslationFieldsProps) {
+  const submitCountRef = useRef(form.formState.submitCount);
+
+  useEffect(() => {
+    const currentSubmitCount = form.formState.submitCount;
+    if (currentSubmitCount !== submitCountRef.current) {
+      submitCountRef.current = currentSubmitCount;
+
+      const baseErrors = form.formState.errors[basePath] as Record<string, unknown> | undefined;
+      if (baseErrors) {
+        // If the current tab already has an error, stay on it so the user can fix it
+        if (baseErrors[activeLanguage]) return;
+
+        // Otherwise, find the first tab that has an error and switch to it
+        const firstErrorCode = MASTER_LANGUAGES.find((lang) => baseErrors[lang.code])?.code;
+        if (firstErrorCode) {
+          setActiveLanguage(firstErrorCode);
+        }
+      }
+    }
+  }, [form.formState.submitCount, form.formState.errors, basePath, activeLanguage, setActiveLanguage]);
+
   return (
     <Card className="h-fit">
       <CardHeader>
@@ -49,11 +71,14 @@ export function TranslationFields({
           onValueChange={(v) => setActiveLanguage(v as MasterLangCode)}
         >
           <TabsList variant="line" size="sm" className="flex w-full flex-wrap justify-start">
-            {MASTER_LANGUAGES.map(({ code, label: langLabel }) => (
-              <TabsTrigger key={code} value={code}>
-                {langLabel} *
-              </TabsTrigger>
-            ))}
+            {MASTER_LANGUAGES.map(({ code, label: langLabel }) => {
+              const hasError = !!(form.formState.errors[basePath] as Record<string, unknown> | undefined)?.[code];
+              return (
+                <TabsTrigger key={code} value={code} className={hasError ? "text-destructive" : ""}>
+                  {langLabel} *
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
           {MASTER_LANGUAGES.map(({ code, label: langLabel }) => (
             <TabsContent

@@ -24,7 +24,6 @@ import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +51,7 @@ import {
 } from "../utils/product-image";
 import { AllocationInventoryModal } from "../components/AllocationInventoryModal";
 import { StatusConfig, StatusDropdown } from "@/components/common/status-dropdown";
+import { formatForDisplay } from "../utils/unit-conversion";
 
 type ProductStatusEntity = {
   id: string;
@@ -289,14 +289,20 @@ export function AdminProductListPage() {
         accessorKey: "price",
         header: ({ column }) => <DataGridColumnHeader title="Price" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => (
-          <TruncatedCell
-            value={`₹${row.original.price.toLocaleString()}`}
-            className="font-semibold"
-            maxWidth="max-w-[90px]"
-            tooltipClassName="sm:max-w-[280px]"
-          />
-        ),
+        cell: ({ row }) => {
+          const stockInKg = row.original.admin_available_quantity ?? row.original.stock;
+          const pricePerKg = row.original.price;
+          const formatted = formatForDisplay(stockInKg, pricePerKg);
+          
+          return (
+            <TruncatedCell
+              value={`₹${formatted.price.toLocaleString()}`}
+              className="font-semibold"
+              maxWidth="max-w-[90px]"
+              tooltipClassName="sm:max-w-[280px]"
+            />
+          );
+        },
         size: 95,
       },
       {
@@ -304,13 +310,20 @@ export function AdminProductListPage() {
         accessorKey: "stock",
         header: ({ column }) => <DataGridColumnHeader title="Qty" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => (
-          <TruncatedCell
-            value={`${row.original.admin_available_quantity ?? row.original.stock} ${getInventoryUnitLabel(row.original.admin_unit ?? row.original.quantity_indicator)}`}
-            maxWidth="max-w-[110px]"
-            tooltipClassName="sm:max-w-[280px]"
-          />
-        ),
+        cell: ({ row }) => {
+          const stockInKg = row.original.admin_available_quantity ?? row.original.stock;
+          const pricePerKg = row.original.price;
+          const formatted = formatForDisplay(stockInKg, pricePerKg);
+          const unitLabel = formatted.unit === "ton" ? "Ton" : "KG";
+          
+          return (
+            <TruncatedCell
+              value={`${formatted.quantity.toLocaleString()} ${unitLabel}`}
+              maxWidth="max-w-[110px]"
+              tooltipClassName="sm:max-w-[280px]"
+            />
+          );
+        },
         size: 110,
       },
       {

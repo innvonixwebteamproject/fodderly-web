@@ -8,7 +8,6 @@ import {
   ProductRecord,
   ProductSortBy,
   ProductSortOrder,
-  ProductUnit,
   PRODUCT_LANGUAGES,
   TranslationMap,
 } from "../types";
@@ -395,17 +394,13 @@ const appendFiles = (formData: FormData, files: File[]) => {
   files.forEach((file) => formData.append("image", file));
 };
 
-const mapUnitToIndicator = (unit: ProductUnit): string => (unit === "ton" ? "TON" : "KG");
-
 const mapFormValuesToFormData = (values: ProductFormValues): FormData => {
   const formData = new FormData();
   formData.append("name", JSON.stringify(sanitizeTranslations(values.name)));
   formData.append("category_uuid", values.category_uuid);
   values.inventory_uuids.forEach((uuid) => formData.append("inventory_uuids", uuid));
-  formData.append("price", String(values.price));
-  formData.append("stock", String(values.stock));
-  formData.append("quantity_indicator", mapUnitToIndicator(values.unit));
-  formData.append("quantity_controls", JSON.stringify({ unit: values.unit, precision: 2 }));
+  formData.append("price", Number(values.price).toFixed(4));
+  formData.append("stock", Number(values.stock).toFixed(4));
 
   const description = sanitizeTranslations(values.description);
   if (Object.keys(description).length > 0) {

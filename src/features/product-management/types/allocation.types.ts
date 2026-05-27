@@ -72,7 +72,6 @@ export interface AllocateProductPayload {
   product_uuid: string;
   allocated_quantity: number;
   total_allocated_price: number;
-  unit: number;
 }
 
 export interface AllocationMutationResponse {

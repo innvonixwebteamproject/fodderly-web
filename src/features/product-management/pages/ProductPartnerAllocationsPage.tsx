@@ -18,11 +18,11 @@ import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
 import { useToolbarStore } from "@/hooks/use-toolbar-store";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { useProductPartnerAllocationsInfiniteQuery } from "../hooks";
 import type { ProductPartnerAllocationItem } from "../types";
+import { formatForDisplay, formatPartnerAllocatedQty } from "@/utils/unit-conversion";
 
 const formatCreatedDate = (value?: string) => {
   if (!value) return "-";
@@ -110,8 +110,9 @@ export function ProductPartnerAllocationsPage() {
         accessorKey: "allocated_quantity",
         header: ({ column }) => <DataGridColumnHeader title="Allocated Qty" column={column} />,
         enableSorting: true,
-        cell: ({ row }) =>
-          `${row.original.allocated_quantity.toLocaleString()} ${getInventoryUnitLabel(row.original.unit)}`,
+        cell: ({ row }) => {
+          return formatPartnerAllocatedQty(row.original.allocated_quantity);
+        },
         size: 130,
       },
       {
@@ -120,8 +121,9 @@ export function ProductPartnerAllocationsPage() {
         header: ({ column }) => <DataGridColumnHeader title="Price/Unit" column={column} />,
         enableSorting: true,
         cell: ({ row }) => {
-          const unit = row.original.allocated_unit ?? row.original.unit;
-          return `₹${row.original.allocated_price.toLocaleString(undefined, { maximumFractionDigits: 2 })}/${getInventoryUnitLabel(unit)}`;
+          const display = formatForDisplay(row.original.allocated_quantity, row.original.allocated_price);
+          const roundedPrice = Math.round(display.price);
+          return `₹${roundedPrice.toLocaleString()}/${display.unit.toUpperCase()}`;
         },
         size: 130,
       },

@@ -16,7 +16,8 @@ import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Loader2 } from "lucide-react";
 import { ActionIcon } from "@/config/icons.config";
-import { INVENTORY_UNIT_OPTIONS } from "@/constants/unit.constants";
+import { INVENTORY_UNIT_OPTIONS, INVENTORY_UNITS, type InventoryUnitValue } from "@/constants/unit.constants";
+import { convertInventoryToKgFormat, formatForDisplay } from "@/utils/unit-conversion";
 import {
   InventoryCategoryOption,
   InventoryFormInputValues,
@@ -75,7 +76,10 @@ export function InventoryForm({
       category_uuid: "",
       hsn_code: "",
       price: "",
-      unit: "",
+      unit: INVENTORY_UNITS.KG,
+      display_unit: "kg",
+      display_quantity: 0,
+      display_price: 0,
     },
   });
 
@@ -89,26 +93,60 @@ export function InventoryForm({
           category_uuid: "",
           hsn_code: "",
           price: "",
-          unit: "",
+          unit: INVENTORY_UNITS.KG,
+          display_unit: "kg",
+          display_quantity: 0,
+          display_price: 0,
         });
       }
       return;
     }
 
+    // Use formatForDisplay to automatically determine the best display unit
+    const display = formatForDisplay(initialData.quantity, initialData.price);
+    const displayUnitValue = display.unit === "ton" ? INVENTORY_UNITS.TON : INVENTORY_UNITS.KG;
+
     form.reset({
       name: initialData.name,
       description: initialData.description,
-      quantity: initialData.quantity,
+      quantity: String(display.quantity),
       category_uuid: initialData.category_uuid,
       hsn_code: initialData.hsn_code,
-      price: initialData.price,
-      unit: initialData.unit,
+      price: String(display.price),
+      unit: displayUnitValue,
+      display_unit: display.unit,
+      display_quantity: display.quantity,
+      display_price: display.price,
     });
   }, [categoryOptions, form, initialData, isOpen]);
 
+  const handleSubmit = (values: InventoryFormValues) => {
+    try {
+      // Convert to KG format for API submission
+      // When unit is TON: quantity = TON * 907.185, price = TON price / 907.185
+      // When unit is KG: values remain as-is
+      const converted = convertInventoryToKgFormat(
+        Number(values.quantity),
+        Number(values.price),
+        values.unit
+      );
+
+      const payload: InventoryFormValues = {
+        ...values,
+        unit: converted.unit as InventoryUnitValue,
+        quantity: converted.quantity,
+        price: converted.price,
+      };
+
+      onSubmit(payload);
+    } catch (error) {
+      console.error("Error in inventory submit:", error);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}

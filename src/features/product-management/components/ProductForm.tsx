@@ -33,8 +33,15 @@ import {
   PRODUCT_LANGUAGES_CONFIG,
   type ProductLanguageCode,
   type TranslationMap,
+  type ProductUnit,
 } from "../types";
 import { translateEnglishText } from "../utils/translate";
+import {
+  convertToKgFormat,
+  convertFromKgFormat,
+  validateConversionResult,
+  getDisplayUnit,
+} from "../utils/unit-conversion";
 
 interface ProductFormProps {
   initialData?: ProductRecord | null;
@@ -94,6 +101,9 @@ export function ProductForm({
       price: 0,
       stock: 0,
       unit: "kg",
+      display_unit: "kg",
+      display_quantity: 0,
+      display_price: 0,
       description: emptyTranslations,
       usage_instructions: emptyTranslations,
       safety_information: emptyTranslations,
@@ -109,16 +119,54 @@ export function ProductForm({
   useEffect(() => {
     if (!initialData) return;
 
+    // Use display values from initialData if available to preserve precision
+    // Or apply automatic unit display logic: if KG >= 907.1847, display as TON
+    const stockInKg = initialData.stock;
+    const pricePerKg = initialData.price;
+    
+    let displayUnit: ProductUnit;
+    let displayPrice: number;
+    let displayStock: number;
+
+    // Use preserved display values if available from API
+    if (initialData.display_unit && initialData.display_quantity !== undefined && initialData.display_price !== undefined) {
+      displayUnit = initialData.display_unit;
+      displayStock = initialData.display_quantity;
+      displayPrice = initialData.display_price;
+    } else {
+      // Fallback to automatic unit display logic
+      displayUnit = getDisplayUnit(stockInKg);
+      displayPrice = pricePerKg;
+      displayStock = stockInKg;
+
+      // Convert from KG to display unit if the display unit is not KG
+      if (displayUnit !== "kg") {
+        try {
+          const converted = convertFromKgFormat(stockInKg, pricePerKg, displayUnit);
+          displayStock = converted.quantity;
+          displayPrice = converted.price;
+          validateConversionResult(displayStock, "quantity");
+          validateConversionResult(displayPrice, "price");
+        } catch (error) {
+          console.error("Error converting from KG format:", error);
+          // Fallback to original values if conversion fails
+          displayStock = stockInKg;
+          displayPrice = pricePerKg;
+        }
+      }
+    }
+
     form.reset({
       name: normalizeTranslation(initialData.name),
       category_uuid: initialData.category_uuid,
       inventory_uuids:
         initialData.inventory_uuids || initialData.inventories?.map((item) => item.id) || [],
-      price: initialData.price,
-      stock: initialData.stock,
-      unit:
-        (initialData.quantity_controls?.unit as "kg" | "ton" | undefined) ||
-        (initialData.quantity_indicator?.toLowerCase() === "ton" ? "ton" : "kg"),
+      price: displayPrice,
+      stock: displayStock,
+      unit: displayUnit,
+      display_unit: displayUnit,
+      display_quantity: displayStock,
+      display_price: displayPrice,
       description: normalizeTranslation(initialData.description),
       usage_instructions: normalizeTranslation(initialData.usage_instructions),
       safety_information: normalizeTranslation(initialData.safety_information),
@@ -269,6 +317,13 @@ export function ProductForm({
     }
   };
 
+  const handleUnitChange = (newUnit: ProductUnit) => {
+    // Only update the unit field - do not auto-convert quantity and price
+    // Unit conversion will happen internally only during API submission
+    form.setValue("unit", newUnit);
+    form.setValue("display_unit", newUnit);
+  };
+
   const handleInvalidSubmit = (errors: FieldErrors<ProductFormInputValues>) => {
     const mainFields: Array<keyof ProductFormInputValues> = [
       "category_uuid",
@@ -300,10 +355,33 @@ export function ProductForm({
     setActiveLanguage(firstLanguageWithError.code);
   };
 
+  const handleSubmit = (values: ProductFormValues) => {
+    try {
+      // Convert UI values to KG format for API submission
+      const converted = convertToKgFormat(values.stock, values.price, values.unit as ProductUnit);
+      
+      validateConversionResult(converted.quantity, "quantity");
+      validateConversionResult(converted.price, "price");
+
+      // Create the payload with KG values (display values are for internal use only)
+      const kgPayload: ProductFormValues = {
+        ...values,
+        unit: "kg",
+        stock: converted.quantity,
+        price: converted.price,
+      };
+
+      onSubmit(kgPayload);
+    } catch (error) {
+      console.error("Error converting to KG format:", error);
+      toast.error("Unable to convert units. Please check your values.");
+    }
+  };
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}
+        onSubmit={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
         className="flex min-h-full flex-col"
       >
         <div className="flex flex-row gap-4 py-4 w-full">
@@ -554,7 +632,10 @@ export function ProductForm({
                             label: item.label,
                           }))}
                           value={field.value}
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            handleUnitChange(value as ProductUnit);
+                            field.onChange(value);
+                          }}
                           placeholder="Select unit"
                           isClearable={false}
                         />

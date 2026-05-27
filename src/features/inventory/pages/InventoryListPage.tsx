@@ -42,7 +42,7 @@ import {
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useInventoryCategoriesQuery } from "@/features/category-management/hooks";
 import { usePartnerAllocationsQuery } from "@/features/product-management/hooks";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
+import { formatForDisplay } from "@/utils/unit-conversion";
 import { InventoryForm } from "../components/InventoryForm";
 import {
   useCreateInventoryMutation,
@@ -267,11 +267,14 @@ export function InventoryListPage() {
         accessorKey: "quantity",
         header: ({ column }) => <DataGridColumnHeader title="Total Quantity" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => (
-          <span>
-            {row.original.quantity} {getInventoryUnitLabel(row.original.unit)}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const display = formatForDisplay(row.original.quantity, row.original.price);
+          return (
+            <span>
+              {display.quantity.toLocaleString()} {display.unit.toUpperCase()}
+            </span>
+          );
+        },
       },
     ];
 
@@ -292,7 +295,14 @@ export function InventoryListPage() {
         <DataGridColumnHeader title={isPartner ? "Total Inventory Price" : "Price"} column={column} />
       ),
       enableSorting: true,
-      cell: ({ row }) => <span>₹{row.original.price.toLocaleString()}</span>,
+      cell: ({ row }) => {
+        const display = formatForDisplay(row.original.quantity, row.original.price);
+        return (
+          <span>
+            ₹{display.price.toLocaleString()}/{display.unit.toUpperCase()}
+          </span>
+        );
+      },
     });
 
     baseColumns.push({
