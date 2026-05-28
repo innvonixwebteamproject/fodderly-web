@@ -55,13 +55,12 @@ import type {
 } from "@/features/category-management/types";
 
 const STATUS_FILTER_OPTIONS: Array<{
-  value: CategoryStatusFilter;
+  value: CategoryStatus;
   label: string;
 }> = [
-  { value: "all", label: "All Status" },
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-];
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+  ];
 
 const statusOptions = STATUS_FILTER_OPTIONS.map((option) => ({
   label: option.label,
@@ -98,7 +97,7 @@ const getCategoryStatusConfig = (status: CategoryStatus): StatusConfig => {
 export function InventoryCategoryAdminPanel() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<CategoryStatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<CategoryStatusFilter>(undefined);
   const [sorting, setSorting] = useState<SortingState>([{ id: "updatedAt", desc: true }]);
 
   const [selectedCategory, setSelectedCategory] = useState<InventoryCategoryItem | null>(null);
@@ -115,7 +114,7 @@ export function InventoryCategoryAdminPanel() {
 
   const categoriesQuery = useInventoryCategoriesQuery({
     search: debouncedSearchTerm || undefined,
-    status: statusFilter === "all" ? undefined : (statusFilter as CategoryStatus),
+    status: statusFilter,
     limit: 10,
   });
 
@@ -247,7 +246,7 @@ export function InventoryCategoryAdminPanel() {
 
   const handleReset = () => {
     setSearchTerm("");
-    setStatusFilter("all");
+    setStatusFilter(undefined);
   };
 
   const handleSubmit = (values: InventoryCategoryFormValues) => {
@@ -276,12 +275,13 @@ export function InventoryCategoryAdminPanel() {
             <div className="w-[120px]">
               <SearchableSelect
                 options={statusOptions}
-                value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value as CategoryStatusFilter)}
+                value={statusFilter ?? ""}
+                onValueChange={(value) =>
+                  setStatusFilter(value ? (value as CategoryStatus) : undefined)
+                }
                 placeholder="Status"
                 searchPlaceholder="Search Status..."
                 searchInputClassName="text-xs placeholder:text-xs"
-                isClearable={false}
                 triggerClassName="h-9 bg-background text-[13px]"
               />
             </div>
@@ -290,7 +290,7 @@ export function InventoryCategoryAdminPanel() {
               variant="outline"
               onClick={handleReset}
               className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all"
-              disabled={!searchTerm && statusFilter === "all"}
+              disabled={!searchTerm && !statusFilter}
             >
               <RotateCcw className="h-4 w-4" />
               Reset

@@ -70,7 +70,7 @@ export function PartnerAllocationListPage() {
   const { partnerId = "" } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<AllocationItem | null>(null);
@@ -122,7 +122,7 @@ export function PartnerAllocationListPage() {
   } = usePartnerAllocationsInfiniteQuery(
     {
       partner_uuid: partnerId || undefined,
-      category_uuid: categoryFilter === "all" ? undefined : categoryFilter,
+      category_uuid: categoryFilter === "" ? undefined : categoryFilter,
       search: debouncedSearch || undefined,
       limit: 10,
       sortBy,
@@ -166,13 +166,11 @@ export function PartnerAllocationListPage() {
   }, [activePartners, partnerId]);
 
   const categoryOptions = useMemo(
-    () => [
-      { value: "all", label: "All Categories" },
-      ...(categoriesQuery.data?.data || []).map((category) => ({
+    () =>
+      (categoriesQuery.data?.data || []).map((category) => ({
         value: category.id,
         label: category.name.en || "-",
       })),
-    ],
     [categoriesQuery.data?.data],
   );
 
@@ -442,7 +440,6 @@ export function PartnerAllocationListPage() {
                 onValueChange={(value) => setCategoryFilter(value)}
                 placeholder="Category"
                 triggerClassName="h-8.5 bg-background text-[12px]"
-                isClearable={false}
               />
             </div>
             <Button
@@ -451,12 +448,12 @@ export function PartnerAllocationListPage() {
               onClick={() => {
                 setSearchTerm("");
                 setDebouncedSearch("");
-                setCategoryFilter("all");
+                setCategoryFilter("");
                 setSorting([{ id: "createdAt", desc: true }]);
               }}
               disabled={
                 !searchTerm &&
-                categoryFilter === "all" &&
+                !categoryFilter &&
                 sorting.length === 1 &&
                 sorting[0]?.id === "createdAt" &&
                 sorting[0]?.desc === true

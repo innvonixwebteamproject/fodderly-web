@@ -67,7 +67,7 @@ export function InventoryListPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([{ id: "createdAt", desc: true }]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -94,10 +94,7 @@ export function InventoryListPage() {
   }, [categoriesQuery.data?.data]);
 
   const categorySelectOptions = useMemo(() => {
-    return [
-      { label: "All Categories", value: "all" },
-      ...categoryOptions.map((category) => ({ label: category.name, value: category.id })),
-    ];
+    return categoryOptions.map((category) => ({ label: category.name, value: category.id }));
   }, [categoryOptions]);
 
   const { sortBy, sortOrder } = getApiSortParams({
@@ -119,7 +116,7 @@ export function InventoryListPage() {
     isLoading,
   } = useInventoriesInfiniteQuery(
     debouncedSearchTerm.trim() || undefined,
-    categoryFilter === "all" ? undefined : categoryFilter,
+    categoryFilter === "" ? undefined : categoryFilter,
     sortBy,
     sortOrder,
     {
@@ -188,7 +185,7 @@ export function InventoryListPage() {
 
   const handleReset = () => {
     setSearchTerm("");
-    setCategoryFilter("all");
+    setCategoryFilter("");
     setSorting([{ id: "createdAt", desc: true }]);
   };
 
@@ -385,7 +382,6 @@ export function InventoryListPage() {
                   placeholder="Category"
                   searchPlaceholder="Search category..."
                   searchInputClassName="text-xs placeholder:text-xs"
-                  isClearable={false}
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
@@ -396,7 +392,7 @@ export function InventoryListPage() {
                 className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all"
                 disabled={
                   !searchTerm &&
-                  categoryFilter === "all" &&
+                  !categoryFilter &&
                   isDefaultSort
                 }
               >

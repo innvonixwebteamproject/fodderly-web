@@ -69,23 +69,22 @@ import type {
 
 type DeleteTarget =
   | {
-      type: "product";
-      item: ProductCategoryItem;
-    }
+    type: "product";
+    item: ProductCategoryItem;
+  }
   | {
-      type: "inventory";
-      item: InventoryCategoryItem;
-    }
+    type: "inventory";
+    item: InventoryCategoryItem;
+  }
   | null;
 
 const STATUS_FILTER_OPTIONS: Array<{
-  value: CategoryStatusFilter;
+  value: CategoryStatus;
   label: string;
 }> = [
-  { value: "all", label: "All Status" },
-  { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
-];
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+  ];
 
 const statusOptions = STATUS_FILTER_OPTIONS.map((option) => ({
   label: option.label,
@@ -152,7 +151,7 @@ export function CategoryCmsPage() {
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const [debouncedProductSearchTerm, setDebouncedProductSearchTerm] = useState("");
   const [productStatusFilter, setProductStatusFilter] =
-    useState<CategoryStatusFilter>("all");
+    useState<CategoryStatusFilter>(undefined);
   const [selectedProductCategory, setSelectedProductCategory] =
     useState<ProductCategoryItem | null>(null);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
@@ -169,7 +168,7 @@ export function CategoryCmsPage() {
   const [debouncedInventorySearchTerm, setDebouncedInventorySearchTerm] =
     useState("");
   const [inventoryStatusFilter, setInventoryStatusFilter] =
-    useState<CategoryStatusFilter>("all");
+    useState<CategoryStatusFilter>(undefined);
   const [selectedInventoryCategory, setSelectedInventoryCategory] =
     useState<InventoryCategoryItem | null>(null);
   const [isInventoryDialogOpen, setIsInventoryDialogOpen] = useState(false);
@@ -215,10 +214,7 @@ export function CategoryCmsPage() {
 
   const productCategoriesQuery = useProductCategoriesInfiniteQuery({
     search: debouncedProductSearchTerm || undefined,
-    status:
-      productStatusFilter === "all"
-        ? undefined
-        : (productStatusFilter as CategoryStatus),
+    status: productStatusFilter,
     sortBy: productSort.sortBy,
     sortOrder: productSort.sortOrder,
     enabled: activeTab === "product",
@@ -226,10 +222,7 @@ export function CategoryCmsPage() {
 
   const inventoryCategoriesQuery = useInventoryCategoriesInfiniteQuery({
     search: debouncedInventorySearchTerm || undefined,
-    status:
-      inventoryStatusFilter === "all"
-        ? undefined
-        : (inventoryStatusFilter as CategoryStatus),
+    status: inventoryStatusFilter,
     sortBy: inventorySort.sortBy,
     sortOrder: inventorySort.sortOrder,
     enabled: activeTab === "inventory",
@@ -466,8 +459,7 @@ export function CategoryCmsPage() {
             showConfirmation
             confirmationTitle="Confirm Status Change"
             getConfirmationMessage={(category, newStatus) =>
-              `Are you sure you want to ${
-                newStatus === "active" ? "activate" : "deactivate"
+              `Are you sure you want to ${newStatus === "active" ? "activate" : "deactivate"
               } category "${category.name}"? This will affect its visibility in the system.`
             }
           />
@@ -577,8 +569,7 @@ export function CategoryCmsPage() {
             showConfirmation
             confirmationTitle="Confirm Status Change"
             getConfirmationMessage={(category, newStatus) =>
-              `Are you sure you want to ${
-                newStatus === "active" ? "activate" : "deactivate"
+              `Are you sure you want to ${newStatus === "active" ? "activate" : "deactivate"
               } category "${category.name}"? This will affect its visibility in the system.`
             }
           />
@@ -656,7 +647,7 @@ export function CategoryCmsPage() {
   return (
     <Container className="pb-8">
       <div className="flex min-h-0 flex-col gap-6">
-        
+
 
         <Tabs
           value={activeTab}
@@ -688,14 +679,15 @@ export function CategoryCmsPage() {
                   <div className="w-[120px]">
                     <SearchableSelect
                       options={statusOptions}
-                      value={productStatusFilter}
+                      value={productStatusFilter ?? ""}
                       onValueChange={(value) =>
-                        setProductStatusFilter(value as CategoryStatusFilter)
+                        setProductStatusFilter(
+                          value ? (value as CategoryStatus) : undefined,
+                        )
                       }
-                      placeholder="Status"
+                      placeholder="All Status"
                       searchPlaceholder="Search Status..."
                       searchInputClassName="text-xs placeholder:text-xs"
-                      isClearable={false}
                       triggerClassName="h-9 bg-background text-[13px]"
                     />
                   </div>
@@ -705,12 +697,12 @@ export function CategoryCmsPage() {
                     className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary transition-all hover:border-primary/50 hover:bg-primary/5"
                     onClick={() => {
                       setProductSearchTerm("");
-                      setProductStatusFilter("all");
+                      setProductStatusFilter(undefined);
                       setProductSorting([{ id: "createdAt", desc: true }]);
                     }}
                     disabled={
                       !productSearchTerm &&
-                      productStatusFilter === "all" &&
+                      !productStatusFilter &&
                       productSorting.length === 1 &&
                       productSorting[0]?.id === "createdAt" &&
                       productSorting[0]?.desc === true
@@ -792,11 +784,13 @@ export function CategoryCmsPage() {
                   <div className="w-[120px]">
                     <SearchableSelect
                       options={statusOptions}
-                      value={inventoryStatusFilter}
+                      value={inventoryStatusFilter ?? ""}
                       onValueChange={(value) =>
-                        setInventoryStatusFilter(value as CategoryStatusFilter)
+                        setInventoryStatusFilter(
+                          value ? (value as CategoryStatus) : undefined,
+                        )
                       }
-                      placeholder="Status"
+                      placeholder="All Status"
                       searchPlaceholder="Search Status..."
                       searchInputClassName="text-xs placeholder:text-xs"
                       isClearable={false}
@@ -809,12 +803,13 @@ export function CategoryCmsPage() {
                     className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary transition-all hover:border-primary/50 hover:bg-primary/5"
                     onClick={() => {
                       setInventorySearchTerm("");
-                      setInventoryStatusFilter("all");
+                      // setInventoryStatusFilter("all");
+                      setInventoryStatusFilter(undefined);
                       setInventorySorting([{ id: "createdAt", desc: true }]);
                     }}
                     disabled={
                       !inventorySearchTerm &&
-                      inventoryStatusFilter === "all" &&
+                      !inventoryStatusFilter &&
                       inventorySorting.length === 1 &&
                       inventorySorting[0]?.id === "createdAt" &&
                       inventorySorting[0]?.desc === true
@@ -992,7 +987,7 @@ export function CategoryCmsPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteProductCategoryMutation.isPending ||
-              deleteInventoryCategoryMutation.isPending ? (
+                deleteInventoryCategoryMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               Delete

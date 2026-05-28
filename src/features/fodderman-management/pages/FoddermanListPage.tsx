@@ -266,7 +266,7 @@ export function FoddermanListPage() {
   const [districtFilter, setDistrictFilter] = useState("");
   const [talukaFilter, setTalukaFilter] = useState("");
   const [partnerFilter, setPartnerFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isVillagesModalOpen, setIsVillagesModalOpen] = useState(false);
   const [isFarmersModalOpen, setIsFarmersModalOpen] = useState(false);
@@ -316,7 +316,7 @@ export function FoddermanListPage() {
     setPartnerFilter("");
   }, [districtFilter]);
 
-  const currentStatus = statusFilter === "all" ? undefined : (statusFilter as "active" | "inactive");
+  const currentStatus = statusFilter === "" ? undefined : (statusFilter as "active" | "inactive");
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
     defaultSortBy: "createdAt",
@@ -366,7 +366,7 @@ export function FoddermanListPage() {
     setDistrictFilter("");
     setTalukaFilter("");
     setPartnerFilter("");
-    setStatusFilter("all");
+    setStatusFilter("");
     setSorting([{ id: "createdAt", desc: true }]);
   };
 
@@ -410,7 +410,7 @@ export function FoddermanListPage() {
         districtFilter,
         talukaFilter,
         !isPartnerUser ? partnerFilter : "",
-        statusFilter !== "all" ? statusFilter : "",
+        statusFilter,
       ].filter(Boolean).length,
     [stateFilter, districtFilter, talukaFilter, partnerFilter, statusFilter, isPartnerUser],
   );
@@ -748,12 +748,11 @@ This action will update the fodderman's status immediately.`
                       />
                     )}
                     <SearchableSelect
-                      options={[{ label: "All status", value: "all" }, ...STATUS_OPTIONS]}
+                      options={STATUS_OPTIONS}
                       value={statusFilter}
                       onValueChange={setStatusFilter}
-                      placeholder="Status"
+                      placeholder="All Status"
                       searchPlaceholder="Search Status..."
-                      isClearable={false}
                       searchInputClassName="text-xs placeholder:text-xs"
                       triggerClassName="h-9 bg-background text-[13px]"
                     />
@@ -787,7 +786,7 @@ This action will update the fodderman's status immediately.`
                   !districtFilter &&
                   !talukaFilter &&
                   !partnerFilter &&
-                  statusFilter === "all" &&
+                  !statusFilter &&
                   sorting.length === 1 &&
                   sorting[0]?.id === "createdAt" &&
                   sorting[0]?.desc === true

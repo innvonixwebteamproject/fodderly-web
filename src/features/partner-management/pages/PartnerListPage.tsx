@@ -54,7 +54,6 @@ import {
 import { PartnerDetailModal } from "../components/PartnerDetailModal";
 
 const statusOptions = [
-  { value: "all", label: "All Status" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
@@ -192,7 +191,7 @@ export function PartnerListPage() {
   ]);
   const [stateFilter, setStateFilter] = useState("");
   const [districtFilter, setDistrictFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isDistrictsModalOpen, setIsDistrictsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<IPartner | null>(null);
@@ -217,7 +216,7 @@ export function PartnerListPage() {
   }, [stateFilter]);
 
   const partnerStatus =
-    statusFilter === "all" ? undefined : (statusFilter as "active" | "inactive");
+    statusFilter === "" ? undefined : (statusFilter as "active" | "inactive");
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
     defaultSortBy: "createdAt",
@@ -277,7 +276,7 @@ export function PartnerListPage() {
     setSearchTerm("");
     setStateFilter("");
     setDistrictFilter("");
-    setStatusFilter("all");
+    setStatusFilter("");
     setSorting([{ id: "createdAt", desc: true }]);
   };
 
@@ -648,10 +647,9 @@ This action will update the partner's status immediately.`
                   options={statusOptions}
                   value={statusFilter}
                   onValueChange={setStatusFilter}
-                  placeholder="Status"
+                  placeholder="All Status"
                   searchPlaceholder="Search Status..."
                   searchInputClassName="text-xs placeholder:text-xs"
-                  isClearable={false}
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
@@ -664,7 +662,7 @@ This action will update the partner's status immediately.`
                   !searchTerm &&
                   !stateFilter &&
                   !districtFilter &&
-                  statusFilter === "all" &&
+                  !statusFilter &&
                   sorting.length === 1 &&
                   sorting[0]?.id === "createdAt" &&
                   sorting[0]?.desc === true

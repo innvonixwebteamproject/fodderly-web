@@ -55,7 +55,7 @@ export function PartnerProductListPage() {
   const userId = useAuthStore((state) => state.userId);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [stockInputValue, setStockInputValue] = useState("");
   const [stockError, setStockError] = useState("");
@@ -83,13 +83,11 @@ export function PartnerProductListPage() {
   const categoriesQuery = useProductCategoriesQuery({ page: 1, limit: 100, status: "active" });
 
   const categoryOptions = useMemo(
-    () => [
-      { value: "all", label: "All Categories" },
-      ...(categoriesQuery.data?.data || []).map((category) => ({
+    () =>
+      (categoriesQuery.data?.data || []).map((category) => ({
         value: category.id,
         label: category.name.en || "-",
       })),
-    ],
     [categoriesQuery.data?.data],
   );
 
@@ -103,7 +101,7 @@ export function PartnerProductListPage() {
   } = usePartnerAllocationsInfiniteQuery(
     {
       partner_uuid: userId || undefined,
-      category_uuid: categoryFilter === "all" ? undefined : categoryFilter,
+      category_uuid: categoryFilter === "" ? undefined : categoryFilter,
       search: debouncedSearchTerm || undefined,
       limit: 10,
       sortBy,
@@ -459,7 +457,6 @@ export function PartnerProductListPage() {
                   onValueChange={(value) => setCategoryFilter(value)}
                   placeholder="Category"
                   searchPlaceholder="Search Category..."
-                  isClearable={false}
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
@@ -468,14 +465,14 @@ export function PartnerProductListPage() {
                 onClick={() => {
                   setSearchTerm("");
                   setDebouncedSearchTerm("");
-                  setCategoryFilter("all");
+                  setCategoryFilter("");
                   cancelEdit();
                   setSorting([{ id: "createdAt", desc: true }]);
                 }}
                 className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all"
                 disabled={
                   !searchTerm &&
-                  categoryFilter === "all" &&
+                  !categoryFilter &&
                   !editingRowId &&
                   sorting.length === 1 &&
                   sorting[0]?.id === "createdAt" &&

@@ -12,7 +12,8 @@ export const CATEGORY_LANGUAGES = [
 
 export type CategoryLanguageCode = (typeof CATEGORY_LANGUAGES)[number]["code"];
 export type CategoryStatus = "active" | "inactive";
-export type CategoryStatusFilter = "all" | CategoryStatus;
+// export type CategoryStatusFilter = "all" | CategoryStatus;
+export type CategoryStatusFilter = CategoryStatus | undefined;
 export type TranslationMap = Partial<Record<CategoryLanguageCode, string>>;
 
 export interface CategoryListMeta {
