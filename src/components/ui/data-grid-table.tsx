@@ -60,18 +60,20 @@ function DataGridTableBase({ children }: { children: ReactNode }) {
   const { props } = useDataGrid();
 
   return (
-    <table
-      data-slot="data-grid-table"
-      className={cn(
-        "w-full align-middle caption-bottom text-left rtl:text-right text-foreground font-normal text-sm",
-        !props.tableLayout?.columnsDraggable &&
-          "border-separate border-spacing-0",
-        props.tableLayout?.width === "fixed" ? "table-fixed" : "table-auto",
-        props.tableClassNames?.base,
-      )}
-    >
-      {children}
-    </table>
+    <div className="w-full overflow-x-auto">
+      <table
+        data-slot="data-grid-table"
+        className={cn(
+          "w-full align-middle caption-bottom text-left rtl:text-right text-foreground font-normal text-sm",
+          !props.tableLayout?.columnsDraggable &&
+            "border-separate border-spacing-0",
+          props.tableLayout?.width === "fixed" ? "table-fixed" : "table-auto",
+          props.tableClassNames?.base,
+        )}
+      >
+        {children}
+      </table>
+    </div>
   );
 }
 

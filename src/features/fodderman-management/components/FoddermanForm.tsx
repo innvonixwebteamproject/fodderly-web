@@ -88,7 +88,7 @@ export function FoddermanForm({
       const initialVillageNames = new Set(
         (initialData.villages || []).map((v) => v.name.toLowerCase().trim())
       );
-      
+
       const matchedIdsFromOptions = (villageOptions || [])
         .filter((opt) => opt.label && initialVillageNames.has(opt.label.toLowerCase().trim()))
         .map((opt) => opt.value);
@@ -520,7 +520,6 @@ export function FoddermanForm({
                             value={field.value || ""}
                             onValueChange={field.onChange}
                             placeholder="Select Partner"
-                            triggerClassName="min-w-[300px]"
                           />
                         </FormControl>
                         <FormMessage />
