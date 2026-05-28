@@ -34,6 +34,7 @@ export function AuthHydration({ children }: AuthHydrationProps) {
             email: profile.data.email,
             isActive: profile.data.isActive,
             forcePasswordChange: profile.data.forcePasswordChange,
+            unitConversion: profile.data.unitConversion,
           });
 
           if (profile.data.isActive === false) {

@@ -101,7 +101,7 @@ export function EditAllocationQuantityModal({
     if (!allocation) return;
 
     // Convert to KG format for API submission
-    // When unit is TON: quantity = TON * 907.185
+    // When unit is TON: quantity = TON * getTonToKgRate()
     // When unit is KG: values remain as-is
     const converted = convertInventoryToKgFormat(
       values.allocated_quantity,

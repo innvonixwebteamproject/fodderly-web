@@ -41,6 +41,7 @@ import {
   formatAdminAvailableQty,
   formatPartnerAvailableQty,
   formatPartnerAllocatedQty,
+  getTonToKgRate,
 } from "../utils/unit-conversion";
 
 const formatCreatedDate = (value?: string) => {
@@ -253,7 +254,7 @@ export function PartnerProductListPage() {
           const stockInKg = row.original.admin_available_quantity ?? 0;
           const adminUnit = row.original.admin_unit;
           // Convert to KG if admin_unit is TON
-          const quantityInKg = adminUnit === INVENTORY_UNITS.TON ? stockInKg * 907.185 : stockInKg;
+          const quantityInKg = adminUnit === INVENTORY_UNITS.TON ? stockInKg * getTonToKgRate() : stockInKg;
           return (
             <span>
               {formatAdminAvailableQty(quantityInKg)}
@@ -270,7 +271,7 @@ export function PartnerProductListPage() {
           const stockInKg = row.original.available_quantity ?? 0;
           const unit = row.original.unit;
           // Convert to KG if unit is TON (backend might send in TON format)
-          const quantityInKg = unit === INVENTORY_UNITS.TON ? stockInKg * 907.185 : stockInKg;
+          const quantityInKg = unit === INVENTORY_UNITS.TON ? stockInKg * getTonToKgRate() : stockInKg;
           return (
             <span>
               {formatPartnerAvailableQty(quantityInKg)}
@@ -289,7 +290,7 @@ export function PartnerProductListPage() {
           const stockInKg = row.original.allocated_quantity;
           const unit = row.original.unit;
           // Convert to KG if unit is TON (backend might send in TON format)
-          const quantityInKg = unit === INVENTORY_UNITS.TON ? stockInKg * 907.185 : stockInKg;
+          const quantityInKg = unit === INVENTORY_UNITS.TON ? stockInKg * getTonToKgRate() : stockInKg;
           
           if (!isEditing) {
             return (

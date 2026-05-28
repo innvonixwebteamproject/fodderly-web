@@ -120,7 +120,7 @@ export function ProductForm({
     if (!initialData) return;
 
     // Use display values from initialData if available to preserve precision
-    // Or apply automatic unit display logic: if KG >= 907.1847, display as TON
+    // Or apply automatic unit display logic: if KG >= TON_CONVERSION_RATE, display as TON
     const stockInKg = initialData.stock;
     const pricePerKg = initialData.price;
     

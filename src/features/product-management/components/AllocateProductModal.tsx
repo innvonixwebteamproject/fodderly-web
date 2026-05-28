@@ -28,7 +28,7 @@ import {
   INVENTORY_UNITS,
   normalizeInventoryUnit,
 } from "@/constants/unit.constants";
-import { convertInventoryToKgFormat, formatForDisplay, TON_TO_KG_RATE, formatAdminAvailableQty } from "@/utils/unit-conversion";
+import { convertInventoryToKgFormat, formatForDisplay, getTonToKgRate, formatAdminAvailableQty } from "@/utils/unit-conversion";
 import { getLanguageLabel } from "../services/product.api";
 import type { IPartner } from "@/features/partner-management/types";
 import type { ProductRecord } from "../types";
@@ -136,7 +136,7 @@ export function AllocateProductModal({
     // Convert price to display unit
     let priceInDisplayUnit = pricePerKg;
     if (displayUnit === INVENTORY_UNITS.TON) {
-      priceInDisplayUnit = pricePerKg * TON_TO_KG_RATE;
+      priceInDisplayUnit = pricePerKg * getTonToKgRate();
     }
 
     return priceInDisplayUnit;
@@ -155,9 +155,9 @@ export function AllocateProductModal({
     // Convert price from admin unit to user's selected unit
     let pricePerSelectedUnit = pricePerKg;
     if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
-      pricePerSelectedUnit = pricePerKg / TON_TO_KG_RATE;
+      pricePerSelectedUnit = pricePerKg / getTonToKgRate();
     } else if (adminUnit === INVENTORY_UNITS.KG && currentUnit === INVENTORY_UNITS.TON) {
-      pricePerSelectedUnit = pricePerKg * TON_TO_KG_RATE;
+      pricePerSelectedUnit = pricePerKg * getTonToKgRate();
     }
 
     return Math.round(Number((Math.max(allocatedQuantity, 0) * pricePerSelectedUnit).toFixed(2)));
@@ -191,7 +191,7 @@ export function AllocateProductModal({
         // Convert stock from admin unit to KG (base unit)
         let stockInKg = stock;
         if (adminUnit === INVENTORY_UNITS.TON) {
-          stockInKg = stock * TON_TO_KG_RATE;
+          stockInKg = stock * getTonToKgRate();
         }
 
         // Always return stock in KG for display stability
@@ -240,11 +240,11 @@ export function AllocateProductModal({
     // Convert price from admin unit to KG (base unit)
     let priceInKg = unitPrice;
     if (adminUnit === INVENTORY_UNITS.TON) {
-      priceInKg = unitPrice / TON_TO_KG_RATE;
+      priceInKg = unitPrice / getTonToKgRate();
     }
 
     // Convert to KG format for API submission based on user's selected unit
-    // When unit is TON: quantity = TON * 907.185, price = TON price / 907.185
+    // When unit is TON: quantity = TON * getTonToKgRate(), price = TON price / getTonToKgRate()
     // When unit is KG: values remain as-is
     // Note: Display values are always in KG, so we use the user's selected unit for conversion
     const converted = convertInventoryToKgFormat(

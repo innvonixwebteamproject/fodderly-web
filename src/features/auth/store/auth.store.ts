@@ -28,6 +28,7 @@ interface AuthStore extends AuthSession {
     email?: string;
     isActive?: boolean;
     forcePasswordChange?: boolean;
+    unitConversion?: { ton_to_kg: number } | null;
   }) => void;
 
   /**
@@ -48,6 +49,7 @@ const initialState: AuthSession = {
   userEmail: null,
   userName: null,
   userId: null,
+  unitConversion: null,
 };
 
 const readPersistedAuthState = (): AuthSession => {
@@ -62,6 +64,15 @@ const readPersistedAuthState = (): AuthSession => {
   const userEmail = localStorage.getItem("auth.userEmail");
   const userName = localStorage.getItem("auth.userName");
   const userId = localStorage.getItem("auth.userId");
+  const unitConversionStr = localStorage.getItem("auth.unitConversion");
+  let unitConversion = null;
+  if (unitConversionStr) {
+    try {
+      unitConversion = JSON.parse(unitConversionStr);
+    } catch {
+      unitConversion = null;
+    }
+  }
 
   return {
     accessToken,
@@ -75,6 +86,7 @@ const readPersistedAuthState = (): AuthSession => {
     userEmail: userEmail || null,
     userName: userName || null,
     userId: userId || null,
+    unitConversion: unitConversion,
   };
 };
 
@@ -96,6 +108,7 @@ export const useAuthStore = create<AuthStore>()(
             userEmail: data.email,
             userName: data.fullName || (data.firstName ? `${data.firstName} ${data.lastName || ""}`.trim() : data.name),
             userId: data.id,
+            unitConversion: data.unitConversion || null,
             isAuthenticated: true,
           });
         },
@@ -113,6 +126,7 @@ export const useAuthStore = create<AuthStore>()(
           localStorage.removeItem("auth.userEmail");
           localStorage.removeItem("auth.userName");
           localStorage.removeItem("auth.userId");
+          localStorage.removeItem("auth.unitConversion");
         },
 
         hydrateAuth: () => {
@@ -129,6 +143,7 @@ export const useAuthStore = create<AuthStore>()(
                 isActive: data.isActive ?? state.isActive,
                 forcePasswordChange:
                   data.forcePasswordChange ?? state.forcePasswordChange,
+                unitConversion: data.unitConversion !== undefined ? data.unitConversion : state.unitConversion,
              };
              return newState;
           });
@@ -184,6 +199,11 @@ export const useAuthStore = create<AuthStore>()(
             localStorage.setItem("auth.userEmail", state.userEmail ?? "");
             localStorage.setItem("auth.userName", state.userName ?? "");
             localStorage.setItem("auth.userId", state.userId ?? "");
+            if (state.unitConversion) {
+              localStorage.setItem("auth.unitConversion", JSON.stringify(state.unitConversion));
+            } else {
+              localStorage.removeItem("auth.unitConversion");
+            }
           },
 
           removeItem: () => {
@@ -198,6 +218,7 @@ export const useAuthStore = create<AuthStore>()(
             localStorage.removeItem("auth.userEmail");
             localStorage.removeItem("auth.userName");
             localStorage.removeItem("auth.userId");
+            localStorage.removeItem("auth.unitConversion");
           },
         },
         skipHydration: false,

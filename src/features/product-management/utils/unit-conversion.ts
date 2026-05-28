@@ -5,7 +5,7 @@
  * The backend always stores values in KG format, while the UI can display in various units.
  * 
  * Conversion rates represent how many KG are in 1 unit of the given type.
- * For example: 1 TON = 907.1847 KG
+ * For example: 1 TON = getTonToKgRate() KG
  */
 
 export type ProductUnit = "kg" | "ton";
@@ -24,9 +24,15 @@ export const UI_PRECISION = 0;
  * 
  * Future units can be added by simply extending this object.
  */
-export const UNIT_CONVERSIONS: Record<ProductUnit, number> = {
-  kg: 1,
-  ton: 907.185,
+import { getTonToKgRate } from "@/utils/unit-conversion";
+
+export { getTonToKgRate };
+
+export const getUnitConversions = (): Record<ProductUnit, number> => {
+  return {
+    kg: 1,
+    ton: getTonToKgRate(),
+  };
 };
 
 /**
@@ -37,7 +43,8 @@ export const UNIT_CONVERSIONS: Record<ProductUnit, number> = {
  * @returns The conversion rate (KG per unit)
  */
 export const getConversionRate = (unit: ProductUnit): number => {
-  const rate = UNIT_CONVERSIONS[unit];
+  const conversions = getUnitConversions();
+  const rate = conversions[unit];
   if (rate === undefined) {
     throw new Error(`Unknown unit: ${unit}`);
   }
@@ -186,7 +193,8 @@ export const getDisplayUnit = (quantityInKg: number): ProductUnit => {
   if (!Number.isFinite(quantityInKg) || quantityInKg < 0) {
     return "kg";
   }
-  return quantityInKg >= UNIT_CONVERSIONS.ton ? "ton" : "kg";
+  const conversions = getUnitConversions();
+  return quantityInKg >= conversions.ton ? "ton" : "kg";
 };
 
 /**
@@ -225,8 +233,9 @@ export const formatAdminAvailableQty = (quantityInKg: number | null | undefined)
     return "—";
   }
   const displayUnit = getDisplayUnit(quantityInKg);
+  const conversions = getUnitConversions();
   if (displayUnit === "ton") {
-    const qtyInTon = quantityInKg / UNIT_CONVERSIONS.ton;
+    const qtyInTon = quantityInKg / conversions.ton;
     const roundedQty = Math.round(qtyInTon);
     return `${roundedQty.toLocaleString()} TON`;
   }
@@ -236,9 +245,9 @@ export const formatAdminAvailableQty = (quantityInKg: number | null | undefined)
 
 /**
  * Format Partner Available Qty.
- * - Always converts dynamically from KG to TON using TON = KG / 907.185.
+ * - Always converts dynamically from KG to TON using TON = KG / getTonToKgRate().
  * - Removes unnecessary trailing zeros for whole TON values, showing up to 3 decimals.
- * - Example: 2000 KG / 907.185 = 2.205 TON -> 2.205 TON
+ * - Example: 2000 KG / getTonToKgRate() = TON -> TON
  * 
  * @param quantityInKg - Quantity in KG
  * @returns Formatted string with TON unit
@@ -247,7 +256,8 @@ export const formatPartnerAvailableQty = (quantityInKg: number | null | undefine
   if (quantityInKg === null || quantityInKg === undefined || !Number.isFinite(quantityInKg) || quantityInKg < 0) {
     return "—";
   }
-  const qtyInTon = quantityInKg / UNIT_CONVERSIONS.ton;
+  const conversions = getUnitConversions();
+  const qtyInTon = quantityInKg / conversions.ton;
   const trimmedQty = Number(qtyInTon.toFixed(3));
   const qtyStr = trimmedQty.toLocaleString(undefined, {
     minimumFractionDigits: 0,
@@ -258,7 +268,7 @@ export const formatPartnerAvailableQty = (quantityInKg: number | null | undefine
 
 /**
  * Format Partner Allocated Qty.
- * - Always converts dynamically from KG to TON using TON = KG / 907.185.
+ * - Always converts dynamically from KG to TON using TON = KG / getTonToKgRate().
  * - Removes unnecessary trailing zeros for whole TON values, showing up to 3 decimals.
  * 
  * @param quantityInKg - Quantity in KG
