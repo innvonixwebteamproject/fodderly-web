@@ -179,28 +179,6 @@ export function AllocateProductModal({
     };
   }, [selectedProducts]);
 
-  const maxAvailableStock = useMemo(() => {
-    if (selectedProducts.length === 0) return Number.POSITIVE_INFINITY;
-    return Math.min(
-      ...selectedProducts.map((product) => {
-        const stock = Number(product.stock || 0);
-        const adminUnit = normalizeInventoryUnit(
-          product.admin_unit ?? product.quantity_indicator,
-        );
-
-        // Convert stock from admin unit to KG (base unit)
-        let stockInKg = stock;
-        if (adminUnit === INVENTORY_UNITS.TON) {
-          stockInKg = stock * getTonToKgRate();
-        }
-
-        // Always return stock in KG for display stability
-        // Unit conversion will happen only during API submission
-        return stockInKg;
-      }),
-    );
-  }, [selectedProducts]);
-
   useEffect(() => {
     if (open && (form.getValues("unit") === "" || form.getValues("unit") === undefined || form.getValues("unit") === null)) {
       form.setValue("unit", INVENTORY_UNITS.KG, { shouldValidate: true });
@@ -222,14 +200,6 @@ export function AllocateProductModal({
   };
 
   const submitForm = (values: AllocationFormValues) => {
-    if (values.allocated_quantity > maxAvailableStock) {
-      form.setError("allocated_quantity", {
-        type: "validate",
-        message: "Allocated quantity cannot exceed available stock.",
-      });
-      return;
-    }
-
     const product = products.find((item) => item.id === values.product_uuid);
     const unitPrice = Number(product?.price || 0);
     const adminUnit = normalizeInventoryUnit(
