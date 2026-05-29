@@ -29,6 +29,8 @@ const asWrappedResponse = <T>(response: WrappedResponse<T> | T): WrappedResponse
   return { data: response as T };
 };
 
+type TranslationMap = Partial<Record<"en" | "hi" | "gu" | "mr" | "te" | "pa" | "ml", string>>;
+
 const getPrimitiveString = (value: unknown) => {
   if (typeof value === "string") return value;
   if (
@@ -42,7 +44,12 @@ const getPrimitiveString = (value: unknown) => {
   return "";
 };
 
-type RawVillage = { id?: string; name?: string };
+type RawGeoName = {
+  name?: string;
+  enName?: string;
+  translations?: TranslationMap | null;
+};
+type RawVillage = RawGeoName & { id?: string };
 type RawPartner = {
   id?: string;
   name?: string;
@@ -66,14 +73,20 @@ type RawFodderman = Partial<IFodderman> & {
   total_farmers?: number;
   partner?: RawPartner | null;
   farmers?: Array<RawFarmer | string>;
-  state?: { id?: string; name?: string } | null;
-  district?: { id?: string; name?: string } | null;
-  taluka?: { id?: string; name?: string } | null;
+  state?: (RawGeoName & { id?: string }) | null;
+  district?: (RawGeoName & { id?: string }) | null;
+  taluka?: (RawGeoName & { id?: string }) | null;
   village?: RawVillage | null;
   villages?: Array<RawVillage | string>;
   villageAllocation?: string[];
   villageIds?: string[];
 };
+
+const getDisplayName = (item?: RawGeoName | null) =>
+  item?.enName?.trim() ||
+  item?.translations?.en?.trim() ||
+  item?.name?.trim() ||
+  "";
 
 const getFallbackMeta = (page: number, limit: number, total: number): IFoddermanListMeta => ({
   page,
@@ -131,7 +144,7 @@ const mapFodderman = (item: RawFodderman): IFodderman => {
   const villages = villagesSource.map((village) =>
     typeof village === "string"
       ? { id: village, name: village }
-      : { id: village.id || "", name: village.name || "" },
+      : { id: village.id || "", name: getDisplayName(village) },
   );
   const allocatedVillages = item.allocated_villages ?? villages.map((village) => village.name);
   const villageIdsFromObjects = villagesSource.flatMap((village) => {
@@ -184,11 +197,11 @@ const mapFodderman = (item: RawFodderman): IFodderman => {
     mobileNumber: getPrimitiveString(item.mobileNumber),
     languagePreference: item.languagePreference || "en",
     stateId: item.stateId || item.state?.id || "",
-    stateName: item.stateName || item.state?.name || "",
+    stateName: getDisplayName(item.state) || item.stateName || "",
     districtId: item.districtId || item.district?.id || "",
-    districtName: item.districtName || item.district?.name || "",
+    districtName: getDisplayName(item.district) || item.districtName || "",
     talukaId: item.talukaId || item.taluka?.id || "",
-    talukaName: item.talukaName || item.taluka?.name || "",
+    talukaName: getDisplayName(item.taluka) || item.talukaName || "",
     pinCode: item.pinCode || item.pincode || "",
     partnerId: item.partnerId || item.partner?.id,
     partnerName,

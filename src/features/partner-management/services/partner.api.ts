@@ -57,6 +57,7 @@ type RawPartner = Partial<IPartner> & {
   lastName?: string;
   fullName?: string;
   phone?: string | { value?: string } | null;
+  mobileNumber?: string | { value?: string } | null;
   email?: string | { value?: string } | null;
   company?: {
     company_name?: string;
@@ -79,11 +80,13 @@ type TranslationMap = {
 
 type RawState = Partial<IPartnerState> & {
   name?: LocalizedName;
+  enName?: string;
   translations?: TranslationMap | null;
 };
 
 type RawDistrict = Partial<IPartnerDistrict> & {
   name?: LocalizedName;
+  enName?: string;
   translations?: TranslationMap | null;
 };
 
@@ -152,7 +155,12 @@ const getEnglishName = (value: LocalizedName) => {
 const getTranslatedEnglishName = (
   translations?: TranslationMap | null,
   fallback?: LocalizedName,
+  enName?: string,
 ) => {
+  if (enName?.trim()) {
+    return enName.trim();
+  }
+
   if (translations?.en) {
     return translations.en;
   }
@@ -177,7 +185,7 @@ const mapPartner = (partner: RawPartner): IPartner => {
       partner.fullName ||
       `${partner.firstName || ""} ${partner.lastName || ""}`.trim(),
     email: getPrimitiveString(partner.email),
-    phone: getPrimitiveString(partner.phone),
+    phone: getPrimitiveString(partner.phone) || getPrimitiveString(partner.mobileNumber),
     role: partner.role,
     isActive: Boolean(partner.isActive),
     forcePasswordChange: Boolean(partner.forcePasswordChange),
@@ -198,14 +206,14 @@ const mapPartner = (partner: RawPartner): IPartner => {
 
 const mapState = (state: RawState): IPartnerState => ({
   id: state.id || "",
-  name: getTranslatedEnglishName(state.translations, state.name),
+  name: getTranslatedEnglishName(state.translations, state.name, state.enName),
   isActive: Boolean(state.isActive),
 });
 
 const mapDistrict = (district: RawDistrict): IPartnerDistrict => ({
   id: district.id || "",
   stateId: district.stateId || "",
-  name: getTranslatedEnglishName(district.translations, district.name),
+  name: getTranslatedEnglishName(district.translations, district.name, district.enName),
   isActive: Boolean(district.isActive),
 });
 
