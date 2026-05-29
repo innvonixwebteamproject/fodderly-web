@@ -50,7 +50,6 @@ import { AssignFoddermanModal } from "../components/AssignFoddermanModal";
 import { FarmerDetailModal } from "../components/FarmerDetailModal";
 
 const statusOptions = [
-  { value: "all", label: "All Status" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
@@ -106,7 +105,7 @@ export function FarmerListPage() {
   const [talukaFilter, setTalukaFilter] = useState("");
   const [villageFilter, setVillageFilter] = useState("");
   const [foddermanFilter, setFoddermanFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -131,7 +130,7 @@ export function FarmerListPage() {
   });
 
   const farmerStatus =
-    statusFilter === "all" ? undefined : (statusFilter as "active" | "inactive");
+    statusFilter === "" ? undefined : (statusFilter as "active" | "inactive");
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
     defaultSortBy: "createdAt" as const,
@@ -241,7 +240,7 @@ export function FarmerListPage() {
     setTalukaFilter("");
     setVillageFilter("");
     setFoddermanFilter("");
-    setStatusFilter("all");
+    setStatusFilter("");
     setSorting([{ id: "createdAt", desc: true }]);
   };
 
@@ -251,7 +250,7 @@ export function FarmerListPage() {
     talukaFilter,
     villageFilter,
     foddermanFilter,
-    statusFilter !== "all" ? statusFilter : "",
+    statusFilter,
   ].filter(Boolean).length;
 
   const columns = useMemo<ColumnDef<IFarmer>[]>(() => {
@@ -536,10 +535,9 @@ export function FarmerListPage() {
                       options={statusOptions}
                       value={statusFilter}
                       onValueChange={setStatusFilter}
-                      placeholder="Status"
+                      placeholder="All Status"
                       searchPlaceholder="Search Status..."
                       searchInputClassName="text-xs placeholder:text-xs"
-                      isClearable={false}
                       triggerClassName="h-9 bg-background text-[13px]"
                     />
                   </div>
@@ -573,7 +571,7 @@ export function FarmerListPage() {
                   !talukaFilter &&
                   !villageFilter &&
                   !foddermanFilter &&
-                  statusFilter === "all" &&
+                  !statusFilter &&
                   sorting.length === 1 &&
                   sorting[0]?.id === "createdAt" &&
                   sorting[0]?.desc === true

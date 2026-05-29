@@ -5,7 +5,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Calendar, ClipboardList, Info, RotateCcw, Truck } from "lucide-react";
+import { ClipboardList, Info, RotateCcw, Truck, Calendar } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container } from "@/components/common/container";
@@ -20,22 +20,11 @@ import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  PopoverPortal,
-} from "@/components/ui/popover";
-import { DatePicker } from "@/components/ui/date-picker";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 import { getApiSortParams } from "@/lib/api-sorting";
 import type {
   AdminOrderListApiStatus,
@@ -59,6 +48,10 @@ import {
   partnerOrderNeedsDispatchHighlight,
 } from "../utils/partner-order-rules";
 import { RETURN_QUERY_SESSION_KEY } from "../utils/partner-order-history-url";
+import { DateRangeFilterPopover } from "../components/DateRangeFilterPopover";
+import type { DateFilterPresetKey } from "../utils/date-filter-presets";
+import { resolvePresetDates } from "../utils/date-filter-presets";
+import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 
 const formatPlacedAt = (value: string) => {
   const d = new Date(value);
@@ -73,14 +66,6 @@ const formatExpected = (value: string | null | undefined) => {
   if (value.length >= 10) return format(new Date(`${value.slice(0, 10)}T12:00:00`), "dd/MM/yy");
   return value;
 };
-
-const parseYyyyMmDd = (str?: string) => {
-  if (!str) return undefined;
-  const [y, m, d] = str.split("-").map(Number);
-  if (!y || !m || !d) return undefined;
-  return new Date(y, m - 1, d);
-};
-
 export function PartnerOrderListPage() {
   const [statusFilter, setStatusFilter] = useState<AdminOrderListApiStatus | "">("");
   const [dispatchTarget, setDispatchTarget] = useState<AdminOrderListItem | null>(null);
@@ -89,18 +74,10 @@ export function PartnerOrderListPage() {
   const [etaTarget, setEtaTarget] = useState<AdminOrderListItem | null>(null);
   const [etaOpen, setEtaOpen] = useState(false);
 
-  // Date range filter state
-  const [dateFilter, setDateFilter] = useState<"last_7_days" | "custom" | "">("");
+  // ── Advanced date range filter state (applied / committed values) ──
+  const [datePresetKey, setDatePresetKey] = useState<DateFilterPresetKey>("");
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
-
-  // Popover open state
-  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
-
-  // Draft states to keep edits local until "Apply" is clicked
-  const [draftDateFilter, setDraftDateFilter] = useState<"last_7_days" | "custom" | "">("");
-  const [draftFromDate, setDraftFromDate] = useState<string>("");
-  const [draftToDate, setDraftToDate] = useState<string>("");
 
   useEffect(() => {
     sessionStorage.removeItem(RETURN_QUERY_SESSION_KEY);
@@ -136,11 +113,13 @@ export function PartnerOrderListPage() {
     () => ({
       status: statusFilter || undefined,
       search: debouncedSearch || undefined,
-      dateFilter: dateFilter || undefined,
-      fromDate: dateFilter === "custom" && fromDate ? fromDate : undefined,
-      toDate: dateFilter === "custom" && toDate ? toDate : undefined,
+      // Always send "custom" so the backend range-filters by fromDate/toDate.
+      // The datePresetKey is kept in local state only for UI label/highlight.
+      dateFilter: datePresetKey && fromDate && toDate ? "custom" : undefined,
+      fromDate: fromDate || undefined,
+      toDate: toDate || undefined,
     }),
-    [statusFilter, debouncedSearch, dateFilter, fromDate, toDate],
+    [statusFilter, debouncedSearch, datePresetKey, fromDate, toDate],
   );
 
   const {
@@ -180,10 +159,29 @@ export function PartnerOrderListPage() {
   const handleReset = useCallback(() => {
     setStatusFilter("");
     setSearchTerm("");
-    setDateFilter("");
+    setDatePresetKey("");
     setFromDate("");
     setToDate("");
     setSorting([]);
+  }, []);
+
+  /** Called by DateRangeFilterPopover when user clicks "Apply Filter". */
+  const handleDateFilterApply = useCallback(
+    (values: { presetKey: DateFilterPresetKey; fromDate: string; toDate: string }) => {
+      const resolved = resolvePresetDates(values.presetKey, values.fromDate, values.toDate);
+      if (!resolved) return;
+      setDatePresetKey(values.presetKey);
+      setFromDate(resolved.fromDate);
+      setToDate(resolved.toDate);
+    },
+    [],
+  );
+
+  /** Called by DateRangeFilterPopover when user clicks "Clear filter". */
+  const handleDateFilterClear = useCallback(() => {
+    setDatePresetKey("");
+    setFromDate("");
+    setToDate("");
   }, []);
 
   const handleScheduleDelivery = useCallback((order: AdminOrderListItem) => {
@@ -215,30 +213,6 @@ export function PartnerOrderListPage() {
     setDispatchOpen(true);
   }, []);
 
-  const handleOpenDatePopover = useCallback(() => {
-    setDraftDateFilter(dateFilter);
-    setDraftFromDate(fromDate);
-    setDraftToDate(toDate);
-    setIsDatePopoverOpen(true);
-  }, [dateFilter, fromDate, toDate]);
-
-  const handleApplyDateFilter = useCallback(() => {
-    if (draftDateFilter === "custom") {
-      if (!draftFromDate || !draftToDate) {
-        toast.error("Please select both start and end dates.");
-        return;
-      }
-      if (new Date(draftFromDate) > new Date(draftToDate)) {
-        toast.error("Start date cannot be after end date.");
-        return;
-      }
-    }
-    setDateFilter(draftDateFilter);
-    setFromDate(draftDateFilter === "custom" ? draftFromDate : "");
-    setToDate(draftDateFilter === "custom" ? draftToDate : "");
-    setIsDatePopoverOpen(false);
-  }, [draftDateFilter, draftFromDate, draftToDate]);
-
   const sortIsDefault =
     sorting.length === 0 ||
     (sorting.length === 1 && sorting[0]?.id === "placedAt" && sorting[0]?.desc === true);
@@ -246,9 +220,8 @@ export function PartnerOrderListPage() {
   const canReset =
     Boolean(statusFilter) ||
     Boolean(searchTerm) ||
-    Boolean(dateFilter) ||
+    Boolean(datePresetKey) ||
     !sortIsDefault;
-
 
 
   const columns = useMemo<ColumnDef<AdminOrderListItem>[]>(
@@ -472,162 +445,13 @@ export function PartnerOrderListPage() {
                   searchPlaceholder="Search…"
                   triggerClassName="h-9 w-[180px] max-w-full bg-background text-[13px]"
                 />
-                <Popover open={isDatePopoverOpen} onOpenChange={(open) => {
-                  if (open) {
-                    handleOpenDatePopover();
-                  } else {
-                    setIsDatePopoverOpen(false);
-                  }
-                }}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="h-9 gap-2 bg-background px-3 text-[13px] font-normal border-input hover:bg-accent/50"
-                    >
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className={cn(
-                        "truncate",
-                        dateFilter ? "text-foreground" : "text-muted-foreground"
-                      )}>
-                        {dateFilter === "last_7_days"
-                          ? "Last 7 Days"
-                          : dateFilter === "custom" && fromDate && toDate
-                          ? (() => {
-                              try {
-                                const fromD = new Date(fromDate);
-                                const toD = new Date(toDate);
-                                if (Number.isNaN(fromD.getTime()) || Number.isNaN(toD.getTime())) return "Custom Range";
-                                return `${format(fromD, "dd/MM/yyyy")} - ${format(toD, "dd/MM/yyyy")}`;
-                              } catch {
-                                return "Custom Range";
-                              }
-                            })()
-                          : "Select Date"}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverPortal>
-                    <PopoverContent className="w-[300px] p-4 flex flex-col gap-4 bg-popover border border-border shadow-lg rounded-md" align="start">
-                      <div className="space-y-1">
-                        <h4 className="font-semibold text-sm leading-none">Date Filter</h4>
-                        <p className="text-xs text-muted-foreground">Select a range to filter orders.</p>
-                      </div>
-
-                      {/* Preset Pills */}
-                      <div className="flex gap-2 p-1 bg-muted rounded-md text-[13px]">
-                        <button
-                          type="button"
-                          className={cn(
-                            "flex-1 py-1.5 rounded-sm font-medium transition-all text-center",
-                            draftDateFilter === ""
-                              ? "bg-background text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                          onClick={() => setDraftDateFilter("")}
-                        >
-                          All
-                        </button>
-                        <button
-                          type="button"
-                          className={cn(
-                            "flex-1 py-1.5 rounded-sm font-medium transition-all text-center",
-                            draftDateFilter === "last_7_days"
-                              ? "bg-background text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                          onClick={() => setDraftDateFilter("last_7_days")}
-                        >
-                          Last 7 Days
-                        </button>
-                        <button
-                          type="button"
-                          className={cn(
-                            "flex-1 py-1.5 rounded-sm font-medium transition-all text-center",
-                            draftDateFilter === "custom"
-                              ? "bg-background text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                          onClick={() => setDraftDateFilter("custom")}
-                        >
-                          Custom
-                        </button>
-                      </div>
-
-                      {/* Custom Range Inputs */}
-                      {draftDateFilter === "custom" && (
-                        <div className="grid grid-cols-2 gap-2 animate-in fade-in-50 duration-200">
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-medium text-muted-foreground">From</label>
-                            <DatePicker
-                              date={parseYyyyMmDd(draftFromDate)}
-                              setDate={(d) => {
-                                const formatted = d ? format(d, "yyyy-MM-dd") : "";
-                                setDraftFromDate(formatted);
-                                if (d && draftToDate) {
-                                  const toD = parseYyyyMmDd(draftToDate);
-                                  if (toD && d > toD) {
-                                    setDraftToDate("");
-                                  }
-                                }
-                              }}
-                              placeholder="Start Date"
-                              className="h-8.5 text-[12px] px-2.5 bg-background border-input"
-                              disabledDays={
-                                draftToDate
-                                  ? { after: parseYyyyMmDd(draftToDate) as Date }
-                                  : undefined
-                              }
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[11px] font-medium text-muted-foreground">To</label>
-                            <DatePicker
-                              date={parseYyyyMmDd(draftToDate)}
-                              setDate={(d) => {
-                                const formatted = d ? format(d, "yyyy-MM-dd") : "";
-                                setDraftToDate(formatted);
-                                if (d && draftFromDate) {
-                                  const fromD = parseYyyyMmDd(draftFromDate);
-                                  if (fromD && d < fromD) {
-                                    setDraftFromDate("");
-                                  }
-                                }
-                              }}
-                              placeholder="End Date"
-                              className="h-8.5 text-[12px] px-2.5 bg-background border-input"
-                              disabledDays={
-                                draftFromDate
-                                  ? { before: parseYyyyMmDd(draftFromDate) as Date }
-                                  : undefined
-                              }
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 justify-end border-t border-border pt-3 mt-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-[12px]"
-                          onClick={() => setIsDatePopoverOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="h-8 text-[12px]"
-                          onClick={handleApplyDateFilter}
-                        >
-                          Apply
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </PopoverPortal>
-                </Popover>
+                <DateRangeFilterPopover
+                  presetKey={datePresetKey}
+                  fromDate={fromDate}
+                  toDate={toDate}
+                  onApply={handleDateFilterApply}
+                  onClear={handleDateFilterClear}
+                />
               </div>
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">

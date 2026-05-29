@@ -250,6 +250,7 @@ type RawTaluka = {
   stateId?: string;
   stateName?: string;
   name?: string;
+  enName?: string;
   translations?: TranslationPayload;
   isActive?: boolean;
 };
@@ -262,6 +263,8 @@ type RawVillage = {
   districtName?: string;
   stateId?: string;
   stateName?: string;
+  name?: string;
+  enName?: string;
   translations?: TranslationPayload;
   isActive?: boolean;
 };
@@ -291,6 +294,9 @@ const getTranslatedName = (translations?: TranslationPayload): string => {
     ""
   );
 };
+
+const getEnglishGeoName = (item: { enName?: string; name?: string; translations?: TranslationPayload }): string =>
+  item.enName?.trim() || getTranslatedName(item.translations) || item.name?.trim() || "";
 
 export const getFarmers = async (
   page: number = 1,
@@ -355,7 +361,7 @@ export const getTalukas = async (params: {
       districtName: item.districtName || "",
       stateId: item.stateId || "",
       stateName: item.stateName || "",
-      name: item.name || getTranslatedName(item.translations),
+      name: getEnglishGeoName(item),
       isActive: Boolean(item.isActive),
     })),
     meta,
@@ -395,7 +401,7 @@ export const getVillages = async (params: {
       districtName: item.districtName || "",
       stateId: item.stateId || "",
       stateName: item.stateName || "",
-      name: getTranslatedName(item.translations),
+      name: getEnglishGeoName(item),
       isActive: Boolean(item.isActive),
     })),
     meta,

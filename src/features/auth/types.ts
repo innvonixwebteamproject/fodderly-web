@@ -99,6 +99,9 @@ export interface LoginResponseData extends AuthTokens {
   role: UserRole;
   forcePasswordChange: boolean;
   isActive: boolean;
+  unitConversion?: {
+    ton_to_kg: number;
+  };
 }
 
 export interface LoginResponse {
@@ -124,6 +127,7 @@ export interface AuthSession {
   userEmail: string | null;
   userName: string | null;
   userId: string | null;
+  unitConversion: { ton_to_kg: number } | null;
 }
 
 export interface UserData {
@@ -163,6 +167,9 @@ export interface UserData {
   updatedAt?: string;
   profile?: string | null;
   skills?: unknown[];
+  unitConversion?: {
+    ton_to_kg: number;
+  };
 }
 
 export interface UserProfileResponse {

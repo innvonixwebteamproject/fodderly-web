@@ -60,6 +60,7 @@ function DialogContent({
   variant,
   onInteractOutside,
   onEscapeKeyDown,
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> &
   VariantProps<typeof dialogContentVariants> & {
@@ -83,6 +84,12 @@ function DialogContent({
         onEscapeKeyDown={(event) => {
           onEscapeKeyDown?.(event);
           if (!closeOnEscapeKey) {
+            event.preventDefault();
+          }
+        }}
+        onOpenAutoFocus={(event) => {
+          onOpenAutoFocus?.(event);
+          if (!event.defaultPrevented) {
             event.preventDefault();
           }
         }}

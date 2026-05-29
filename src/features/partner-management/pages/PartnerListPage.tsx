@@ -54,7 +54,6 @@ import {
 import { PartnerDetailModal } from "../components/PartnerDetailModal";
 
 const statusOptions = [
-  { value: "all", label: "All Status" },
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
 ];
@@ -83,8 +82,8 @@ function DistrictsModal({
     partner.districts && partner.districts.length > 0
       ? partner.districts.map((district) => district.name).filter(Boolean)
       : partner.districtIds
-          .map((id) => districtNameMap.get(id) || id)
-          .filter(Boolean);
+        .map((id) => districtNameMap.get(id) || id)
+        .filter(Boolean);
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
@@ -192,7 +191,7 @@ export function PartnerListPage() {
   ]);
   const [stateFilter, setStateFilter] = useState("");
   const [districtFilter, setDistrictFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [isDistrictsModalOpen, setIsDistrictsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<IPartner | null>(null);
@@ -217,7 +216,7 @@ export function PartnerListPage() {
   }, [stateFilter]);
 
   const partnerStatus =
-    statusFilter === "all" ? undefined : (statusFilter as "active" | "inactive");
+    statusFilter === "" ? undefined : (statusFilter as "active" | "inactive");
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
     defaultSortBy: "createdAt",
@@ -277,7 +276,7 @@ export function PartnerListPage() {
     setSearchTerm("");
     setStateFilter("");
     setDistrictFilter("");
-    setStatusFilter("all");
+    setStatusFilter("");
     setSorting([{ id: "createdAt", desc: true }]);
   };
 
@@ -344,8 +343,8 @@ export function PartnerListPage() {
       partner.state?.id
         ? partner.state.id === stateFilter
         : partner.districtIds.some(
-            (districtId) => districtStateMap.get(districtId) === stateFilter,
-          ),
+          (districtId) => districtStateMap.get(districtId) === stateFilter,
+        ),
     );
   }, [debouncedSearchTerm, districtStateMap, districtFilter, partners, stateFilter]);
 
@@ -368,9 +367,9 @@ export function PartnerListPage() {
         enableSorting: true,
         cell: ({ row }) => (
           <div className="flex items-center gap-2 min-w-0">
-            <TruncatedCell 
-              value={row.original.fullName} 
-              className="font-medium" 
+            <TruncatedCell
+              value={row.original.fullName}
+              className="font-medium"
               maxWidth="max-w-[130px]"
             />
             {!row.original.forcePasswordChange && (
@@ -438,8 +437,8 @@ export function PartnerListPage() {
           row.districts && row.districts.length > 0
             ? row.districts.map((district) => district.name).join(", ")
             : row.districtIds
-                .map((districtId) => districtNameMap.get(districtId) || districtId)
-                .join(", "),
+              .map((districtId) => districtNameMap.get(districtId) || districtId)
+              .join(", "),
         header: ({ column }) => (
           <DataGridColumnHeader title="Districts" column={column} />
         ),
@@ -449,8 +448,8 @@ export function PartnerListPage() {
             row.original.districts && row.original.districts.length > 0
               ? row.original.districts.map((district) => district.name).filter(Boolean)
               : row.original.districtIds
-                  .map((districtId) => districtNameMap.get(districtId) || districtId)
-                  .filter(Boolean);
+                .map((districtId) => districtNameMap.get(districtId) || districtId)
+                .filter(Boolean);
 
           if (districtNames.length === 0) return <span className="text-muted-foreground italic">-</span>;
 
@@ -648,10 +647,9 @@ This action will update the partner's status immediately.`
                   options={statusOptions}
                   value={statusFilter}
                   onValueChange={setStatusFilter}
-                  placeholder="Status"
+                  placeholder="All Status"
                   searchPlaceholder="Search Status..."
                   searchInputClassName="text-xs placeholder:text-xs"
-                  isClearable={false}
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
@@ -664,7 +662,7 @@ This action will update the partner's status immediately.`
                   !searchTerm &&
                   !stateFilter &&
                   !districtFilter &&
-                  statusFilter === "all" &&
+                  !statusFilter &&
                   sorting.length === 1 &&
                   sorting[0]?.id === "createdAt" &&
                   sorting[0]?.desc === true

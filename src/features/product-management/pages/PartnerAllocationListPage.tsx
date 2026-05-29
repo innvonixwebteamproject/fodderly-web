@@ -32,7 +32,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
+import {
+  formatForDisplay,
+  formatAdminAvailableQty,
+  formatPartnerAvailableQty,
+  formatPartnerAllocatedQty,
+} from "@/utils/unit-conversion";
 import { useProductCategoriesQuery } from "@/features/category-management/hooks";
 import { usePartnersQuery } from "@/features/partner-management/hooks";
 import { usePartnerAllocationProductDetailQuery, useProductsQuery } from "../hooks";
@@ -65,7 +70,7 @@ export function PartnerAllocationListPage() {
   const { partnerId = "" } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<AllocationItem | null>(null);
@@ -117,7 +122,7 @@ export function PartnerAllocationListPage() {
   } = usePartnerAllocationsInfiniteQuery(
     {
       partner_uuid: partnerId || undefined,
-      category_uuid: categoryFilter === "all" ? undefined : categoryFilter,
+      category_uuid: categoryFilter === "" ? undefined : categoryFilter,
       search: debouncedSearch || undefined,
       limit: 10,
       sortBy,
@@ -161,13 +166,11 @@ export function PartnerAllocationListPage() {
   }, [activePartners, partnerId]);
 
   const categoryOptions = useMemo(
-    () => [
-      { value: "all", label: "All Categories" },
-      ...(categoriesQuery.data?.data || []).map((category) => ({
+    () =>
+      (categoriesQuery.data?.data || []).map((category) => ({
         value: category.id,
         label: category.name.en || "-",
       })),
-    ],
     [categoriesQuery.data?.data],
   );
 
@@ -277,11 +280,11 @@ export function PartnerAllocationListPage() {
         accessorKey: "admin_available_quantity",
         header: ({ column }) => <DataGridColumnHeader title="Admin Available Qty" column={column} />,
         enableSorting: false,
-        cell: ({ row }) =>
-          row.original.admin_available_quantity !== null &&
-          row.original.admin_available_quantity !== undefined
-            ? `${row.original.admin_available_quantity} ${getInventoryUnitLabel(row.original.admin_unit ?? row.original.unit)}`
-            : "—",
+        cell: ({ row }) => {
+          const quantity = row.original.admin_available_quantity;
+          if (quantity === null || quantity === undefined) return "—";
+          return formatAdminAvailableQty(quantity);
+        },
         size: 80,
       },
       {
@@ -289,10 +292,11 @@ export function PartnerAllocationListPage() {
         accessorKey: "available_quantity",
         header: ({ column }) => <DataGridColumnHeader title="Available Qty" column={column} />,
         enableSorting: false,
-        cell: ({ row }) =>
-          row.original.available_quantity !== null && row.original.available_quantity !== undefined
-            ? `${row.original.available_quantity} ${getInventoryUnitLabel(row.original.unit)}`
-            : "—",
+        cell: ({ row }) => {
+          const quantity = row.original.available_quantity;
+          if (quantity === null || quantity === undefined) return "—";
+          return formatPartnerAvailableQty(quantity);
+        },
         size: 80,
       },
       {
@@ -300,8 +304,9 @@ export function PartnerAllocationListPage() {
         accessorKey: "allocated_quantity",
         header: ({ column }) => <DataGridColumnHeader title="Allocated Qty" column={column} />,
         enableSorting: true,
-        cell: ({ row }) =>
-          `${row.original.allocated_quantity.toLocaleString()} ${getInventoryUnitLabel(row.original.unit)}`,
+        cell: ({ row }) => {
+          return formatPartnerAllocatedQty(row.original.allocated_quantity);
+        },
         size: 70,
       },
       {
@@ -309,8 +314,12 @@ export function PartnerAllocationListPage() {
         accessorKey: "price_per_unit",
         header: ({ column }) => <DataGridColumnHeader title="Price" column={column} />,
         enableSorting: true,
-        cell: ({ row }) =>
-          `₹${row.original.price_per_unit.toLocaleString(undefined, { maximumFractionDigits: 2 })}/${getInventoryUnitLabel(row.original.unit)}`,
+        cell: ({ row }) => {
+          const quantity = row.original.admin_available_quantity ?? row.original.allocated_quantity;
+          const display = formatForDisplay(quantity, row.original.price_per_unit);
+          const roundedPrice = Math.round(display.price);
+          return `₹${roundedPrice.toLocaleString()}/${display.unit.toUpperCase()}`;
+        },
         size: 90,
       },
       {
@@ -318,7 +327,12 @@ export function PartnerAllocationListPage() {
         accessorKey: "total_allocated_price",
         header: ({ column }) => <DataGridColumnHeader title="Total" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => <span className="font-semibold">₹{row.original.total_allocated_price.toLocaleString()}</span>,
+        cell: ({ row }) => {
+          const display = formatForDisplay(row.original.allocated_quantity, row.original.price_per_unit);
+          const total = display.quantity * display.price;
+          const roundedTotal = Math.round(total);
+          return <span className="font-semibold">₹{roundedTotal.toLocaleString()}</span>;
+        },
         size: 100,
       },
       {
@@ -426,7 +440,6 @@ export function PartnerAllocationListPage() {
                 onValueChange={(value) => setCategoryFilter(value)}
                 placeholder="Category"
                 triggerClassName="h-8.5 bg-background text-[12px]"
-                isClearable={false}
               />
             </div>
             <Button
@@ -435,12 +448,12 @@ export function PartnerAllocationListPage() {
               onClick={() => {
                 setSearchTerm("");
                 setDebouncedSearch("");
-                setCategoryFilter("all");
+                setCategoryFilter("");
                 setSorting([{ id: "createdAt", desc: true }]);
               }}
               disabled={
                 !searchTerm &&
-                categoryFilter === "all" &&
+                !categoryFilter &&
                 sorting.length === 1 &&
                 sorting[0]?.id === "createdAt" &&
                 sorting[0]?.desc === true

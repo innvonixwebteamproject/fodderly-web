@@ -17,7 +17,7 @@ import {
 } from "../utils/product-image";
 
 import { TruncatedCell } from "@/components/common/truncated-cell";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
+import { formatForDisplay, formatAdminAvailableQty, formatPartnerAllocatedQty } from "../utils/unit-conversion";
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -83,6 +83,16 @@ export function ProductDetailModal({
   const primaryImageSrc = imageUrls[selectedImageIndex] || PRODUCT_NO_IMAGE_PLACEHOLDER;
 
   if (!product) return null;
+
+  // Format price and quantity for display based on automatic unit selection
+  const stockInKg = product.admin_available_quantity ?? product.stock;
+  const pricePerKg = product.price;
+  const formattedDisplay = formatForDisplay(stockInKg, pricePerKg);
+  const unitLabel = formattedDisplay.unit === "ton" ? "Ton" : "KG";
+
+  // Format quantities for display using new centralized helpers
+  const adminAvailableQtyStr = formatAdminAvailableQty(product.admin_available_quantity ?? product.stock);
+  const allocatedQtyStr = formatPartnerAllocatedQty(product.allocated_quantity ?? 0);
 
   const getTranslation = (value: Partial<TranslationMap> | undefined, lang: ProductLanguageCode, fallback = "-"): string => {
     if (!value) return fallback;
@@ -189,7 +199,7 @@ export function ProductDetailModal({
                       Product Price
                     </h4>
                     <p className="text-2xl font-black text-primary">
-                      ₹{product.price.toLocaleString()}/{getInventoryUnitLabel(product.admin_unit)}
+                      ₹{formattedDisplay.price.toLocaleString()}/{unitLabel}
                     </p>
                   </div>
 
@@ -199,8 +209,7 @@ export function ProductDetailModal({
                         <ShieldAlert className="h-3.5 w-3.5" /> Total Admin Available Qty
                       </h4>
                       <p className="text-[13px] font-bold text-foreground">
-                        {(product.admin_available_quantity ?? product.stock)}{" "}
-                        {getInventoryUnitLabel(product.admin_unit)}
+                        {adminAvailableQtyStr}
                       </p>
                     </div>
 
@@ -210,8 +219,7 @@ export function ProductDetailModal({
                           Partner Allocated Qty
                         </h4>
                         <p className="text-[13px] font-bold text-foreground">
-                          {(product.allocated_quantity ?? 0)}{" "}
-                          {getInventoryUnitLabel(product.allocated_unit ?? product.admin_unit)}
+                          {allocatedQtyStr}
                         </p>
                       </div>
                     )}

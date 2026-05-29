@@ -24,11 +24,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
-  getInventoryUnitLabel,
   INVENTORY_UNIT_OPTIONS,
   INVENTORY_UNITS,
   normalizeInventoryUnit,
 } from "@/constants/unit.constants";
+import { convertInventoryToKgFormat, formatForDisplay, getTonToKgRate, formatAdminAvailableQty } from "@/utils/unit-conversion";
 import { getLanguageLabel } from "../services/product.api";
 import type { IPartner } from "@/features/partner-management/types";
 import type { ProductRecord } from "../types";
@@ -123,66 +123,61 @@ export function AllocateProductModal({
     return Array.from(nameSet);
   }, [selectedProducts]);
 
-  const combinedUnitPrice = useMemo(() => {
-    return selectedProducts.reduce((sum, product) => {
-      let price = Number(product.price || 0);
-      const adminUnit = normalizeInventoryUnit(
-        product.admin_unit ?? product.quantity_indicator,
-      );
-      const currentUnit =
-        selectedUnit === "" || selectedUnit === undefined
-          ? adminUnit
-          : normalizeInventoryUnit(selectedUnit);
+  // Calculate price per display unit (KG or TON based on formatForDisplay)
+  const pricePerDisplayUnit = useMemo(() => {
+    if (selectedProducts.length === 0) return 0;
 
-      if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
-        price = price / 1000;
-      } else if (adminUnit === INVENTORY_UNITS.KG && currentUnit === INVENTORY_UNITS.TON) {
-        price = price * 1000;
-      }
-      return sum + price;
-    }, 0);
-  }, [selectedProducts, selectedUnit]);
-
-  const totalAllocationPrice = useMemo(
-    () => Number((Math.max(allocatedQuantity, 0) * combinedUnitPrice).toFixed(2)),
-    [allocatedQuantity, combinedUnitPrice],
-  );
-
-  const adminTotalAvailableQuantity = useMemo(() => {
-    if (selectedProducts.length === 0) return "";
     const product = selectedProducts[0];
-    if (product.admin_available_quantity === undefined || product.admin_available_quantity === null) {
-      return "";
+    const pricePerKg = Number(product.price || 0);
+    const quantity = Number(product.admin_available_quantity || 0);
+    const display = formatForDisplay(quantity, 0);
+    const displayUnit = display.unit === "ton" ? INVENTORY_UNITS.TON : INVENTORY_UNITS.KG;
+
+    // Convert price to display unit
+    let priceInDisplayUnit = pricePerKg;
+    if (displayUnit === INVENTORY_UNITS.TON) {
+      priceInDisplayUnit = pricePerKg * getTonToKgRate();
     }
-    const quantity = Number(product.admin_available_quantity);
+
+    return priceInDisplayUnit;
+  }, [selectedProducts]);
+
+  const totalAllocationPrice = useMemo(() => {
+    if (selectedProducts.length === 0) return 0;
+
+    const product = selectedProducts[0];
+    const pricePerKg = Number(product.price || 0);
     const adminUnit = normalizeInventoryUnit(
       product.admin_unit ?? product.quantity_indicator,
     );
-    return `${quantity.toLocaleString()} ${getInventoryUnitLabel(adminUnit)}`;
+    const currentUnit = normalizeInventoryUnit(selectedUnit);
+
+    // Convert price from admin unit to user's selected unit
+    let pricePerSelectedUnit = pricePerKg;
+    if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
+      pricePerSelectedUnit = pricePerKg / getTonToKgRate();
+    } else if (adminUnit === INVENTORY_UNITS.KG && currentUnit === INVENTORY_UNITS.TON) {
+      pricePerSelectedUnit = pricePerKg * getTonToKgRate();
+    }
+
+    return Math.round(Number((Math.max(allocatedQuantity, 0) * pricePerSelectedUnit).toFixed(2)));
+  }, [allocatedQuantity, selectedUnit, selectedProducts]);
+
+  const { adminTotalAvailableQuantity, displayUnit } = useMemo(() => {
+    if (selectedProducts.length === 0) return { adminTotalAvailableQuantity: "", displayUnit: INVENTORY_UNITS.KG };
+
+    const product = selectedProducts[0];
+    if (product.admin_available_quantity === undefined || product.admin_available_quantity === null) {
+      return { adminTotalAvailableQuantity: "", displayUnit: INVENTORY_UNITS.KG };
+    }
+    const quantity = Number(product.admin_available_quantity);
+    const display = formatForDisplay(quantity, 0);
+    const displayUnit = display.unit === "ton" ? INVENTORY_UNITS.TON : INVENTORY_UNITS.KG;
+    return {
+      adminTotalAvailableQuantity: formatAdminAvailableQty(quantity),
+      displayUnit
+    };
   }, [selectedProducts]);
-
-  const maxAvailableStock = useMemo(() => {
-    if (selectedProducts.length === 0) return Number.POSITIVE_INFINITY;
-    return Math.min(
-      ...selectedProducts.map((product) => {
-        let stock = Number(product.stock || 0);
-        const adminUnit = normalizeInventoryUnit(
-          product.admin_unit ?? product.quantity_indicator,
-        );
-        const currentUnit =
-          selectedUnit === "" || selectedUnit === undefined
-            ? adminUnit
-            : normalizeInventoryUnit(selectedUnit);
-
-        if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
-          stock = stock * 1000;
-        } else if (adminUnit === INVENTORY_UNITS.KG && currentUnit === INVENTORY_UNITS.TON) {
-          stock = stock / 1000;
-        }
-        return stock;
-      }),
-    );
-  }, [selectedProducts, selectedUnit]);
 
   useEffect(() => {
     if (open && (form.getValues("unit") === "" || form.getValues("unit") === undefined || form.getValues("unit") === null)) {
@@ -205,34 +200,35 @@ export function AllocateProductModal({
   };
 
   const submitForm = (values: AllocationFormValues) => {
-    if (values.allocated_quantity > maxAvailableStock) {
-      form.setError("allocated_quantity", {
-        type: "validate",
-        message: "Allocated quantity cannot exceed available stock.",
-      });
-      return;
-    }
-
     const product = products.find((item) => item.id === values.product_uuid);
-    let unitPrice = Number(product?.price || 0);
+    const unitPrice = Number(product?.price || 0);
     const adminUnit = normalizeInventoryUnit(
       product?.admin_unit ?? product?.quantity_indicator,
     );
     const currentUnit = normalizeInventoryUnit(values.unit);
 
-    if (adminUnit === INVENTORY_UNITS.TON && currentUnit === INVENTORY_UNITS.KG) {
-      unitPrice = unitPrice / 1000;
-    } else if (adminUnit === INVENTORY_UNITS.KG && currentUnit === INVENTORY_UNITS.TON) {
-      unitPrice = unitPrice * 1000;
+    // Convert price from admin unit to KG (base unit)
+    let priceInKg = unitPrice;
+    if (adminUnit === INVENTORY_UNITS.TON) {
+      priceInKg = unitPrice / getTonToKgRate();
     }
+
+    // Convert to KG format for API submission based on user's selected unit
+    // When unit is TON: quantity = TON * getTonToKgRate(), price = TON price / getTonToKgRate()
+    // When unit is KG: values remain as-is
+    // Note: Display values are always in KG, so we use the user's selected unit for conversion
+    const converted = convertInventoryToKgFormat(
+      values.allocated_quantity,
+      priceInKg,
+      currentUnit
+    );
 
     const payloads: AllocateProductPayload[] = [
       {
         partner_uuid: values.partner_uuid,
         product_uuid: values.product_uuid,
-        allocated_quantity: values.allocated_quantity,
-        total_allocated_price: Number((values.allocated_quantity * unitPrice).toFixed(2)),
-        unit: values.unit ?? 0,
+        allocated_quantity: converted.quantity,
+        total_allocated_price: Number((converted.quantity * converted.price).toFixed(2)),
       },
     ];
 
@@ -398,7 +394,10 @@ export function AllocateProductModal({
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <FormItem>
                   <FormLabel>Price Per Unit</FormLabel>
-                  <Input disabled value={`₹${combinedUnitPrice.toLocaleString()}`} />
+                  <Input
+                    disabled
+                    value={`₹${Math.round(pricePerDisplayUnit).toLocaleString()}/${displayUnit === INVENTORY_UNITS.TON ? "TON" : "KG"}`}
+                  />
                 </FormItem>
                 <FormItem>
                   <FormLabel>Total Allocation Price</FormLabel>

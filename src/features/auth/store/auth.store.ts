@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { devtools } from "zustand/middleware";
-import { STORAGE_KEYS } from "@/config/constant";
+import { STORAGE_KEYS } from "@/constants/app.constants";
+import { ROLES } from "@/constants/auth.constants";
 import type { AuthSession, LoginResponseData } from "../types";
 
 interface AuthStore extends AuthSession {
@@ -28,6 +29,7 @@ interface AuthStore extends AuthSession {
     email?: string;
     isActive?: boolean;
     forcePasswordChange?: boolean;
+    unitConversion?: { ton_to_kg: number } | null;
   }) => void;
 
   /**
@@ -48,20 +50,30 @@ const initialState: AuthSession = {
   userEmail: null,
   userName: null,
   userId: null,
+  unitConversion: null,
 };
 
 const readPersistedAuthState = (): AuthSession => {
   const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-  const expiresIn = localStorage.getItem("auth.expiresIn");
-  const tokenType = localStorage.getItem("auth.tokenType");
-  const role = localStorage.getItem("auth.role");
-  const isActive = localStorage.getItem("auth.isActive");
-  const forcePasswordChange = localStorage.getItem("auth.forcePasswordChange");
-  const isAuthenticated = localStorage.getItem("auth.isAuthenticated");
-  const userEmail = localStorage.getItem("auth.userEmail");
-  const userName = localStorage.getItem("auth.userName");
-  const userId = localStorage.getItem("auth.userId");
+  const expiresIn = localStorage.getItem(STORAGE_KEYS.AUTH_EXPIRES_IN);
+  const tokenType = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN_TYPE);
+  const role = localStorage.getItem(STORAGE_KEYS.AUTH_ROLE);
+  const isActive = localStorage.getItem(STORAGE_KEYS.AUTH_IS_ACTIVE);
+  const forcePasswordChange = localStorage.getItem(STORAGE_KEYS.AUTH_FORCE_PASSWORD_CHANGE);
+  const isAuthenticated = localStorage.getItem(STORAGE_KEYS.AUTH_IS_AUTHENTICATED);
+  const userEmail = localStorage.getItem(STORAGE_KEYS.AUTH_USER_EMAIL);
+  const userName = localStorage.getItem(STORAGE_KEYS.AUTH_USER_NAME);
+  const userId = localStorage.getItem(STORAGE_KEYS.AUTH_USER_ID);
+  const unitConversionStr = localStorage.getItem(STORAGE_KEYS.AUTH_UNIT_CONVERSION);
+  let unitConversion = null;
+  if (unitConversionStr) {
+    try {
+      unitConversion = JSON.parse(unitConversionStr);
+    } catch {
+      unitConversion = null;
+    }
+  }
 
   return {
     accessToken,
@@ -75,6 +87,7 @@ const readPersistedAuthState = (): AuthSession => {
     userEmail: userEmail || null,
     userName: userName || null,
     userId: userId || null,
+    unitConversion: unitConversion,
   };
 };
 
@@ -96,6 +109,7 @@ export const useAuthStore = create<AuthStore>()(
             userEmail: data.email,
             userName: data.fullName || (data.firstName ? `${data.firstName} ${data.lastName || ""}`.trim() : data.name),
             userId: data.id,
+            unitConversion: data.unitConversion || null,
             isAuthenticated: true,
           });
         },
@@ -104,15 +118,16 @@ export const useAuthStore = create<AuthStore>()(
           set({ ...initialState });
           localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-          localStorage.removeItem("auth.expiresIn");
-          localStorage.removeItem("auth.tokenType");
-          localStorage.removeItem("auth.role");
-          localStorage.removeItem("auth.forcePasswordChange");
-          localStorage.removeItem("auth.isActive");
-          localStorage.removeItem("auth.isAuthenticated");
-          localStorage.removeItem("auth.userEmail");
-          localStorage.removeItem("auth.userName");
-          localStorage.removeItem("auth.userId");
+          localStorage.removeItem(STORAGE_KEYS.AUTH_EXPIRES_IN);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN_TYPE);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_ROLE);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_FORCE_PASSWORD_CHANGE);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_IS_ACTIVE);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_IS_AUTHENTICATED);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_USER_EMAIL);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_USER_NAME);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_USER_ID);
+          localStorage.removeItem(STORAGE_KEYS.AUTH_UNIT_CONVERSION);
         },
 
         hydrateAuth: () => {
@@ -129,6 +144,7 @@ export const useAuthStore = create<AuthStore>()(
                 isActive: data.isActive ?? state.isActive,
                 forcePasswordChange:
                   data.forcePasswordChange ?? state.forcePasswordChange,
+                unitConversion: data.unitConversion !== undefined ? data.unitConversion : state.unitConversion,
              };
              return newState;
           });
@@ -168,36 +184,42 @@ export const useAuthStore = create<AuthStore>()(
             localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, state.refreshToken ?? "");
 
             if (state.expiresIn != null) {
-              localStorage.setItem("auth.expiresIn", String(state.expiresIn));
+              localStorage.setItem(STORAGE_KEYS.AUTH_EXPIRES_IN, String(state.expiresIn));
             } else {
-              localStorage.removeItem("auth.expiresIn");
+              localStorage.removeItem(STORAGE_KEYS.AUTH_EXPIRES_IN);
             }
 
-            localStorage.setItem("auth.tokenType", state.tokenType ?? "");
-            localStorage.setItem("auth.role", state.role || "admin");
-            localStorage.setItem("auth.isActive", String(state.isActive));
+            localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN_TYPE, state.tokenType ?? "");
+            localStorage.setItem(STORAGE_KEYS.AUTH_ROLE, state.role || ROLES.ADMIN);
+            localStorage.setItem(STORAGE_KEYS.AUTH_IS_ACTIVE, String(state.isActive));
             localStorage.setItem(
-              "auth.forcePasswordChange",
+              STORAGE_KEYS.AUTH_FORCE_PASSWORD_CHANGE,
               String(state.forcePasswordChange),
             );
-            localStorage.setItem("auth.isAuthenticated", String(state.isAuthenticated));
-            localStorage.setItem("auth.userEmail", state.userEmail ?? "");
-            localStorage.setItem("auth.userName", state.userName ?? "");
-            localStorage.setItem("auth.userId", state.userId ?? "");
+            localStorage.setItem(STORAGE_KEYS.AUTH_IS_AUTHENTICATED, String(state.isAuthenticated));
+            localStorage.setItem(STORAGE_KEYS.AUTH_USER_EMAIL, state.userEmail ?? "");
+            localStorage.setItem(STORAGE_KEYS.AUTH_USER_NAME, state.userName ?? "");
+            localStorage.setItem(STORAGE_KEYS.AUTH_USER_ID, state.userId ?? "");
+            if (state.unitConversion) {
+              localStorage.setItem(STORAGE_KEYS.AUTH_UNIT_CONVERSION, JSON.stringify(state.unitConversion));
+            } else {
+              localStorage.removeItem(STORAGE_KEYS.AUTH_UNIT_CONVERSION);
+            }
           },
 
           removeItem: () => {
             localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
             localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-            localStorage.removeItem("auth.expiresIn");
-            localStorage.removeItem("auth.tokenType");
-            localStorage.removeItem("auth.role");
-            localStorage.removeItem("auth.forcePasswordChange");
-            localStorage.removeItem("auth.isActive");
-            localStorage.removeItem("auth.isAuthenticated");
-            localStorage.removeItem("auth.userEmail");
-            localStorage.removeItem("auth.userName");
-            localStorage.removeItem("auth.userId");
+            localStorage.removeItem(STORAGE_KEYS.AUTH_EXPIRES_IN);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN_TYPE);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_ROLE);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_FORCE_PASSWORD_CHANGE);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_IS_ACTIVE);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_IS_AUTHENTICATED);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_USER_EMAIL);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_USER_NAME);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_USER_ID);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_UNIT_CONVERSION);
           },
         },
         skipHydration: false,

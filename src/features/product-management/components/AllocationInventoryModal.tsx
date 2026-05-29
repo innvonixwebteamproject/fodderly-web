@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
+import { formatForDisplay } from "@/utils/unit-conversion";
 import type { AllocationInventory } from "../types/allocation.types";
 
 interface AllocationInventoryModalProps {
@@ -68,11 +68,19 @@ export function AllocationInventoryModal({
                     <TableCell className="text-[12px] font-normal">{inv.hsn_code || "—"}</TableCell>
                     <TableCell className="text-[12px] font-normal">
                       {inv.quantity !== null && inv.quantity !== undefined
-                        ? `${inv.quantity} ${getInventoryUnitLabel(inv.unit)}`
+                        ? (() => {
+                            const display = formatForDisplay(inv.quantity, inv.price || 0);
+                            return `${display.quantity.toLocaleString()} ${display.unit.toUpperCase()}`;
+                          })()
                         : "—"}
                     </TableCell>
                     <TableCell className="text-[12px] font-normal">
-                      {typeof inv.price === "number" ? `₹${inv.price.toLocaleString()}` : "—"}
+                      {typeof inv.price === "number"
+                        ? (() => {
+                            const display = formatForDisplay(inv.quantity || 0, inv.price);
+                            return `₹${display.price.toLocaleString()}/${display.unit.toUpperCase()}`;
+                          })()
+                        : "—"}
                     </TableCell>
                     <TableCell className="text-[12px] font-normal">{inv.category_name || "—"}</TableCell>
                   </TableRow>

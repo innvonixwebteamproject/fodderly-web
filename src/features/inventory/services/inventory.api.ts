@@ -132,7 +132,13 @@ export const createInventory = async (body: {
   hsn_code: string;
   price: number;
 }): Promise<{ message: string; data: InventoryRecord }> => {
-  const response = await api.post<WrappedItemResponse>("/inventory", body);
+  const { unit: _unit, ...rest } = body;
+  const formattedBody = {
+    ...rest,
+    quantity: Number(body.quantity).toFixed(4),
+    price: Number(body.price).toFixed(4),
+  };
+  const response = await api.post<WrappedItemResponse>("/inventory", formattedBody);
   if (!response.data.data) {
     throw new Error(response.data.message || "Unable to create inventory.");
   }
@@ -151,7 +157,13 @@ export const updateInventory = async (
     price: number;
   },
 ): Promise<{ message: string; data: InventoryRecord }> => {
-  const response = await api.patch<WrappedItemResponse>(`/inventory/${id}`, body);
+  const { unit: _unit, ...rest } = body;
+  const formattedBody = {
+    ...rest,
+    quantity: Number(body.quantity).toFixed(4),
+    price: Number(body.price).toFixed(4),
+  };
+  const response = await api.patch<WrappedItemResponse>(`/inventory/${id}`, formattedBody);
   if (!response.data.data) {
     throw new Error(response.data.message || "Unable to update inventory.");
   }

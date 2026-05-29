@@ -12,7 +12,8 @@ export const CATEGORY_LANGUAGES = [
 
 export type CategoryLanguageCode = (typeof CATEGORY_LANGUAGES)[number]["code"];
 export type CategoryStatus = "active" | "inactive";
-export type CategoryStatusFilter = "all" | CategoryStatus;
+// export type CategoryStatusFilter = "all" | CategoryStatus;
+export type CategoryStatusFilter = CategoryStatus | undefined;
 export type TranslationMap = Partial<Record<CategoryLanguageCode, string>>;
 
 export interface CategoryListMeta {
@@ -133,24 +134,7 @@ export const productCategoryFormSchema = z.object({
       });
     }
 
-    if (englishDescription) {
-      if (!translatedDescription) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["description", language.code],
-          message: "Product description is required in all languages.",
-        });
-      } else if (translatedDescription.length < PRODUCT_CATEGORY_DESCRIPTION_MIN_LENGTH) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["description", language.code],
-          message: `Product description must be at least ${PRODUCT_CATEGORY_DESCRIPTION_MIN_LENGTH} characters.`,
-        });
-      }
-    } else if (
-      translatedDescription &&
-      translatedDescription.length < PRODUCT_CATEGORY_DESCRIPTION_MIN_LENGTH
-    ) {
+    if (translatedDescription && translatedDescription.length < PRODUCT_CATEGORY_DESCRIPTION_MIN_LENGTH) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["description", language.code],

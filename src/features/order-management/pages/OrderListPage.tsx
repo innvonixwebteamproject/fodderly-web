@@ -59,6 +59,8 @@ import type {
   OrderExportJobStatus,
 } from "../types/order.types";
 import { useOrdersInfiniteQuery } from "../hooks/useOrdersQuery";
+import { DateRangeFilterPopover } from "../components/DateRangeFilterPopover";
+import { resolvePresetDates, type DateFilterPresetKey } from "../utils/date-filter-presets";
 import {
   exportAdminOrderList,
   enqueueAdminOrderExport,
@@ -100,6 +102,9 @@ export function OrderListPage() {
   const [adminStatusFilter, setAdminStatusFilter] = useState<"" | AdminOrderListApiStatus>("");
   const [adminPaymentModeFilter, setAdminPaymentModeFilter] = useState<"" | AdminOrderListApiPaymentMode>("");
   const [adminPaymentStatusFilter, setAdminPaymentStatusFilter] = useState<"" | AdminOrderListApiPaymentStatus>("");
+  const [datePresetKey, setDatePresetKey] = useState<DateFilterPresetKey>("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [quickOrder, setQuickOrder] = useState<AdminOrderListItem | null>(null);
@@ -196,6 +201,8 @@ export function OrderListPage() {
       adminListStatus: adminStatusFilter || undefined,
       adminListPaymentMode: adminPaymentModeFilter || undefined,
       adminListPaymentStatus: adminPaymentStatusFilter || undefined,
+      orderDateFrom: fromDate || undefined,
+      orderDateTo: toDate || undefined,
     }),
     [
       debouncedSearch,
@@ -209,6 +216,8 @@ export function OrderListPage() {
       adminStatusFilter,
       adminPaymentModeFilter,
       adminPaymentStatusFilter,
+      fromDate,
+      toDate,
     ],
   );
 
@@ -248,6 +257,9 @@ export function OrderListPage() {
     setAdminStatusFilter("");
     setAdminPaymentModeFilter("");
     setAdminPaymentStatusFilter("");
+    setDatePresetKey("");
+    setFromDate("");
+    setToDate("");
   };
 
   const activeFilterCount = [
@@ -340,6 +352,23 @@ export function OrderListPage() {
       if (interval) window.clearInterval(interval);
     };
   }, [activeJobId]);
+
+  const handleDateFilterApply = useCallback(
+    (values: { presetKey: DateFilterPresetKey; fromDate: string; toDate: string }) => {
+      const resolved = resolvePresetDates(values.presetKey, values.fromDate, values.toDate);
+      if (!resolved) return;
+      setDatePresetKey(values.presetKey);
+      setFromDate(resolved.fromDate);
+      setToDate(resolved.toDate);
+    },
+    [],
+  );
+
+  const handleDateFilterClear = useCallback(() => {
+    setDatePresetKey("");
+    setFromDate("");
+    setToDate("");
+  }, []);
 
   const columns = useMemo<ColumnDef<AdminOrderListItem>[]>(
     () => [
@@ -507,6 +536,13 @@ export function OrderListPage() {
                 tooltip="Search by order id, farmer name, or fodderman name"
                 className="w-full max-w-[280px] xl:max-w-[300px] 2xl:max-w-[340px]"
                 inputClassName="h-9 text-[13px]"
+              />
+              <DateRangeFilterPopover
+                presetKey={datePresetKey}
+                fromDate={fromDate}
+                toDate={toDate}
+                onApply={handleDateFilterApply}
+                onClear={handleDateFilterClear}
               />
             </div>
             <div className="ml-auto flex flex-wrap items-center justify-end gap-2">

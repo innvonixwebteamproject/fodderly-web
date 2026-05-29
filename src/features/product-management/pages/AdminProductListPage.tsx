@@ -24,7 +24,6 @@ import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +51,7 @@ import {
 } from "../utils/product-image";
 import { AllocationInventoryModal } from "../components/AllocationInventoryModal";
 import { StatusConfig, StatusDropdown } from "@/components/common/status-dropdown";
+import { formatForDisplay } from "../utils/unit-conversion";
 
 type ProductStatusEntity = {
   id: string;
@@ -70,8 +70,8 @@ export function AdminProductListPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | "active" | "inactive">("");
   const [sorting, setSorting] = useState<SortingState>([{ id: "createdAt", desc: true }]);
 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -99,10 +99,10 @@ export function AdminProductListPage() {
 
   const productsQuery = useProductsInfiniteQuery({
     search: debouncedSearchTerm || undefined,
-    categoryUuid: categoryFilter === "all" ? undefined : categoryFilter,
+    categoryUuid: categoryFilter === "" ? undefined : categoryFilter,
     sortBy,
     sortOrder,
-    isActive: statusFilter === "all" ? undefined : statusFilter === "active",
+    isActive: statusFilter === "" ? undefined : statusFilter === "active",
   });
 
   const categoriesQuery = useProductCategoriesQuery({ page: 1, limit: 100, status: "active" });
@@ -113,18 +113,15 @@ export function AdminProductListPage() {
   );
 
   const categoryOptions = useMemo(
-    () => [
-      { label: "All Categories", value: "all" },
-      ...(categoriesQuery.data?.data || []).map((item) => ({
+    () =>
+      (categoriesQuery.data?.data || []).map((item) => ({
         label: getLanguageLabel(item.name, "Category"),
         value: item.id,
       })),
-    ],
     [categoriesQuery.data?.data],
   );
 
   const statusOptions = [
-    { label: "All Status", value: "all" },
     { label: "Active", value: "active" },
     { label: "Inactive", value: "inactive" },
   ];
@@ -289,14 +286,20 @@ export function AdminProductListPage() {
         accessorKey: "price",
         header: ({ column }) => <DataGridColumnHeader title="Price" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => (
-          <TruncatedCell
-            value={`₹${row.original.price.toLocaleString()}`}
-            className="font-semibold"
-            maxWidth="max-w-[90px]"
-            tooltipClassName="sm:max-w-[280px]"
-          />
-        ),
+        cell: ({ row }) => {
+          const stockInKg = row.original.admin_available_quantity ?? row.original.stock;
+          const pricePerKg = row.original.price;
+          const formatted = formatForDisplay(stockInKg, pricePerKg);
+          
+          return (
+            <TruncatedCell
+              value={`₹${formatted.price.toLocaleString()}`}
+              className="font-semibold"
+              maxWidth="max-w-[90px]"
+              tooltipClassName="sm:max-w-[280px]"
+            />
+          );
+        },
         size: 95,
       },
       {
@@ -304,13 +307,20 @@ export function AdminProductListPage() {
         accessorKey: "stock",
         header: ({ column }) => <DataGridColumnHeader title="Qty" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => (
-          <TruncatedCell
-            value={`${row.original.admin_available_quantity ?? row.original.stock} ${getInventoryUnitLabel(row.original.admin_unit ?? row.original.quantity_indicator)}`}
-            maxWidth="max-w-[110px]"
-            tooltipClassName="sm:max-w-[280px]"
-          />
-        ),
+        cell: ({ row }) => {
+          const stockInKg = row.original.admin_available_quantity ?? row.original.stock;
+          const pricePerKg = row.original.price;
+          const formatted = formatForDisplay(stockInKg, pricePerKg);
+          const unitLabel = formatted.unit === "ton" ? "Ton" : "KG";
+          
+          return (
+            <TruncatedCell
+              value={`${formatted.quantity.toLocaleString()} ${unitLabel}`}
+              maxWidth="max-w-[110px]"
+              tooltipClassName="sm:max-w-[280px]"
+            />
+          );
+        },
         size: 110,
       },
       {
@@ -437,10 +447,9 @@ export function AdminProductListPage() {
                 <SearchableSelect
                   options={statusOptions}
                   value={statusFilter}
-                  onValueChange={(val) => setStatusFilter(val as "all" | "active" | "inactive")}
-                  placeholder="Status"
+                  onValueChange={(val) => setStatusFilter(val as "" | "active" | "inactive")}
+                  placeholder="All Status"
                   triggerClassName="h-8.5 bg-background text-[12px]"
-                  isClearable={false}
                 />
               </div>
               <div className="w-[140px]">
@@ -450,19 +459,18 @@ export function AdminProductListPage() {
                   onValueChange={setCategoryFilter}
                   placeholder="Category"
                   triggerClassName="h-8.5 bg-background text-[12.5px]"
-                  isClearable={false}
                 />
               </div>
               <Button
                 variant="outline"
                 onClick={() => {
                   setSearchTerm("");
-                  setCategoryFilter("all");
-                  setStatusFilter("all");
+                  setCategoryFilter("");
+                  setStatusFilter("");
                   setSorting([{ id: "createdAt", desc: true }]);
                 }}
                 className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary shrink-0 hover:bg-primary/5 hover:border-primary/50 transition-all"
-                disabled={!searchTerm && categoryFilter === "all" && statusFilter === "all" && sorting[0]?.id === "createdAt"}
+                disabled={!searchTerm && !categoryFilter && !statusFilter && sorting[0]?.id === "createdAt"}
                 title="Reset Filters"
               >
                 <RotateCcw className="h-4 w-4" />

@@ -882,6 +882,8 @@ const buildAdminListRequestBody = (
   if (filters.adminListStatus) body.statuses = [filters.adminListStatus];
   if (filters.adminListPaymentMode) body.paymentModes = [filters.adminListPaymentMode];
   if (filters.adminListPaymentStatus) body.paymentStatusLabels = [filters.adminListPaymentStatus];
+  if (filters.orderDateFrom) body.fromDate = filters.orderDateFrom;
+  if (filters.orderDateTo) body.toDate = filters.orderDateTo;
   return body;
 };
 

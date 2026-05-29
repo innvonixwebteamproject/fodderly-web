@@ -57,6 +57,9 @@ export interface ProductRecord {
   allocated_unit?: number;
   quantity_indicator?: string;
   quantity_controls?: Record<string, unknown> | null;
+  display_unit?: ProductUnit;
+  display_quantity?: number;
+  display_price?: number;
   description?: Partial<TranslationMap>;
   usage_instructions?: Partial<TranslationMap>;
   safety_information?: Partial<TranslationMap>;
@@ -154,13 +157,13 @@ export const productFormSchema = z
     category_uuid: z.string().trim().min(1, "Category is required."),
     inventory_uuids: z.array(z.string()).min(1, "Please select at least one inventory."),
     price: requiredNumber("Price is required.")
-      .refine((value) => value > 0, "Price must be greater than zero.")
-      .refine((value) => Number.isInteger(value), "Price must be greater than zero.")
-      .refine((value) => value <= 100_000_000, "Price cannot exceed 100000000"),
+      .refine((value) => value > 0, "Price must be greater than zero."),
     stock: requiredNumber("Quantity is required.")
-      .refine((value) => value > 0, "Quantity must be greater than zero.")
-      .refine((value) => value <= 10_000_000, "Quantity cannot exceed 10000000"),
+      .refine((value) => value > 0, "Quantity must be greater than zero."),
     unit: z.enum(["kg", "ton"], { message: "Please select quantity unit." }),
+    display_unit: z.enum(["kg", "ton"]).optional(),
+    display_quantity: z.number().optional(),
+    display_price: z.number().optional(),
     description: z.object({
       en: optionalDescriptionField,
       hi: optionalDescriptionField,
