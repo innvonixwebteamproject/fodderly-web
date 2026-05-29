@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { INVENTORY_UNITS } from "@/constants/unit.constants";
 
+export type ProductUnit = "kg" | "ton";
+
 export interface InventoryCategoryOption {
   id: string;
   name: string;
@@ -18,6 +20,9 @@ export interface InventoryRow {
   category_uuid: string;
   categoryName?: string;
   createdAt?: string;
+  display_unit?: ProductUnit;
+  display_quantity?: number;
+  display_price?: number;
 }
 
 const requiredNumber = (message: string) =>
@@ -57,6 +62,9 @@ export const inventoryFormSchema = z.object({
     (value) => value === INVENTORY_UNITS.KG || value === INVENTORY_UNITS.TON,
     "Please select a unit.",
   ),
+  display_unit: z.enum(["kg", "ton"]).optional(),
+  display_quantity: z.number().optional(),
+  display_price: z.number().optional(),
 });
 
 export type InventoryFormInputValues = z.input<typeof inventoryFormSchema>;

@@ -17,6 +17,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { MENU_SIDEBAR } from "@/config/menu.config";
 import { type MenuItem } from "@/config/types";
@@ -117,24 +122,37 @@ export function SidebarMenuPrimary({ isOpen }: { isOpen: boolean }) {
           />
         ) : null;
 
+        const linkContent = (
+          <Link
+            to={item.path || "#"}
+            className={cn(
+              "flex h-full items-center gap-2",
+              !isOpen && "w-full justify-center",
+            )}
+          >
+            {iconNode}
+            {isOpen && (
+              <span data-slot="accordion-menu-title">{item.title}</span>
+            )}
+          </Link>
+        );
+
         return (
           <AccordionMenuItem
             key={index}
             value={item.path || ""}
             className="text-sm font-medium"
           >
-            <Link
-              to={item.path || "#"}
-              className={cn(
-                "flex h-full items-center gap-2",
-                !isOpen && "w-full justify-center",
-              )}
-            >
-              {iconNode}
-              {isOpen && (
-                <span data-slot="accordion-menu-title">{item.title}</span>
-              )}
-            </Link>
+            {isOpen ? linkContent : (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  {linkContent}
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={14} className="bg-primary text-primary-foreground border-primary font-medium">
+                  {item.title}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </AccordionMenuItem>
         );
       }
@@ -194,22 +212,35 @@ export function SidebarMenuPrimary({ isOpen }: { isOpen: boolean }) {
       />
     ) : null;
 
+    const linkContent = (
+      <Link
+        to={item.path || "#"}
+        className={cn(
+          "flex h-full items-center gap-2",
+          !isOpen && "w-full justify-center",
+        )}
+      >
+        {iconNode}
+        {isOpen && <span data-slot="accordion-menu-title">{item.title}</span>}
+      </Link>
+    );
+
     return (
       <AccordionMenuItem
         key={index}
         value={item.path || ""}
         className="text-sm font-medium"
       >
-        <Link
-          to={item.path || "#"}
-          className={cn(
-            "flex h-full items-center gap-2",
-            !isOpen && "w-full justify-center",
-          )}
-        >
-          {iconNode}
-          {isOpen && <span data-slot="accordion-menu-title">{item.title}</span>}
-        </Link>
+        {isOpen ? linkContent : (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              {linkContent}
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={14} className="bg-primary text-primary-foreground border-primary font-medium">
+              {item.title}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </AccordionMenuItem>
     );
   };

@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useProductCategoriesQuery } from "@/features/category-management/hooks";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
+import { INVENTORY_UNITS } from "@/constants/unit.constants";
 import type { AllocationItem } from "../types/allocation.types";
 import { usePartnerAllocationProductDetailQuery } from "../hooks";
 import {
@@ -36,6 +36,13 @@ import {
   getPrimaryProductImageUrl,
   PRODUCT_NO_IMAGE_PLACEHOLDER,
 } from "../utils/product-image";
+import {
+  formatForDisplay,
+  formatAdminAvailableQty,
+  formatPartnerAvailableQty,
+  formatPartnerAllocatedQty,
+  getTonToKgRate,
+} from "../utils/unit-conversion";
 
 const formatCreatedDate = (value?: string) => {
   if (!value) return "-";
@@ -48,7 +55,7 @@ export function PartnerProductListPage() {
   const userId = useAuthStore((state) => state.userId);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
   const [stockInputValue, setStockInputValue] = useState("");
   const [stockError, setStockError] = useState("");
@@ -76,13 +83,11 @@ export function PartnerProductListPage() {
   const categoriesQuery = useProductCategoriesQuery({ page: 1, limit: 100, status: "active" });
 
   const categoryOptions = useMemo(
-    () => [
-      { value: "all", label: "All Categories" },
-      ...(categoriesQuery.data?.data || []).map((category) => ({
+    () =>
+      (categoriesQuery.data?.data || []).map((category) => ({
         value: category.id,
         label: category.name.en || "-",
       })),
-    ],
     [categoriesQuery.data?.data],
   );
 
@@ -96,7 +101,7 @@ export function PartnerProductListPage() {
   } = usePartnerAllocationsInfiniteQuery(
     {
       partner_uuid: userId || undefined,
-      category_uuid: categoryFilter === "all" ? undefined : categoryFilter,
+      category_uuid: categoryFilter === "" ? undefined : categoryFilter,
       search: debouncedSearchTerm || undefined,
       limit: 10,
       sortBy,
@@ -243,24 +248,34 @@ export function PartnerProductListPage() {
         accessorKey: "admin_available_quantity",
         header: ({ column }) => <DataGridColumnHeader title="Admin Available Qty" column={column} />,
         enableSorting: false,
-        cell: ({ row }) => (
-          <span>
-            {(row.original.admin_available_quantity ?? 0).toLocaleString()}{" "}
-            {getInventoryUnitLabel(row.original.admin_unit ?? row.original.unit)}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const stockInKg = row.original.admin_available_quantity ?? 0;
+          const adminUnit = row.original.admin_unit;
+          // Convert to KG if admin_unit is TON
+          const quantityInKg = adminUnit === INVENTORY_UNITS.TON ? stockInKg * getTonToKgRate() : stockInKg;
+          return (
+            <span>
+              {formatAdminAvailableQty(quantityInKg)}
+            </span>
+          );
+        },
         size: 140,
       },
       {
         id: "qty",
         header: ({ column }) => <DataGridColumnHeader title="Available Qty" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => (
-          <span>
-            {(row.original.available_quantity ?? 0).toLocaleString()}{" "}
-            {getInventoryUnitLabel(row.original.unit)}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const stockInKg = row.original.available_quantity ?? 0;
+          const unit = row.original.unit;
+          // Convert to KG if unit is TON (backend might send in TON format)
+          const quantityInKg = unit === INVENTORY_UNITS.TON ? stockInKg * getTonToKgRate() : stockInKg;
+          return (
+            <span>
+              {formatPartnerAvailableQty(quantityInKg)}
+            </span>
+          );
+        },
         size: 120,
       },
       {
@@ -270,10 +285,15 @@ export function PartnerProductListPage() {
         enableSorting: true,
         cell: ({ row }) => {
           const isEditing = editingRowId === row.original.id;
+          const stockInKg = row.original.allocated_quantity;
+          const unit = row.original.unit;
+          // Convert to KG if unit is TON (backend might send in TON format)
+          const quantityInKg = unit === INVENTORY_UNITS.TON ? stockInKg * getTonToKgRate() : stockInKg;
+          
           if (!isEditing) {
             return (
               <span>
-                {row.original.allocated_quantity.toLocaleString()} {getInventoryUnitLabel(row.original.unit)}
+                {formatPartnerAllocatedQty(quantityInKg)}
               </span>
             );
           }
@@ -314,8 +334,13 @@ export function PartnerProductListPage() {
         accessorKey: "price_per_unit",
         header: ({ column }) => <DataGridColumnHeader title="Price" column={column} />,
         enableSorting: true,
-        cell: ({ row }) =>
-          `₹${row.original.price_per_unit.toLocaleString(undefined, { maximumFractionDigits: 2 })}/${getInventoryUnitLabel(row.original.unit)}`,
+        cell: ({ row }) => {
+          const stockInKg = row.original.available_quantity ?? 0;
+          const pricePerKg = row.original.price_per_unit;
+          const formatted = formatForDisplay(stockInKg, pricePerKg);
+          
+          return `₹${formatted.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+        },
         size: 100,
       },
       {
@@ -432,7 +457,6 @@ export function PartnerProductListPage() {
                   onValueChange={(value) => setCategoryFilter(value)}
                   placeholder="Category"
                   searchPlaceholder="Search Category..."
-                  isClearable={false}
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
@@ -441,14 +465,14 @@ export function PartnerProductListPage() {
                 onClick={() => {
                   setSearchTerm("");
                   setDebouncedSearchTerm("");
-                  setCategoryFilter("all");
+                  setCategoryFilter("");
                   cancelEdit();
                   setSorting([{ id: "createdAt", desc: true }]);
                 }}
                 className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all"
                 disabled={
                   !searchTerm &&
-                  categoryFilter === "all" &&
+                  !categoryFilter &&
                   !editingRowId &&
                   sorting.length === 1 &&
                   sorting[0]?.id === "createdAt" &&

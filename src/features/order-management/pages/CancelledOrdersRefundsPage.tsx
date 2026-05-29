@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-table";
 import DatePicker from "@/components/ui/date-picker";
 import { format } from "date-fns";
-import { Ban, ClipboardList, Eye, Filter, Landmark, RotateCcw } from "lucide-react";
+import { Ban, ClipboardList, Eye, Filter, Info, Landmark, RotateCcw } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Container } from "@/components/common/container";
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getApiSortParams } from "@/lib/api-sorting";
 import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 import type { AdminCancelledOrdersSortBy, CancellationRefundListFilters, RefundQueueItem } from "../types/refund.types";
@@ -323,11 +324,28 @@ export function CancelledOrdersRefundsPage() {
                 <DialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5"
+                    className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all"
                   >
                     <Filter className="h-4 w-4" />
                     Filters
                     {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Filters info"
+                          onClick={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          className="ml-1 inline-flex items-center text-primary/80 hover:text-primary"
+                        >
+                          <Info className="h-3.5 w-3.5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Refund status, payment mode, cancellation date range, and refund date range filters.</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[640px]">

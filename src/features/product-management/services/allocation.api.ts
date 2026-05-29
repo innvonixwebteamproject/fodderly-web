@@ -235,11 +235,10 @@ export const allocateProducts = async (
 export const updatePartnerAllocation = async (
   id: string,
   allocated_quantity: number,
-  unit?: number,
 ): Promise<{ message: string; data: AllocationMutationResponse }> => {
   const response = await api.patch<WrappedResponse<AllocationMutationResponse>>(
     `/products/partner-allocations/${id}`,
-    { allocated_quantity, unit },
+    { allocated_quantity },
   );
   const raw = response.data;
   const data = unwrapMutationData<AllocationMutationResponse>(raw);

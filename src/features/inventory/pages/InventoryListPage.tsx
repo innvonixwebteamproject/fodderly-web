@@ -42,7 +42,7 @@ import {
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useInventoryCategoriesQuery } from "@/features/category-management/hooks";
 import { usePartnerAllocationsQuery } from "@/features/product-management/hooks";
-import { getInventoryUnitLabel } from "@/constants/unit.constants";
+import { formatForDisplay } from "@/utils/unit-conversion";
 import { InventoryForm } from "../components/InventoryForm";
 import {
   useCreateInventoryMutation,
@@ -67,7 +67,7 @@ export function InventoryListPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [sorting, setSorting] = useState<SortingState>([{ id: "createdAt", desc: true }]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -94,10 +94,7 @@ export function InventoryListPage() {
   }, [categoriesQuery.data?.data]);
 
   const categorySelectOptions = useMemo(() => {
-    return [
-      { label: "All Categories", value: "all" },
-      ...categoryOptions.map((category) => ({ label: category.name, value: category.id })),
-    ];
+    return categoryOptions.map((category) => ({ label: category.name, value: category.id }));
   }, [categoryOptions]);
 
   const { sortBy, sortOrder } = getApiSortParams({
@@ -119,7 +116,7 @@ export function InventoryListPage() {
     isLoading,
   } = useInventoriesInfiniteQuery(
     debouncedSearchTerm.trim() || undefined,
-    categoryFilter === "all" ? undefined : categoryFilter,
+    categoryFilter === "" ? undefined : categoryFilter,
     sortBy,
     sortOrder,
     {
@@ -188,7 +185,7 @@ export function InventoryListPage() {
 
   const handleReset = () => {
     setSearchTerm("");
-    setCategoryFilter("all");
+    setCategoryFilter("");
     setSorting([{ id: "createdAt", desc: true }]);
   };
 
@@ -267,11 +264,14 @@ export function InventoryListPage() {
         accessorKey: "quantity",
         header: ({ column }) => <DataGridColumnHeader title="Total Quantity" column={column} />,
         enableSorting: true,
-        cell: ({ row }) => (
-          <span>
-            {row.original.quantity} {getInventoryUnitLabel(row.original.unit)}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const display = formatForDisplay(row.original.quantity, row.original.price);
+          return (
+            <span>
+              {display.quantity.toLocaleString()} {display.unit.toUpperCase()}
+            </span>
+          );
+        },
       },
     ];
 
@@ -292,7 +292,14 @@ export function InventoryListPage() {
         <DataGridColumnHeader title={isPartner ? "Total Inventory Price" : "Price"} column={column} />
       ),
       enableSorting: true,
-      cell: ({ row }) => <span>₹{row.original.price.toLocaleString()}</span>,
+      cell: ({ row }) => {
+        const display = formatForDisplay(row.original.quantity, row.original.price);
+        return (
+          <span>
+            ₹{display.price.toLocaleString()}/{display.unit.toUpperCase()}
+          </span>
+        );
+      },
     });
 
     baseColumns.push({
@@ -375,7 +382,6 @@ export function InventoryListPage() {
                   placeholder="Category"
                   searchPlaceholder="Search category..."
                   searchInputClassName="text-xs placeholder:text-xs"
-                  isClearable={false}
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
@@ -386,7 +392,7 @@ export function InventoryListPage() {
                 className="h-8.5 gap-1 px-2.5 text-[13px] font-semibold border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all"
                 disabled={
                   !searchTerm &&
-                  categoryFilter === "all" &&
+                  !categoryFilter &&
                   isDefaultSort
                 }
               >

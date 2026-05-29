@@ -59,9 +59,6 @@ export function ProductCategoryForm({
     reValidateMode: "onChange",
   });
 
-  const englishDescription = form.watch("description.en");
-  const isTranslatedDescriptionRequired = englishDescription.trim().length > 0;
-
   const translationErrorsByLanguage = useMemo(() => {
     return OTHER_CATEGORY_LANGUAGES.reduce<Record<string, boolean>>((acc, language) => {
       acc[language.code] = Boolean(
@@ -414,7 +411,7 @@ export function ProductCategoryForm({
                       name={`description.${language.code}`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel required={isTranslatedDescriptionRequired}>
+                          <FormLabel>
                             Description
                           </FormLabel>
                           <FormControl>

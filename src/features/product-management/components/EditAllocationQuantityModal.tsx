@@ -24,11 +24,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
-  getInventoryUnitLabel,
   INVENTORY_UNIT_OPTIONS,
   INVENTORY_UNITS,
   normalizeInventoryUnit,
 } from "@/constants/unit.constants";
+import { convertInventoryToKgFormat, formatForDisplay, formatAdminAvailableQty } from "@/utils/unit-conversion";
 import type { AllocationItem } from "../types/allocation.types";
 
 const editAllocationSchema = z.object({
@@ -45,7 +45,7 @@ interface EditAllocationQuantityModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   allocation: AllocationItem | null;
-  onSubmit: (values: { id: string; allocated_quantity: number; unit: number }) => void;
+  onSubmit: (values: { id: string; allocated_quantity: number }) => void;
   isSubmitting?: boolean;
 }
 
@@ -67,18 +67,27 @@ export function EditAllocationQuantityModal({
   });
 
   useEffect(() => {
-    if (open) {
+    if (open && allocation) {
+      // Use formatForDisplay to automatically determine the best display unit
+      const display = formatForDisplay(allocation.allocated_quantity, 0);
+      const displayUnitValue = display.unit === "ton" ? INVENTORY_UNITS.TON : INVENTORY_UNITS.KG;
+
       form.reset({
-        allocated_quantity: allocation?.allocated_quantity ?? 1,
-        unit: normalizeInventoryUnit(allocation?.unit ?? allocation?.admin_unit ?? INVENTORY_UNITS.KG),
+        allocated_quantity: display.quantity,
+        unit: displayUnitValue,
       });
     }
-  }, [allocation?.allocated_quantity, allocation?.unit, allocation?.admin_unit, form, open]);
+  }, [allocation, form, open]);
 
   const inventoryNames = useMemo(() => {
     if (!allocation) return "";
     const list = allocation.inventories?.map((i) => i.name).filter(Boolean) ?? [];
     return list.length ? list.join(", ") : "—";
+  }, [allocation]);
+
+  const availableStockDisplay = useMemo(() => {
+    if (!allocation) return "";
+    return formatAdminAvailableQty(allocation.admin_available_quantity);
   }, [allocation]);
 
   const handleClose = (nextOpen: boolean) => {
@@ -90,7 +99,17 @@ export function EditAllocationQuantityModal({
 
   const submitForm = (values: EditAllocationFormValues) => {
     if (!allocation) return;
-    onSubmit({ id: allocation.id, allocated_quantity: values.allocated_quantity, unit: values.unit });
+
+    // Convert to KG format for API submission
+    // When unit is TON: quantity = TON * getTonToKgRate()
+    // When unit is KG: values remain as-is
+    const converted = convertInventoryToKgFormat(
+      values.allocated_quantity,
+      0, // Price is not applicable for edit allocation quantity
+      normalizeInventoryUnit(values.unit)
+    );
+
+    onSubmit({ id: allocation.id, allocated_quantity: converted.quantity });
   };
 
   return (
@@ -118,7 +137,7 @@ export function EditAllocationQuantityModal({
                     <FormLabel>Available Stock</FormLabel>
                     <Input
                       readOnly
-                      value={`${allocation.admin_available_quantity ?? 0} ${getInventoryUnitLabel(allocation.admin_unit ?? allocation.unit)}`}
+                      value={availableStockDisplay}
                     />
                   </FormItem>
 

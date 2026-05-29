@@ -238,7 +238,7 @@ export function DistrictListPage() {
                   options={stateOptions}
                   value={stateFilter}
                   onValueChange={setStateFilter}
-                  placeholder="Select State"
+                  placeholder="All States"
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start"
