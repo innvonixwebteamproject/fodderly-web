@@ -120,29 +120,31 @@ export function DateRangeFilterPopover({
 
   return (
     <Popover open={isOpen} onOpenChange={(open) => { if (!open) setIsOpen(false); }}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          onClick={handleOpen}
-          className={cn(
-            "h-9 gap-1.5 bg-background px-3 text-[13px] font-normal border-input hover:bg-accent/50 max-w-[280px]",
-            isFiltered && "border-primary/50 bg-primary/5 text-primary hover:bg-primary/10",
-          )}
-        >
-          <CalendarIcon className={cn("h-4 w-4 shrink-0", isFiltered ? "text-primary" : "text-muted-foreground")} />
-          <span className="truncate">{label}</span>
-          {isFiltered && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); handleClear(); }}
-              className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20 text-primary/70 hover:text-primary shrink-0 transition-colors cursor-pointer"
-              aria-label="Clear date filter"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-        </Button>
-      </PopoverTrigger>
+      <div className="relative inline-flex max-w-[280px]">
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            onClick={handleOpen}
+            className={cn(
+              "h-9 w-full gap-1.5 bg-background px-3 text-[13px] font-normal border-input hover:bg-accent/50",
+              isFiltered && "border-primary/50 bg-primary/5 pr-8 text-primary hover:bg-primary/10",
+            )}
+          >
+            <CalendarIcon className={cn("h-4 w-4 shrink-0", isFiltered ? "text-primary" : "text-muted-foreground")} />
+            <span className="truncate">{label}</span>
+          </Button>
+        </PopoverTrigger>
+        {isFiltered && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full p-0.5 text-primary/70 transition-colors hover:bg-primary/20 hover:text-primary cursor-pointer"
+            aria-label="Clear date filter"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
 
       <PopoverPortal>
         <PopoverContent
