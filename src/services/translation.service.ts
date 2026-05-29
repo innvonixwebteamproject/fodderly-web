@@ -1,8 +1,8 @@
-import { ENV } from "@/config/env";
-import axios, { AxiosError, type AxiosInstance } from "axios";
+import { api } from "@/lib/axios.interceptors";
 
 const BHASHINI_PROVIDER = "bhashini";
-const TRANSLATION_TIMEOUT = 30000;
+const TRANSLATION_PROVIDER = "bhashini";
+const TRANSLATION_ENDPOINT = "/auth/translate";
 
 export type LanguageCode = "en" | "hi" | "gu" | "mr" | "te" | "pa" | "ml";
 
@@ -24,10 +24,20 @@ type TranslateTextParams = {
 
 type NormalizedTranslateParams = Required<TranslateTextParams>;
 
-type BhashiniTranslateRequest = {
+type TranslateRequest = {
   inputText: string;
   inputLanguage: string;
   outputLanguage: string;
+};
+
+type TranslateResponse = {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data?: {
+    translatedText?: string;
+  };
+  timestamp?: string;
 };
 
 const decodeHtmlEntities = (value: string) => {
@@ -40,45 +50,20 @@ const decodeHtmlEntities = (value: string) => {
   return textarea.value;
 };
 
-const getBhashiniBaseUrl = () => ENV.TRANSLATION_API_BASE_URL.replace(/\/$/, "");
+const getTranslationProvider = () => TRANSLATION_PROVIDER;
 
-const getBhashiniTranslatePath = () => `/${ENV.TRANSLATION_API_VERSION}/translate`;
-
-const bhashiniApi: AxiosInstance = axios.create({
-  baseURL: getBhashiniBaseUrl(),
-  timeout: TRANSLATION_TIMEOUT,
-  headers: {
-    accept: "text/plain",
-    "Content-Type": "application/json",
-  },
-});
-
-bhashiniApi.interceptors.request.use((config) => {
-  config.headers = config.headers ?? {};
-  config.headers.accept = "text/plain";
-  config.headers["Content-Type"] = "application/json";
-
-  if (ENV.TRANSLATION_API_KEY) {
-    config.headers["X-API-KEY"] = ENV.TRANSLATION_API_KEY;
-  }
-
-  return config;
-});
-
-const getTranslationProvider = () => ENV.TRANSLATION_PROVIDER.toLowerCase();
-
-const buildBhashiniTranslatePayload = ({
+const buildTranslatePayload = ({
   text,
   sourceLanguage = "en",
   targetLanguage,
-}: NormalizedTranslateParams): BhashiniTranslateRequest => ({
+}: NormalizedTranslateParams): TranslateRequest => ({
   inputText: text,
   inputLanguage: TRANSLATION_LANGUAGE_NAMES[sourceLanguage],
   outputLanguage: TRANSLATION_LANGUAGE_NAMES[targetLanguage],
 });
 
-const parseBhashiniTranslateResponse = (responseText: string) => {
-  const translatedText = String(responseText || "").trim();
+const parseTranslateResponse = (payload: TranslateResponse) => {
+  const translatedText = String(payload.data?.translatedText || "").trim();
 
   if (!translatedText) {
     throw new Error("Translation response was empty.");
@@ -90,23 +75,12 @@ const parseBhashiniTranslateResponse = (responseText: string) => {
 const translateWithBhashini = async (
   params: NormalizedTranslateParams,
 ): Promise<string> => {
-  try {
-    const response = await bhashiniApi.post<string>(
-      getBhashiniTranslatePath(),
-      buildBhashiniTranslatePayload(params),
-      {
-        responseType: "text",
-      },
-    );
+  const response = await api.post<TranslateResponse>(
+    TRANSLATION_ENDPOINT,
+    buildTranslatePayload(params),
+  );
 
-    return parseBhashiniTranslateResponse(response.data);
-  } catch (error) {
-    if (error instanceof AxiosError && !error.response) {
-      throw new Error("Translation request failed.");
-    }
-
-    throw new Error("Translation service is unavailable.");
-  }
+  return parseTranslateResponse(response.data);
 };
 
 export const translateText = async ({
