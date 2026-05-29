@@ -1,7 +1,6 @@
 import { Languages } from "lucide-react";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useRef } from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -35,28 +34,7 @@ export function TranslationFields<TFormValues extends FieldValues>({
   label,
   isLoading,
   viewOnly,
-}: TranslationFieldsProps) {
-  const submitCountRef = useRef(form.formState.submitCount);
-
-  useEffect(() => {
-    const currentSubmitCount = form.formState.submitCount;
-    if (currentSubmitCount !== submitCountRef.current) {
-      submitCountRef.current = currentSubmitCount;
-
-      const baseErrors = form.formState.errors[basePath] as Record<string, unknown> | undefined;
-      if (baseErrors) {
-        // If the current tab already has an error, stay on it so the user can fix it
-        if (baseErrors[activeLanguage]) return;
-
-        // Otherwise, find the first tab that has an error and switch to it
-        const firstErrorCode = MASTER_LANGUAGES.find((lang) => baseErrors[lang.code])?.code;
-        if (firstErrorCode) {
-          setActiveLanguage(firstErrorCode);
-        }
-      }
-    }
-  }, [form.formState.submitCount, form.formState.errors, basePath, activeLanguage, setActiveLanguage]);
-
+}: TranslationFieldsProps<TFormValues>) {
   return (
     <Card className="h-fit">
       <CardHeader>
