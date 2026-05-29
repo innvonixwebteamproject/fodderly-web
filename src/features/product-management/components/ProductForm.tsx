@@ -73,9 +73,6 @@ const normalizeTranslation = (value?: Partial<Record<(typeof PRODUCT_LANGUAGES)[
   ...(value || {}),
 });
 
-const MAX_PRICE = 100_000_000;
-const MAX_STOCK = 10_000_000;
-
 export function ProductForm({
   initialData,
   categoryOptions,
@@ -537,7 +534,6 @@ export function ProductForm({
                         <Input
                           type="number"
                           min={1}
-                          max={MAX_PRICE}
                           step="any"
                           className="tabular-nums"
                           autoComplete="off"
@@ -555,7 +551,7 @@ export function ProductForm({
                             }
                             const n = Number(raw);
                             if (!Number.isFinite(n)) return;
-                            if (n < 0 || n > MAX_PRICE) return;
+                            if (n < 0) return;
                             field.onChange(n);
                           }}
                           onBlur={field.onBlur}
@@ -583,7 +579,6 @@ export function ProductForm({
                         <Input
                           type="number"
                           min={1}
-                          max={MAX_STOCK}
                           step="any"
                           className="tabular-nums"
                           autoComplete="off"
@@ -601,7 +596,7 @@ export function ProductForm({
                             }
                             const n = Number(raw);
                             if (!Number.isFinite(n)) return;
-                            if (n < 0 || n > MAX_STOCK) return;
+                            if (n < 0) return;
                             field.onChange(n);
                           }}
                           onBlur={field.onBlur}

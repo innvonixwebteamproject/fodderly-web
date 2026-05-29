@@ -46,8 +46,7 @@ export const inventoryFormSchema = z.object({
     .min(10, "Description must be at least 10 characters long.")
     .max(1000, "Description cannot exceed 1000 characters."),
   quantity: requiredNumber("Quantity is required.")
-    .refine((value) => Number.isInteger(value) && value > 0, "Quantity must be greater than zero.")
-    .refine((value) => value <= 1_000_000, "Quantity cannot exceed 1000000."),
+    .refine((value) => Number.isInteger(value) && value > 0, "Quantity must be greater than zero."),
   category_uuid: z.string().trim().min(1, "Please select a category."),
   hsn_code: z
     .string()
@@ -56,8 +55,7 @@ export const inventoryFormSchema = z.object({
     .regex(/^\d{4}$|^\d{6}$|^\d{8}$/, "Please enter a valid HSN code."),
   price: requiredNumber("Price is required.")
     .refine((value) => value > 0, "Price must be greater than zero.")
-    .refine((value) => Number.isInteger(value), "Price must be greater than zero.")
-    .refine((value) => value <= 10_000_000, "Price cannot exceed 10000000."),
+    .refine((value) => Number.isInteger(value), "Price must be greater than zero."),
   unit: requiredNumber("Please select a unit.").refine(
     (value) => value === INVENTORY_UNITS.KG || value === INVENTORY_UNITS.TON,
     "Please select a unit.",
