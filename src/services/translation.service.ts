@@ -48,14 +48,14 @@ const bhashiniApi: AxiosInstance = axios.create({
   baseURL: getBhashiniBaseUrl(),
   timeout: TRANSLATION_TIMEOUT,
   headers: {
-    Accept: "text/plain",
+    accept: "text/plain",
     "Content-Type": "application/json",
   },
 });
 
 bhashiniApi.interceptors.request.use((config) => {
   config.headers = config.headers ?? {};
-  config.headers.Accept = "text/plain";
+  config.headers.accept = "text/plain";
   config.headers["Content-Type"] = "application/json";
 
   if (ENV.TRANSLATION_API_KEY) {
@@ -102,9 +102,7 @@ const translateWithBhashini = async (
     return parseBhashiniTranslateResponse(response.data);
   } catch (error) {
     if (error instanceof AxiosError && !error.response) {
-      throw new Error(
-        "Translation request failed. If this is a browser CORS error, route translation through the backend proxy.",
-      );
+      throw new Error("Translation request failed.");
     }
 
     throw new Error("Translation service is unavailable.");
