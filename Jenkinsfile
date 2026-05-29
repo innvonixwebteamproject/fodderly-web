@@ -25,12 +25,12 @@ pipeline {
     environment {
         PROJECT_NAME = 'fodderly-app-web'
         DOCKER_HUB_USER = 'fodderlydocker'
-        DOCKER_IMAGE_NAME = 'fodderly-test-web'
+        DOCKER_IMAGE_NAME = 'fodderly-dev-web'
         DOCKER_CREDENTIALS_ID = 'app-fodderly-docker'
         JENKINS_SSH_KEY_ID = 'jenkins-ssh-key'
         SERVER_HOST = '15.206.203.201'
         SERVER_USER = 'ubuntu'
-        SERVER_UPLOAD_PATH = '/home/ubuntu/fodderly.test.web'
+        SERVER_UPLOAD_PATH = '/home/ubuntu/fodderly.dev.web'
         MATTERMOST_CHANNEL = 'jenkins-deployment'
     }
     stages {
