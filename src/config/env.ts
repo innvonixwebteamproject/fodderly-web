@@ -16,7 +16,7 @@ export const ENV = {
   // Translation
   TRANSLATION_PROVIDER: import.meta.env.VITE_TRANSLATION_PROVIDER || 'bhashini',
   TRANSLATION_API_BASE_URL:
-    import.meta.env.VITE_TRANSLATION_API_BASE_URL || '/bhashini-translation',
+    import.meta.env.VITE_TRANSLATION_API_BASE_URL || 'https://tts.bhashini.ai',
   TRANSLATION_API_VERSION: import.meta.env.VITE_TRANSLATION_API_VERSION || 'v2',
   TRANSLATION_API_KEY: import.meta.env.VITE_TRANSLATION_API_KEY || '',
 };
