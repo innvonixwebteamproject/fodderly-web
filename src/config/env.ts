@@ -13,7 +13,10 @@ export const ENV = {
   FIREBASE_MEASUREMENT_ID: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '',
   FIREBASE_VAPID_KEY: import.meta.env.VITE_FIREBASE_VAPID_KEY || '',
 
-  // Google Cloud Translation
-  GOOGLE_CLOUD_TRANSLATE_API_KEY:
-    import.meta.env.VITE_GOOGLE_CLOUD_TRANSLATE_API_KEY || '',
+  // Translation
+  TRANSLATION_PROVIDER: import.meta.env.VITE_TRANSLATION_PROVIDER || 'bhashini',
+  TRANSLATION_API_BASE_URL:
+    import.meta.env.VITE_TRANSLATION_API_BASE_URL || '/bhashini-translation',
+  TRANSLATION_API_VERSION: import.meta.env.VITE_TRANSLATION_API_VERSION || 'v2',
+  TRANSLATION_API_KEY: import.meta.env.VITE_TRANSLATION_API_KEY || '',
 };

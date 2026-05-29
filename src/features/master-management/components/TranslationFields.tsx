@@ -1,5 +1,5 @@
 import { Languages } from "lucide-react";
-import { FieldValues, UseFormReturn } from "react-hook-form";
+import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,8 @@ export const MASTER_LANGUAGES = [
 
 export type MasterLangCode = (typeof MASTER_LANGUAGES)[number]["code"];
 
-interface TranslationFieldsProps {
-  form: UseFormReturn<FieldValues>;
+interface TranslationFieldsProps<TFormValues extends FieldValues> {
+  form: UseFormReturn<TFormValues>;
   activeLanguage: MasterLangCode;
   setActiveLanguage: (lang: MasterLangCode) => void;
   basePath: string; // e.g. "name"
@@ -26,7 +26,7 @@ interface TranslationFieldsProps {
   viewOnly?: boolean;
 }
 
-export function TranslationFields({
+export function TranslationFields<TFormValues extends FieldValues>({
   form,
   activeLanguage,
   setActiveLanguage,
@@ -34,7 +34,7 @@ export function TranslationFields({
   label,
   isLoading,
   viewOnly,
-}: TranslationFieldsProps) {
+}: TranslationFieldsProps<TFormValues>) {
   return (
     <Card className="h-fit">
       <CardHeader>
@@ -63,7 +63,7 @@ export function TranslationFields({
             >
               <FormField
                 control={form.control}
-                name={`${basePath}.${code}`}
+                name={`${basePath}.${code}` as Path<TFormValues>}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{label}</FormLabel>

@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_API_BASE_URL,
           changeOrigin: true,
         },
+        "/bhashini-translation": {
+          target: "https://tts.bhashini.ai",
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/bhashini-translation/, ""),
+        },
       },
     },
     build: {

@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { translateEnglishText } from "../utils/translate";
+import { translateEnglishText } from "@/services/translation.service";
 import {
   CATEGORY_LANGUAGES,
   getDefaultProductCategoryFormValues,

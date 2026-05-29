@@ -8,8 +8,7 @@ import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { translateEnglishText } from "@/features/category-management/utils/translate";
-import type { CategoryLanguageCode } from "@/features/category-management/types";
+import { translateEnglishText } from "@/services/translation.service";
 import { MASTER_LANGUAGES, MasterLangCode, TranslationFields } from "../../components/TranslationFields";
 import { StateFormValues, StateItem, stateFormSchema } from "../types";
 
@@ -71,7 +70,7 @@ export function StateForm({ initialData, onSubmit, onCancel, isLoading, viewOnly
       const results = await Promise.all(
         MASTER_LANGUAGES.map(async ({ code }) => ({
           code,
-          translated: await translateEnglishText(englishName, code as CategoryLanguageCode),
+          translated: await translateEnglishText(englishName, code),
         }))
       );
       results.forEach(({ code, translated }) => {

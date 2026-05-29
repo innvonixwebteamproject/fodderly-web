@@ -9,8 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { translateEnglishText } from "@/features/category-management/utils/translate";
-import type { CategoryLanguageCode } from "@/features/category-management/types";
+import { translateEnglishText } from "@/services/translation.service";
 import { MASTER_LANGUAGES, MasterLangCode, TranslationFields } from "../../components/TranslationFields";
 import { TalukaFormValues, TalukaItem, talukaFormSchema } from "../types";
 
@@ -80,7 +79,7 @@ export function TalukaForm({ initialData, states, onSubmit, onCancel, isLoading,
       const results = await Promise.all(
         MASTER_LANGUAGES.map(async ({ code }) => ({
           code,
-          translated: await translateEnglishText(englishName, code as CategoryLanguageCode),
+          translated: await translateEnglishText(englishName, code),
         }))
       );
       results.forEach(({ code, translated }) => {
