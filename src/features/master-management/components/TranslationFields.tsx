@@ -1,6 +1,7 @@
 import { Languages } from "lucide-react";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useRef } from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,11 +50,14 @@ export function TranslationFields<TFormValues extends FieldValues>({
           onValueChange={(v) => setActiveLanguage(v as MasterLangCode)}
         >
           <TabsList variant="line" size="sm" className="flex w-full flex-wrap justify-start">
-            {MASTER_LANGUAGES.map(({ code, label: langLabel }) => (
-              <TabsTrigger key={code} value={code}>
-                {langLabel} *
-              </TabsTrigger>
-            ))}
+            {MASTER_LANGUAGES.map(({ code, label: langLabel }) => {
+              const hasError = !!(form.formState.errors[basePath] as Record<string, unknown> | undefined)?.[code];
+              return (
+                <TabsTrigger key={code} value={code} className={hasError ? "text-destructive" : ""}>
+                  {langLabel} *
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
           {MASTER_LANGUAGES.map(({ code, label: langLabel }) => (
             <TabsContent
