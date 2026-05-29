@@ -36,16 +36,12 @@ import {
   type TranslationMap,
   type ProductUnit,
 } from "../types";
-<<<<<<< HEAD
-=======
-import { translateEnglishText } from "../utils/translate";
 import {
   convertToKgFormat,
   convertFromKgFormat,
   validateConversionResult,
   getDisplayUnit,
 } from "../utils/unit-conversion";
->>>>>>> 3942edce476b8573e76ab1727f8434d93f7e820e
 
 interface ProductFormProps {
   initialData?: ProductRecord | null;
