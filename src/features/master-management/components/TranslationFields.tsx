@@ -35,32 +35,7 @@ export function TranslationFields<TFormValues extends FieldValues>({
   label,
   isLoading,
   viewOnly,
-<<<<<<< HEAD
 }: TranslationFieldsProps<TFormValues>) {
-=======
-}: TranslationFieldsProps) {
-  const submitCountRef = useRef(form.formState.submitCount);
-
-  useEffect(() => {
-    const currentSubmitCount = form.formState.submitCount;
-    if (currentSubmitCount !== submitCountRef.current) {
-      submitCountRef.current = currentSubmitCount;
-
-      const baseErrors = form.formState.errors[basePath] as Record<string, unknown> | undefined;
-      if (baseErrors) {
-        // If the current tab already has an error, stay on it so the user can fix it
-        if (baseErrors[activeLanguage]) return;
-
-        // Otherwise, find the first tab that has an error and switch to it
-        const firstErrorCode = MASTER_LANGUAGES.find((lang) => baseErrors[lang.code])?.code;
-        if (firstErrorCode) {
-          setActiveLanguage(firstErrorCode);
-        }
-      }
-    }
-  }, [form.formState.submitCount, form.formState.errors, basePath, activeLanguage, setActiveLanguage]);
-
->>>>>>> 3942edce476b8573e76ab1727f8434d93f7e820e
   return (
     <Card className="h-fit">
       <CardHeader>
