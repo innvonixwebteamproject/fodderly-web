@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: fodderlydocker/fodderly-dev-web:1.0.29
+    image: fodderlydocker/fodderly-dev-web:1.0.30
     container_name: fodderly-dev-web
     ports:
       - ${APP_PORT:-3000}:80
