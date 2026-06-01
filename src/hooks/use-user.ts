@@ -4,6 +4,8 @@ import { useAuthStore } from "@/features/auth";
 import { authApi } from "@/features/auth/services/auth.api";
 import type { User } from "@/interfaces/user.interface";
 
+const profileQueryKey = (userId: string | null) => ["auth", "profile", userId] as const;
+
 /**
  * Custom hook for managing user state and operations
  * Integrates with Zustand auth store for real user data
@@ -14,12 +16,18 @@ export function useUser() {
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["profile", userId],
+    queryKey: profileQueryKey(userId),
     queryFn: async () => {
       if (!userId) return null;
       return await authApi.getProfile(userId);
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   // Create user object from API response or fallback to store data
@@ -86,7 +94,7 @@ export function useUser() {
       });
 
       // Invalidate profile query to ensure fresh data is fetched
-      await queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      await queryClient.invalidateQueries({ queryKey: profileQueryKey(userId) });
 
       return updatedProfile;
     } catch (error) {

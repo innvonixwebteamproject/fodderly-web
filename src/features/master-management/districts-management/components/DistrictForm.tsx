@@ -8,23 +8,20 @@ import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import { translateEnglishText } from "@/services/translation.service";
 import { MASTER_LANGUAGES, MasterLangCode, TranslationFields } from "../../components/TranslationFields";
 import { DistrictFormValues, DistrictItem, districtFormSchema } from "../types";
-
-interface SelectOption { value: string; label: string; }
+import { StateSelect } from "@/components/common/api-selects";
 
 interface DistrictFormProps {
   initialData?: DistrictItem | null;
-  states: SelectOption[];
   onSubmit: (values: DistrictFormValues) => void;
   onCancel: () => void;
   isLoading?: boolean;
   viewOnly?: boolean;
 }
 
-export function DistrictForm({ initialData, states, onSubmit, onCancel, isLoading, viewOnly }: DistrictFormProps) {
+export function DistrictForm({ initialData, onSubmit, onCancel, isLoading, viewOnly }: DistrictFormProps) {
   const [activeLanguage, setActiveLanguage] = useState<MasterLangCode>("hi");
   const [isAutoTranslating, setIsAutoTranslating] = useState(false);
 
@@ -110,7 +107,7 @@ export function DistrictForm({ initialData, states, onSubmit, onCancel, isLoadin
                 <FormItem>
                   <FormLabel required>State</FormLabel>
                   <FormControl>
-                    <SearchableSelect options={states} value={field.value} onValueChange={field.onChange}
+                    <StateSelect value={field.value} onValueChange={field.onChange}
                       placeholder="Select state" disabled={isLoading || viewOnly} />
                   </FormControl>
                   <FormMessage />

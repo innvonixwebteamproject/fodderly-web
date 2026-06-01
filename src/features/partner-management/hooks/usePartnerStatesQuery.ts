@@ -6,5 +6,8 @@ export const usePartnerStatesQuery = (enabled: boolean = true) => {
     queryKey: ["partner-states"],
     queryFn: () => getAllPartnerStates(),
     enabled,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 };

@@ -57,7 +57,7 @@ export function MultiSelectPopover({
           autoHeight
           mode="input"
           placeholder={value.length === 0}
-          className="w-full px-1.5 py-1 relative"
+          className="w-full px-1.5 py-1 text-[12px] relative"
           disabled={disabled}
         >
           <div className="flex flex-wrap items-center gap-1 pe-2.5">
@@ -66,7 +66,7 @@ export function MultiSelectPopover({
                 {visibleItems.map((val) => {
                   const opt = options.find((o) => o.value === val);
                   return opt ? (
-                    <Badge key={val} variant="outline">
+                    <Badge key={val} variant="outline" className="text-[11px]">
                       {opt.label}
                       <button
                         className="ml-1 hover:text-red-500"
@@ -82,7 +82,7 @@ export function MultiSelectPopover({
                 })}
                 {(hiddenCount > 0 || expanded) && (
                   <Badge
-                    className="cursor-pointer px-1.5 text-muted-foreground hover:bg-accent"
+                    className="cursor-pointer px-1.5 text-[11px] text-muted-foreground hover:bg-accent"
                     appearance="ghost"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -106,9 +106,10 @@ export function MultiSelectPopover({
           <CommandInput
             placeholder={searchPlaceholder}
             onValueChange={setSearch}
+            className="text-[12px] placeholder:text-[12px]"
           />
           <CommandList>
-            <CommandEmpty>No options found.</CommandEmpty>
+            <CommandEmpty className="text-[12px]">No options found.</CommandEmpty>
             <CommandGroup>
               {onSelectAll && (
                 <CommandItem
@@ -117,7 +118,7 @@ export function MultiSelectPopover({
                   onSelect={() => {
                     onSelectAll();
                   }}
-                  className="font-medium text-primary"
+                  className="font-medium text-[12px] text-primary"
                 >
                   <span className="truncate">Select All</span>
                   {value.length === options.length && value.length > 0 && (
@@ -130,6 +131,7 @@ export function MultiSelectPopover({
                   key={opt.value}
                   value={opt.value}
                   onSelect={() => toggleSelection(opt.value)}
+                  className="text-[12px]"
                 >
                   <span className="truncate">{opt.label}</span>
                   {value.includes(opt.value) && <CommandCheck />}

@@ -21,7 +21,7 @@ import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { CategorySelect } from "@/components/common/api-selects";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +38,6 @@ import {
   formatPartnerAvailableQty,
   formatPartnerAllocatedQty,
 } from "@/utils/unit-conversion";
-import { useProductCategoriesQuery } from "@/features/category-management/hooks";
 import { usePartnersQuery } from "@/features/partner-management/hooks";
 import { usePartnerAllocationProductDetailQuery, useProductsQuery } from "../hooks";
 import {
@@ -98,7 +97,6 @@ export function PartnerAllocationListPage() {
   }, [searchTerm]);
 
   const partnersQuery = usePartnersQuery(1, 100, undefined, "active");
-  const categoriesQuery = useProductCategoriesQuery({ page: 1, limit: 100, status: "active" });
   const productsQuery = useProductsQuery({
     page: 1,
     limit: 100,
@@ -164,15 +162,6 @@ export function PartnerAllocationListPage() {
       selectedPartner.email
     );
   }, [activePartners, partnerId]);
-
-  const categoryOptions = useMemo(
-    () =>
-      (categoriesQuery.data?.data || []).map((category) => ({
-        value: category.id,
-        label: category.name.en || "-",
-      })),
-    [categoriesQuery.data?.data],
-  );
 
   const products = useMemo(
     () => productsQuery.data?.data || [],
@@ -434,8 +423,7 @@ export function PartnerAllocationListPage() {
               inputClassName="h-8.5 text-[12.5px]"
             />
             <div className="w-[140px]">
-              <SearchableSelect
-                options={categoryOptions}
+              <CategorySelect
                 value={categoryFilter}
                 onValueChange={(value) => setCategoryFilter(value)}
                 placeholder="Category"

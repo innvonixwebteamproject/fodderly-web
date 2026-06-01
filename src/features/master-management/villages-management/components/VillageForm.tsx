@@ -8,26 +8,20 @@ import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import { translateEnglishText } from "@/services/translation.service";
 import { MASTER_LANGUAGES, MasterLangCode, TranslationFields } from "../../components/TranslationFields";
 import { VillageFormValues, VillageItem, villageFormSchema } from "../types";
-
-interface SelectOption { value: string; label: string; }
+import { StateSelect, DistrictSelect, TalukaSelect } from "@/components/common/api-selects";
 
 interface VillageFormProps {
   initialData?: VillageItem | null;
-  states: SelectOption[];
   onSubmit: (values: VillageFormValues) => void;
   onCancel: () => void;
   isLoading?: boolean;
   viewOnly?: boolean;
 }
 
-import { useDistrictsQuery } from "../../districts-management/hooks/use-district-queries";
-import { useTalukasQuery } from "../../talukas-management/hooks/use-taluka-queries";
-
-export function VillageForm({ initialData, states, onSubmit, onCancel, isLoading, viewOnly }: VillageFormProps) {
+export function VillageForm({ initialData, onSubmit, onCancel, isLoading, viewOnly }: VillageFormProps) {
   const [activeLanguage, setActiveLanguage] = useState<MasterLangCode>("hi");
   const [isAutoTranslating, setIsAutoTranslating] = useState(false);
 
@@ -101,12 +95,6 @@ export function VillageForm({ initialData, states, onSubmit, onCancel, isLoading
   const watchedStateId = form.watch("stateId");
   const watchedDistrictId = form.watch("districtId");
 
-  const { data: districtsData, isLoading: isLoadingDistricts } = useDistrictsQuery({ stateId: watchedStateId || undefined });
-  const districtOptions = (districtsData?.data || []).map(d => ({ value: d.id, label: d.translations?.en || (typeof d.name === "string" ? d.name : d.name?.en) || "" }));
-
-  const { data: talukasData, isLoading: isLoadingTalukas } = useTalukasQuery({ stateId: watchedStateId || undefined, districtId: watchedDistrictId || undefined });
-  const talukaOptions = (talukasData?.data || []).map(t => ({ value: t.id, label: t.translations?.en || (typeof t.name === "string" ? t.name : t.name?.en) || "" }));
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-full flex-col">
@@ -128,7 +116,7 @@ export function VillageForm({ initialData, states, onSubmit, onCancel, isLoading
                 <FormItem>
                   <FormLabel required>State</FormLabel>
                   <FormControl>
-                    <SearchableSelect options={states} value={field.value}
+                    <StateSelect value={field.value}
                       onValueChange={(val) => { field.onChange(val); form.setValue("districtId", ""); form.setValue("talukaId", ""); }}
                       placeholder="Select state" disabled={isLoading || viewOnly} />
                   </FormControl>
@@ -139,10 +127,10 @@ export function VillageForm({ initialData, states, onSubmit, onCancel, isLoading
                 <FormItem>
                   <FormLabel required>District</FormLabel>
                   <FormControl>
-                    <SearchableSelect options={districtOptions} value={field.value}
+                    <DistrictSelect stateId={watchedStateId} value={field.value}
                       onValueChange={(val) => { field.onChange(val); form.setValue("talukaId", ""); }}
                       placeholder={watchedStateId ? "Select district" : "Select state first"}
-                      disabled={isLoading || viewOnly || !watchedStateId || isLoadingDistricts} />
+                      disabled={isLoading || viewOnly || !watchedStateId} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -151,9 +139,9 @@ export function VillageForm({ initialData, states, onSubmit, onCancel, isLoading
                 <FormItem>
                   <FormLabel required>Taluka</FormLabel>
                   <FormControl>
-                    <SearchableSelect options={talukaOptions} value={field.value} onValueChange={field.onChange}
+                    <TalukaSelect stateId={watchedStateId} districtId={watchedDistrictId} value={field.value} onValueChange={field.onChange}
                       placeholder={watchedDistrictId ? "Select taluka" : "Select district first"}
-                      disabled={isLoading || viewOnly || !watchedDistrictId || isLoadingTalukas} />
+                      disabled={isLoading || viewOnly || !watchedDistrictId} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

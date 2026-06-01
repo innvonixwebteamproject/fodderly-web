@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { UseInfiniteQueryResult, InfiniteData } from "@tanstack/react-query";
 import {
     Select,
@@ -46,8 +46,7 @@ export function InfiniteScrollSelect<T>({
 }: InfiniteScrollSelectProps<T>) {
     const [search, setSearch] = useState("");
     const [open, setOpen] = useState(false);
-    const observerTarget = useRef<HTMLDivElement>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
+    const loadingPageRef = useRef<number | null>(null);
 
     const {
         data,
@@ -55,6 +54,7 @@ export function InfiniteScrollSelect<T>({
         hasNextPage,
         isFetchingNextPage,
         isLoading,
+        isFetching,
     } = query;
 
     // Flatten all pages into a single array
@@ -62,39 +62,33 @@ export function InfiniteScrollSelect<T>({
         return data?.pages.flatMap((page: ApiResponse<T>) => page.data) || [];
     }, [data]);
 
-    // Intersection observer for infinite scroll
-    useEffect(() => {
-        if (!open) return;
+    const handleScroll = useCallback(
+        (event: React.UIEvent<HTMLDivElement>) => {
+            const lastPage = data?.pages[data.pages.length - 1];
+            const currentPage = lastPage?.meta.page;
+            const totalPages = lastPage?.meta.totalPages;
+            const nextPage =
+                currentPage && (!totalPages || currentPage < totalPages)
+                    ? currentPage + 1
+                    : undefined;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (
-                    entries[0].isIntersecting &&
-                    hasNextPage &&
-                    !isFetchingNextPage &&
-                    !isLoading
-                ) {
-                    fetchNextPage();
+            if (!open || !nextPage || !hasNextPage || isFetching || isLoading) return;
+
+            const target = event.currentTarget;
+            const distanceFromBottom =
+                target.scrollHeight - target.scrollTop - target.clientHeight;
+
+            if (distanceFromBottom > 48 || loadingPageRef.current === nextPage) return;
+
+            loadingPageRef.current = nextPage;
+            void fetchNextPage({ cancelRefetch: false }).finally(() => {
+                if (loadingPageRef.current === nextPage) {
+                    loadingPageRef.current = null;
                 }
-            },
-            {
-                root: contentRef.current,
-                threshold: 0.5,
-                rootMargin: "50px",
-            }
-        );
-
-        const target = observerTarget.current;
-        if (target) {
-            observer.observe(target);
-        }
-
-        return () => {
-            if (target) {
-                observer.unobserve(target);
-            }
-        };
-    }, [open, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
+            });
+        },
+        [data, fetchNextPage, hasNextPage, isFetching, isLoading, open]
+    );
 
     return (
         <div className="relative w-full">
@@ -104,7 +98,7 @@ export function InfiniteScrollSelect<T>({
                         <SelectValue placeholder={placeholder} />
                     </SelectTrigger>
                 </FormControl>
-                <SelectContent ref={contentRef} className="max-h-[300px]">
+                <SelectContent className="max-h-[300px] overflow-y-auto" onScroll={handleScroll}>
                     {/* Search Input */}
                     <div className="sticky top-0 z-10 bg-popover p-2 border-b">
                         <div className="relative">
@@ -156,7 +150,7 @@ export function InfiniteScrollSelect<T>({
                     )}
 
                     {/* Observer Target & Loading More Indicator */}
-                    <div ref={observerTarget} className="w-full">
+                    <div className="w-full">
                         {isFetchingNextPage && (
                             <div className="flex items-center justify-center gap-2 py-2">
                                 <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />

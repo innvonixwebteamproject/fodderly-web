@@ -8,25 +8,20 @@ import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import { translateEnglishText } from "@/services/translation.service";
 import { MASTER_LANGUAGES, MasterLangCode, TranslationFields } from "../../components/TranslationFields";
 import { TalukaFormValues, TalukaItem, talukaFormSchema } from "../types";
-
-interface SelectOption { value: string; label: string; }
+import { StateSelect, DistrictSelect } from "@/components/common/api-selects";
 
 interface TalukaFormProps {
   initialData?: TalukaItem | null;
-  states: SelectOption[];
   onSubmit: (values: TalukaFormValues) => void;
   onCancel: () => void;
   isLoading?: boolean;
   viewOnly?: boolean;
 }
 
-import { useDistrictsQuery } from "../../districts-management/hooks/use-district-queries";
-
-export function TalukaForm({ initialData, states, onSubmit, onCancel, isLoading, viewOnly }: TalukaFormProps) {
+export function TalukaForm({ initialData, onSubmit, onCancel, isLoading, viewOnly }: TalukaFormProps) {
   const [activeLanguage, setActiveLanguage] = useState<MasterLangCode>("hi");
   const [isAutoTranslating, setIsAutoTranslating] = useState(false);
 
@@ -96,9 +91,6 @@ export function TalukaForm({ initialData, states, onSubmit, onCancel, isLoading,
 
   const watchedStateId = form.watch("stateId");
 
-  const { data: districtsData, isLoading: isLoadingDistricts } = useDistrictsQuery({ stateId: watchedStateId || undefined });
-  const districtOptions = (districtsData?.data || []).map(d => ({ value: d.id, label: d.translations?.en || (typeof d.name === "string" ? d.name : d.name?.en) || "" }));
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex min-h-full flex-col">
@@ -120,7 +112,7 @@ export function TalukaForm({ initialData, states, onSubmit, onCancel, isLoading,
                 <FormItem>
                   <FormLabel required>State</FormLabel>
                   <FormControl>
-                    <SearchableSelect options={states} value={field.value}
+                    <StateSelect value={field.value}
                       onValueChange={(val) => { field.onChange(val); form.setValue("districtId", ""); }}
                       placeholder="Select state" disabled={isLoading || viewOnly} />
                   </FormControl>
@@ -131,9 +123,9 @@ export function TalukaForm({ initialData, states, onSubmit, onCancel, isLoading,
                 <FormItem>
                   <FormLabel required>District</FormLabel>
                   <FormControl>
-                    <SearchableSelect options={districtOptions} value={field.value} onValueChange={field.onChange}
+                    <DistrictSelect stateId={watchedStateId} value={field.value} onValueChange={field.onChange}
                       placeholder={watchedStateId ? "Select district" : "Select state first"}
-                      disabled={isLoading || viewOnly || !watchedStateId || isLoadingDistricts} />
+                      disabled={isLoading || viewOnly || !watchedStateId} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

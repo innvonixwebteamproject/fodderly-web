@@ -44,7 +44,7 @@ export interface MasterDataResponse<T> {
 export type PartnerSortBy = "name" | "email" | "createdAt" | "status";
 export type PartnerSortOrder = "ASC" | "DESC";
 
-const MASTER_PAGE_LIMIT = 100;
+const MASTER_PAGE_LIMIT = 10;
 const MAX_MASTER_AGGREGATION_PAGES = 100;
 
 type RawPartner = Partial<IPartner> & {
@@ -427,7 +427,12 @@ export const getPartnerStates = async (
   limit: number = MASTER_PAGE_LIMIT,
 ): Promise<MasterDataResponse<IPartnerState>> => {
   const response = await api.get<WrappedResponse<RawState[]>>("/states", {
-    params: { page, limit },
+    params: {
+      page,
+      limit,
+      sortBy: "name",
+      sortOrder: "ASC",
+    },
   });
   const responseData = response.data;
   const { items, meta } = unwrapCollection(responseData, page, limit);
@@ -482,6 +487,8 @@ export const getPartnerDistricts = async (
     params: {
       page,
       limit,
+      sortBy: "name",
+      sortOrder: "ASC",
       ...(stateId?.trim() ? { stateId } : {}),
     },
   });

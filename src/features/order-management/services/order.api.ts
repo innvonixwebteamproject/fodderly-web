@@ -821,6 +821,7 @@ const buildListParams = (
   ...(filters.talukaId ? { talukaId: filters.talukaId } : {}),
   ...(filters.villageId ? { villageId: filters.villageId } : {}),
   ...(filters.partnerId ? { partnerId: filters.partnerId } : {}),
+  ...(filters.farmerId ? { farmerId: filters.farmerId } : {}),
   ...(filters.foddermanId ? { foddermanId: filters.foddermanId } : {}),
   ...(filters.orderStatus ? { orderStatus: filters.orderStatus } : {}),
   ...(filters.paymentMode ? { paymentMode: filters.paymentMode } : {}),

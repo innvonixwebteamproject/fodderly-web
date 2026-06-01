@@ -27,8 +27,6 @@ import { ActionButton } from "@/components/common/action-button";
 import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { PartnerStatus } from "@/lib/enum";
 import {
-  usePartnerDistrictsQuery,
-  usePartnerStatesQuery,
   usePartnersInfiniteQuery,
   useResendPartnerEmailMutation,
   useUpdatePartnerStatusMutation,
@@ -45,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { DistrictSelect, StateSelect } from "@/components/common/api-selects";
 import {
   Tooltip,
   TooltipContent,
@@ -197,11 +196,6 @@ export function PartnerListPage() {
   const [selectedPartner, setSelectedPartner] = useState<IPartner | null>(null);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
   const [resendingPartnerId, setResendingPartnerId] = useState<string | null>(null);
-  const { data: statesResponse, isLoading: isLoadingStates } =
-    usePartnerStatesQuery();
-  const { data: districtsResponse, isLoading: isLoadingDistricts } =
-    usePartnerDistrictsQuery(stateFilter || undefined, Boolean(stateFilter));
-  const { data: allDistrictsResponse } = usePartnerDistrictsQuery();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -284,39 +278,17 @@ export function PartnerListPage() {
     return data?.pages.flatMap((page) => page.data) || [];
   }, [data]);
 
-  const states = useMemo(() => statesResponse?.data ?? [], [statesResponse?.data]);
-  const districts = useMemo(
-    () => districtsResponse?.data ?? [],
-    [districtsResponse?.data],
-  );
-  const allDistricts = useMemo(
-    () => allDistrictsResponse?.data ?? [],
-    [allDistrictsResponse?.data],
-  );
-
-  const districtNameMap = useMemo(
-    () => new Map(allDistricts.map((district) => [district.id, district.name])),
-    [allDistricts],
-  );
-
-  const districtStateMap = useMemo(
-    () => new Map(allDistricts.map((district) => [district.id, district.stateId])),
-    [allDistricts],
-  );
-
-  const stateOptions = useMemo(() => {
-    return states.map((state) => ({
-      value: state.id,
-      label: state.name,
-    }));
-  }, [states]);
-
-  const districtOptions = useMemo(() => {
-    return districts.map((district) => ({
-      value: district.id,
-      label: district.name,
-    }));
-  }, [districts]);
+  const districtNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    partners.forEach((partner) => {
+      partner.districts?.forEach((district) => {
+        if (district.id && district.name) {
+          map.set(district.id, district.name);
+        }
+      });
+    });
+    return map;
+  }, [partners]);
 
   const filteredPartners = useMemo(() => {
     const normalizedSearch = debouncedSearchTerm.trim().toLowerCase();
@@ -342,11 +314,9 @@ export function PartnerListPage() {
     return bySearch.filter((partner) =>
       partner.state?.id
         ? partner.state.id === stateFilter
-        : partner.districtIds.some(
-          (districtId) => districtStateMap.get(districtId) === stateFilter,
-        ),
+        : partner.districts?.some((district) => district.stateId === stateFilter) ?? false,
     );
-  }, [debouncedSearchTerm, districtStateMap, districtFilter, partners, stateFilter]);
+  }, [debouncedSearchTerm, districtFilter, partners, stateFilter]);
 
   const columns = useMemo<ColumnDef<IPartner>[]>(
     () => [
@@ -615,29 +585,27 @@ This action will update the partner's status immediately.`
 
             <div className="flex flex-wrap items-center justify-end gap-2 xl:shrink-0 2xl:flex-nowrap">
               <div className="w-[145px]">
-                <SearchableSelect
-                  options={stateOptions}
+                <StateSelect
                   value={stateFilter}
-                  onValueChange={setStateFilter}
+                  onValueChange={(value) => setStateFilter(value as string)}
                   placeholder="All States"
                   searchPlaceholder="Search State..."
-                  searchInputClassName="text-xs placeholder:text-xs"
-                  disabled={isLoadingStates}
+                  isClearable
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
 
               <div className="w-[145px]">
-                <SearchableSelect
-                  options={districtOptions}
+                <DistrictSelect
+                  stateId={stateFilter}
                   value={districtFilter}
-                  onValueChange={setDistrictFilter}
+                  onValueChange={(value) => setDistrictFilter(value as string)}
                   placeholder={
                     stateFilter ? "All Districts" : "Select state first"
                   }
                   searchPlaceholder="Search District..."
-                  searchInputClassName="text-xs placeholder:text-xs"
-                  disabled={!stateFilter || isLoadingDistricts}
+                  disabled={!stateFilter}
+                  isClearable
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>

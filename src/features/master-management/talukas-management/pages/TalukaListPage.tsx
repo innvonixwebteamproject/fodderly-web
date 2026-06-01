@@ -20,7 +20,6 @@ import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Dialog,
   DialogContent,
@@ -32,8 +31,7 @@ import {
 import { useTalukasInfiniteQuery, useTalukaMutation } from "../hooks/use-taluka-queries";
 import { uploadTalukaExcel, downloadTalukaExcel, streamTalukaImport, downloadTalukaImportErrorSheet } from "../services/taluka.api";
 
-import { useStatesInfiniteQuery } from "../../states-management/hooks/use-state-queries";
-import { useDistrictsQuery } from "../../districts-management/hooks/use-district-queries";
+import { StateSelect, DistrictSelect } from "@/components/common/api-selects";
 import { TalukaForm } from "../components/TalukaForm";
 import { CommonExcelUploadModal } from "../../components/CommonExcelUploadModal";
 import { TalukaItem, TalukaFormValues } from "../types";
@@ -60,33 +58,7 @@ export function TalukaListPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: statesData } = useStatesInfiniteQuery({
-    prefetchAllPages: true,
-    limit: 100,
-    sortBy: "name",
-    sortOrder: "ASC",
-  });
-  const stateOptions = useMemo(
-    () =>
-      statesData?.pages.flatMap((p) =>
-        p.data.map((s) => ({
-          value: s.id,
-          label:
-            s.translations?.en || (typeof s.name === "string" ? s.name : s.name?.en) || "",
-        })),
-      ) || [],
-    [statesData],
-  );
 
-  const { data: districtsData, isLoading: isLoadingDistricts } = useDistrictsQuery({ stateId: stateFilter || undefined });
-  const districtOptions = useMemo(
-    () =>
-      (districtsData?.data || []).map((d) => ({
-        value: d.id,
-        label: d.translations?.en || (typeof d.name === "string" ? d.name : d.name?.en) || "",
-      })),
-    [districtsData],
-  );
 
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
@@ -113,27 +85,9 @@ export function TalukaListPage() {
     return format(parsed, "dd/MM/yyyy");
   };
 
-  // Build a set of district IDs that belong to the selected state (for reliable client-side filtering)
-  const stateDistrictIdSet = useMemo(() =>
-    new Set((districtsData?.data || []).map(d => d.id)),
-    [districtsData]
-  );
-
   const talukasData = useMemo(() => {
-    const allTalukas = data?.pages.flatMap(p => p.data) || [];
-    return allTalukas.filter(t => {
-      // Filter by state: use stateId if present, else check districtId belongs to state's districts
-      if (stateFilter) {
-        const matchesState = t.stateId
-          ? t.stateId === stateFilter
-          : stateDistrictIdSet.size > 0 && stateDistrictIdSet.has(t.districtId);
-        if (!matchesState) return false;
-      }
-      // Filter by district
-      if (districtFilter && t.districtId && t.districtId !== districtFilter) return false;
-      return true;
-    });
-  }, [data, stateFilter, districtFilter, stateDistrictIdSet]);
+    return data?.pages.flatMap(p => p.data) || [];
+  }, [data]);
 
   const mutation = useTalukaMutation(selectedTaluka?.id, () => {
     setIsDialogOpen(false);
@@ -276,23 +230,24 @@ export function TalukaListPage() {
               <SearchInput value={searchTerm} onChange={setSearchTerm} tooltip="Search by taluka name"
                 className="w-full sm:max-w-[250px]" inputClassName="h-9 text-[13px]" />
               <div className="w-[150px]">
-                <SearchableSelect
-                  options={stateOptions}
+                <StateSelect
                   value={stateFilter}
-                  onValueChange={(val) => { setStateFilter(val); setDistrictFilter(""); }}
+                  onValueChange={(val) => { setStateFilter(val as string); setDistrictFilter(""); }}
                   placeholder="Select State"
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start"
+                  isClearable
                 />
               </div>
               <div className="w-[150px]">
-                <SearchableSelect options={districtOptions} value={districtFilter} onValueChange={setDistrictFilter}
+                <DistrictSelect stateId={stateFilter} value={districtFilter} onValueChange={(val) => setDistrictFilter(val as string)}
                   placeholder={stateFilter ? "Select District" : "Select State first"}
-                  disabled={!stateFilter || isLoadingDistricts}
+                  disabled={!stateFilter}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start"
+                  isClearable
                 />
               </div>
             </div>
@@ -375,7 +330,6 @@ export function TalukaListPage() {
           <div className="px-6 ">
             <TalukaForm
               initialData={selectedTaluka}
-              states={stateOptions}
               onSubmit={(val: TalukaFormValues) => mutation.mutate(val)}
               onCancel={() => setIsDialogOpen(false)}
               isLoading={mutation.isPending}

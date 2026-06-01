@@ -54,7 +54,7 @@ function CommandInput({
       <Search className="me-2 h-4 w-4 shrink-0 opacity-50" />
       <CommandPrimitive.Input
         className={cn(
-          "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-hidden text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-11 w-full rounded-md bg-transparent py-3 text-[12px] outline-hidden text-foreground placeholder:text-[12px] placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}
         {...props}
@@ -77,12 +77,13 @@ const CommandList = React.forwardRef<
 CommandList.displayName = CommandPrimitive.List.displayName;
 
 function CommandEmpty({
+  className,
   ...props
 }: React.ComponentPropsWithoutRef<typeof CommandPrimitive.Empty>) {
   return (
     <CommandPrimitive.Empty
       data-slot="command-empty"
-      className="py-6 text-center text-sm"
+      className={cn("py-6 text-center text-[12px]", className)}
       {...props}
     />
   );
@@ -125,7 +126,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "relative flex text-foreground cursor-default gap-1.5 select-none items-center rounded-none px-3 py-1.5 text-[12.5px] outline-hidden data-[disabled=true]:pointer-events-none data-[selected=true]:bg-primary/10 hover:bg-primary/10 data-[disabled=true]:opacity-50 transition-colors [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
+        "relative flex text-foreground cursor-default gap-1.5 select-none items-center rounded-none px-3 py-1.5 text-[12px] outline-hidden data-[disabled=true]:pointer-events-none data-[selected=true]:bg-primary/10 hover:bg-primary/10 data-[disabled=true]:opacity-50 transition-colors [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
         className,
       )}
       {...props}

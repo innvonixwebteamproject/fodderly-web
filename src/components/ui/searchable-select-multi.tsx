@@ -60,7 +60,7 @@ export const SearchableSelectMulti = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between text-[12px]"
         >
           <span
             className="truncate min-w-0"
@@ -77,8 +77,11 @@ export const SearchableSelectMulti = ({
         align="start"
       >
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
-          <CommandEmpty>No option found.</CommandEmpty>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            className="text-[12px] placeholder:text-[12px]"
+          />
+          <CommandEmpty className="text-[12px]">No option found.</CommandEmpty>
           <CommandGroup>
             {/* Selected options */}
             {options
@@ -88,7 +91,7 @@ export const SearchableSelectMulti = ({
                   key={option.value}
                   value={option.label}
                   onSelect={() => handleSelect(option.value)}
-                  className="bg-accent/50 mb-1"
+                  className="bg-accent/50 mb-1 text-[12px]"
                 >
                   <Check className="mr-2 h-4 w-4 opacity-100" />
                   <span className="truncate max-w-[300px]" title={option.label}>
@@ -114,6 +117,7 @@ export const SearchableSelectMulti = ({
                   key={option.value}
                   value={option.label}
                   onSelect={() => handleSelect(option.value)}
+                  className="text-[12px]"
                 >
                   <Check className="mr-2 h-4 w-4 opacity-0" />
                   <span className="break-words whitespace-normal" title={option.label}>

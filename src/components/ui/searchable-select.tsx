@@ -50,7 +50,7 @@ export const SearchableSelect = ({
           role="combobox"
           mode="input"
           className={cn(
-            "w-full justify-between px-2 py-1.5 text-left relative",
+            "w-full justify-between px-2 py-1.5 text-left text-[12px] relative",
             triggerClassName,
           )}
         >
@@ -94,7 +94,7 @@ export const SearchableSelect = ({
               placeholder={searchPlaceholder || "Search..."}
               value={search}
               onValueChange={setSearch}
-              className={searchInputClassName}
+              className={cn("text-[12px] placeholder:text-[12px]", searchInputClassName)}
             />
             <CommandList className="max-h-[min(40vh,340px)] min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
               <CommandEmpty>No option found.</CommandEmpty>
@@ -103,6 +103,7 @@ export const SearchableSelect = ({
                   <CommandItem
                     key={`${opt.value}-${index}`}
                     value={opt.label + " " + opt.value}
+                    className="text-[12px]"
                     onSelect={() => {
                       onValueChange(opt.value);
                       setOpen(false);

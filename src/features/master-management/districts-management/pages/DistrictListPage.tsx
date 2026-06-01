@@ -21,7 +21,6 @@ import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Dialog,
   DialogContent,
@@ -33,8 +32,8 @@ import {
 import { useDistrictsInfiniteQuery, useDistrictMutation } from "../hooks/use-district-queries";
 import { uploadDistrictExcel, downloadDistrictExcel, streamDistrictImport, downloadDistrictImportErrorSheet } from "../services/district.api";
 
-import { useStatesInfiniteQuery } from "../../states-management/hooks/use-state-queries";
 import { DistrictForm } from "../components/DistrictForm";
+import { StateSelect } from "@/components/common/api-selects";
 import { CommonExcelUploadModal } from "../../components/CommonExcelUploadModal";
 import { DistrictItem, DistrictFormValues } from "../types";
 import { toast } from "sonner";
@@ -59,23 +58,7 @@ export function DistrictListPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: statesData } = useStatesInfiniteQuery({
-    prefetchAllPages: true,
-    limit: 100,
-    sortBy: "name",
-    sortOrder: "ASC",
-  });
-  const stateOptions = useMemo(
-    () =>
-      statesData?.pages.flatMap((p) =>
-        p.data.map((s) => ({
-          value: s.id,
-          label:
-            s.translations?.en || (typeof s.name === "string" ? s.name : s.name?.en) || "",
-        })),
-      ) || [],
-    [statesData],
-  );
+
 
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
@@ -234,14 +217,14 @@ export function DistrictListPage() {
               <SearchInput value={searchTerm} onChange={setSearchTerm} tooltip="Search by district or state name"
                 className="w-full sm:max-w-[250px]" inputClassName="h-9 text-[13px]" />
               <div className="w-[160px]">
-                <SearchableSelect
-                  options={stateOptions}
+                <StateSelect
                   value={stateFilter}
-                  onValueChange={setStateFilter}
+                  onValueChange={(value) => setStateFilter(value as string)}
                   placeholder="All States"
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
                   align="start"
+                  isClearable
                 />
               </div>
             </div>
@@ -328,7 +311,6 @@ export function DistrictListPage() {
           <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-6 pb-6">
             <DistrictForm
               initialData={selectedDistrict}
-              states={stateOptions}
               onSubmit={(val: DistrictFormValues) => mutation.mutate(val)}
               onCancel={() => setIsDialogOpen(false)}
               isLoading={mutation.isPending}

@@ -24,6 +24,7 @@ import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { CategorySelect } from "@/components/common/api-selects";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +36,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProductDetailModal } from "../components/ProductDetailModal";
-import { useProductCategoriesQuery } from "@/features/category-management/hooks";
 import {
   useDeleteProductMutation,
   useProductQuery,
@@ -105,20 +105,9 @@ export function AdminProductListPage() {
     isActive: statusFilter === "" ? undefined : statusFilter === "active",
   });
 
-  const categoriesQuery = useProductCategoriesQuery({ page: 1, limit: 100, status: "active" });
-
   const rows = useMemo(
     () => productsQuery.data?.pages.flatMap((page) => page.data) || [],
     [productsQuery.data?.pages],
-  );
-
-  const categoryOptions = useMemo(
-    () =>
-      (categoriesQuery.data?.data || []).map((item) => ({
-        label: getLanguageLabel(item.name, "Category"),
-        value: item.id,
-      })),
-    [categoriesQuery.data?.data],
   );
 
   const statusOptions = [
@@ -453,8 +442,7 @@ export function AdminProductListPage() {
                 />
               </div>
               <div className="w-[140px]">
-                <SearchableSelect
-                  options={categoryOptions}
+                <CategorySelect
                   value={categoryFilter}
                   onValueChange={setCategoryFilter}
                   placeholder="Category"

@@ -17,17 +17,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import {
+  DistrictSelect,
+  FoddermanSelect,
+  StateSelect,
+  TalukaSelect,
+  VillageSelect,
+} from "@/components/common/api-selects";
 import { ActionIcon } from "@/config/icons.config";
 import { validatePincodeAgainstDistrict } from "@/lib/pincode-district-validator";
-import {
-  usePartnerDistrictsQuery,
-  usePartnerStatesQuery,
-} from "@/features/partner-management";
-import {
-  useFoddermanOptionsQuery,
-  useTalukaOptionsQuery,
-  useVillageOptionsQuery,
-} from "../hooks";
 import type { IFarmer, FarmerFormSchemaType } from "../types/farmer.types";
 import { farmerFormSchema } from "../types/farmer.types";
 import { LANGUAGE_OPTIONS } from "../constants";
@@ -66,52 +64,47 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
   const selectedDistrictId = form.watch("districtId");
   const selectedTalukaId = form.watch("talukaId");
   const selectedVillageId = form.watch("villageId");
-  const selectedFoddermanId = form.watch("foddermanId");
 
-  const { data: statesResponse, isLoading: isLoadingStates } = usePartnerStatesQuery();
-  const { data: districtsResponse, isLoading: isLoadingDistricts } =
-    usePartnerDistrictsQuery(selectedStateId || undefined, Boolean(selectedStateId));
-
-  const { data: talukaOptions, isLoading: isLoadingTalukas } =
-    useTalukaOptionsQuery(selectedDistrictId || undefined);
-  const { data: villageOptions, isLoading: isLoadingVillages } =
-    useVillageOptionsQuery(selectedTalukaId || undefined);
   const foddermanGeoEnabled = Boolean(selectedStateId?.trim());
-  const { data: foddermanOptions, isLoading: isLoadingFoddermen } = useFoddermanOptionsQuery(
-    {
-      stateId: selectedStateId || undefined,
-      districtId: selectedDistrictId || undefined,
-      talukaId: selectedTalukaId || undefined,
-      villageId: selectedVillageId || undefined,
-    },
-    { enabled: foddermanGeoEnabled },
+
+  const selectedOptionLabels = useMemo(
+    () => ({
+      state: initialData?.stateId && initialData.stateName
+        ? { [initialData.stateId]: initialData.stateName }
+        : {},
+      district: initialData?.districtId && initialData.districtName
+        ? { [initialData.districtId]: initialData.districtName }
+        : {},
+      taluka: initialData?.talukaId && initialData.talukaName
+        ? { [initialData.talukaId]: initialData.talukaName }
+        : {},
+      village: initialData?.villageId && initialData.villageName
+        ? { [initialData.villageId]: initialData.villageName }
+        : {},
+      fodderman: initialData?.foddermanId && initialData.foddermanName
+        ? {
+            [initialData.foddermanId]: initialData.foddermanPhone
+              ? `${initialData.foddermanName} (${initialData.foddermanPhone})`
+              : initialData.foddermanName,
+          }
+        : {},
+    }),
+    [initialData],
   );
 
-  const states = useMemo(() => statesResponse?.data ?? [], [statesResponse?.data]);
-  const districts = useMemo(() => districtsResponse?.data ?? [], [districtsResponse?.data]);
-
-  const stateOptions = useMemo(
-    () => states.map((state) => ({ value: state.id, label: state.name })),
-    [states],
-  );
-
-  const districtOptions = useMemo(
-    () => districts.map((district) => ({ value: district.id, label: district.name })),
-    [districts],
-  );
   const selectedStateName = useMemo(() => {
     if (initialData?.stateName && isReadonlyInEdit) {
       return initialData.stateName;
     }
-    return stateOptions.find((state) => state.value === selectedStateId)?.label ?? "";
-  }, [stateOptions, initialData?.stateName, isReadonlyInEdit, selectedStateId]);
+    return selectedOptionLabels.state[selectedStateId] ?? "";
+  }, [initialData?.stateName, isReadonlyInEdit, selectedOptionLabels.state, selectedStateId]);
 
   const selectedDistrictName = useMemo(() => {
     if (initialData?.districtName && isReadonlyInEdit) {
       return initialData.districtName;
     }
-    return districtOptions.find((district) => district.value === selectedDistrictId)?.label ?? "";
-  }, [districtOptions, initialData?.districtName, isReadonlyInEdit, selectedDistrictId]);
+    return selectedOptionLabels.district[selectedDistrictId] ?? "";
+  }, [initialData?.districtName, isReadonlyInEdit, selectedDistrictId, selectedOptionLabels.district]);
 
   useEffect(() => {
     if (!initialData) {
@@ -134,22 +127,7 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
     });
   }, [form, initialData]);
 
-  useEffect(() => {
-    if (!selectedFoddermanId?.trim() || isLoadingFoddermen) return;
-    if (foddermanOptions.length === 0) return;
-    const stillValid = foddermanOptions.some((option) => option.value === selectedFoddermanId);
-    if (!stillValid) {
-      form.setValue("foddermanId", "", { shouldValidate: true });
-    }
-  }, [foddermanOptions, selectedFoddermanId, isLoadingFoddermen, form]);
-
-  const isBusy =
-    isLoading ||
-    isLoadingStates ||
-    isLoadingDistricts ||
-    isLoadingTalukas ||
-    isLoadingVillages ||
-    isLoadingFoddermen;
+  const isBusy = isLoading;
 
   const handleCancel = () => {
     if (form.formState.isDirty && !window.confirm("You have unsaved changes. Continue?")) {
@@ -312,8 +290,7 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                       <FormItem>
                         <FormLabel required>State</FormLabel>
                         <FormControl>
-                          <SearchableSelect
-                            options={stateOptions}
+                          <StateSelect
                             value={field.value}
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -342,7 +319,8 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                             }}
                             placeholder="Select State"
                             searchPlaceholder="Search State..."
-                            disabled={isLoadingStates || isReadonlyInEdit}
+                            disabled={isReadonlyInEdit}
+                            selectedOptionLabels={selectedOptionLabels.state}
                           />
                         </FormControl>
                         <FormMessage />
@@ -357,8 +335,8 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                       <FormItem>
                         <FormLabel required>District</FormLabel>
                         <FormControl>
-                          <SearchableSelect
-                            options={districtOptions}
+                          <DistrictSelect
+                            stateId={selectedStateId || undefined}
                             value={field.value}
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -385,7 +363,8 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                             }}
                             placeholder={selectedStateId ? "Select District" : "Select state first"}
                             searchPlaceholder="Search District..."
-                            disabled={!selectedStateId || isLoadingDistricts || isReadonlyInEdit}
+                            disabled={!selectedStateId || isReadonlyInEdit}
+                            selectedOptionLabels={selectedOptionLabels.district}
                           />
                         </FormControl>
                         <FormMessage />
@@ -400,8 +379,9 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                       <FormItem>
                         <FormLabel required>Taluka</FormLabel>
                         <FormControl>
-                          <SearchableSelect
-                            options={talukaOptions}
+                          <TalukaSelect
+                            stateId={selectedStateId || undefined}
+                            districtId={selectedDistrictId || undefined}
                             value={field.value ?? ""}
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -422,7 +402,8 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                               selectedDistrictId ? "Select Taluka" : "Select district first"
                             }
                             searchPlaceholder="Search Taluka..."
-                            disabled={!selectedDistrictId || isLoadingTalukas || isReadonlyInEdit}
+                            disabled={!selectedDistrictId || isReadonlyInEdit}
+                            selectedOptionLabels={selectedOptionLabels.taluka}
                           />
                         </FormControl>
                         <FormMessage />
@@ -437,8 +418,10 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                       <FormItem>
                         <FormLabel required>Village</FormLabel>
                         <FormControl>
-                          <SearchableSelect
-                            options={villageOptions}
+                          <VillageSelect
+                            stateId={selectedStateId || undefined}
+                            districtId={selectedDistrictId || undefined}
+                            talukaId={selectedTalukaId || undefined}
                             value={field.value}
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -452,7 +435,8 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                             }}
                             placeholder={selectedTalukaId ? "Select Village" : "Select taluka first"}
                             searchPlaceholder="Search Village..."
-                            disabled={!selectedTalukaId || isLoadingVillages}
+                            disabled={!selectedTalukaId}
+                            selectedOptionLabels={selectedOptionLabels.village}
                           />
                         </FormControl>
                         <FormMessage />
@@ -524,24 +508,26 @@ export function FarmerForm({ initialData, onSubmit, isLoading }: FarmerFormProps
                       <FormItem className="md:col-span-2">
                         <FormLabel required>Fodderman</FormLabel>
                         <FormControl>
-                          <SearchableSelect
-                            options={foddermanOptions}
+                          <FoddermanSelect
+                            stateId={selectedStateId || undefined}
+                            districtId={selectedDistrictId || undefined}
+                            talukaId={selectedTalukaId || undefined}
+                            villageId={selectedVillageId || undefined}
                             value={field.value ?? ""}
                             onValueChange={(value) => {
                               field.onChange(value);
-                              if (value?.trim()) {
+                              if (typeof value === "string" && value.trim()) {
                                 form.clearErrors("foddermanId");
                               }
                             }}
                             placeholder={
                               !foddermanGeoEnabled
                                 ? "Select state first"
-                                : isLoadingFoddermen
-                                  ? "Loading fodderman..."
-                                  : "Select fodderman"
+                                : "Select fodderman"
                             }
                             searchPlaceholder="Search Fodderman..."
-                            disabled={!foddermanGeoEnabled || isLoadingFoddermen}
+                            disabled={!foddermanGeoEnabled}
+                            selectedOptionLabels={selectedOptionLabels.fodderman}
                           />
                         </FormControl>
                         <FormMessage />

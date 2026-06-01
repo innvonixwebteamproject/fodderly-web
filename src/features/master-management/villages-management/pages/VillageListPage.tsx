@@ -20,7 +20,6 @@ import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
-import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Dialog,
   DialogContent,
@@ -32,9 +31,7 @@ import {
 import { useVillagesInfiniteQuery, useVillageMutation } from "../hooks/use-village-queries";
 import { uploadVillageExcel, downloadVillageExcel, streamVillageImport, downloadVillageImportErrorSheet } from "../services/village.api";
 
-import { useStatesInfiniteQuery } from "../../states-management/hooks/use-state-queries";
-import { useDistrictsQuery } from "../../districts-management/hooks/use-district-queries";
-import { useTalukasQuery } from "../../talukas-management/hooks/use-taluka-queries";
+import { StateSelect, DistrictSelect, TalukaSelect } from "@/components/common/api-selects";
 import { VillageForm } from "../components/VillageForm";
 import { CommonExcelUploadModal } from "../../components/CommonExcelUploadModal";
 import { VillageItem, VillageFormValues } from "../types";
@@ -62,46 +59,7 @@ export function VillageListPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const { data: statesData } = useStatesInfiniteQuery({
-    prefetchAllPages: true,
-    limit: 100,
-    sortBy: "name",
-    sortOrder: "ASC",
-  });
-  const stateOptions = useMemo(
-    () =>
-      statesData?.pages.flatMap((p) =>
-        p.data.map((s) => ({
-          value: s.id,
-          label:
-            s.translations?.en || (typeof s.name === "string" ? s.name : s.name?.en) || "",
-        })),
-      ) || [],
-    [statesData],
-  );
 
-  const { data: districtsData, isLoading: isLoadingDistricts } = useDistrictsQuery({ stateId: stateFilter || undefined });
-  const districtOptions = useMemo(
-    () =>
-      (districtsData?.data || []).map((d) => ({
-        value: d.id,
-        label: d.translations?.en || (typeof d.name === "string" ? d.name : d.name?.en) || "",
-      })),
-    [districtsData],
-  );
-
-  const { data: talukasData, isLoading: isLoadingTalukas } = useTalukasQuery({
-    stateId: stateFilter || undefined,
-    districtId: districtFilter || undefined,
-  });
-  const talukaOptions = useMemo(
-    () =>
-      (talukasData?.data || []).map((t) => ({
-        value: t.id,
-        label: t.translations?.en || (typeof t.name === "string" ? t.name : t.name?.en) || "",
-      })),
-    [talukasData],
-  );
 
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
@@ -129,38 +87,9 @@ export function VillageListPage() {
     return format(parsed, "dd/MM/yyyy");
   };
 
-  // Build sets from already-fetched dropdown data for reliable client-side filtering
-  const stateDistrictIdSet = useMemo(() =>
-    new Set((districtsData?.data || []).map(d => d.id)),
-    [districtsData]
-  );
-  const districtTalukaIdSet = useMemo(() =>
-    new Set((talukasData?.data || []).map(t => t.id)),
-    [talukasData]
-  );
-
   const villagesData = useMemo(() => {
-    const allVillages = data?.pages.flatMap(p => p.data) || [];
-    return allVillages.filter(v => {
-      // Filter by state: stateId if available, else check districtId belongs to state's districts
-      if (stateFilter) {
-        const matchesState = v.stateId
-          ? v.stateId === stateFilter
-          : stateDistrictIdSet.size > 0 && stateDistrictIdSet.has(v.districtId);
-        if (!matchesState) return false;
-      }
-      // Filter by district: districtId if available, else check talukaId belongs to district's talukas
-      if (districtFilter) {
-        const matchesDistrict = v.districtId
-          ? v.districtId === districtFilter
-          : districtTalukaIdSet.size > 0 && districtTalukaIdSet.has(v.talukaId);
-        if (!matchesDistrict) return false;
-      }
-      // Filter by taluka
-      if (talukaFilter && v.talukaId && v.talukaId !== talukaFilter) return false;
-      return true;
-    });
-  }, [data, stateFilter, districtFilter, talukaFilter, stateDistrictIdSet, districtTalukaIdSet]);
+    return data?.pages.flatMap(p => p.data) || [];
+  }, [data]);
 
   const mutation = useVillageMutation(selectedVillage?.id, () => {
     setIsDialogOpen(false);
@@ -310,29 +239,32 @@ export function VillageListPage() {
               <SearchInput value={searchTerm} onChange={setSearchTerm} tooltip="Search by village name"
                 className="w-full sm:max-w-[160px]" inputClassName="h-9 text-[13px]" />
               <div className="w-[130px]">
-                <SearchableSelect options={stateOptions} value={stateFilter}
-                  onValueChange={(val) => { setStateFilter(val); setDistrictFilter(""); setTalukaFilter(""); }}
+                <StateSelect value={stateFilter}
+                  onValueChange={(val) => { setStateFilter(val as string); setDistrictFilter(""); setTalukaFilter(""); }}
                   placeholder="State"
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
-                  align="start" />
+                  align="start"
+                  isClearable />
               </div>
               <div className="w-[155px]">
-                <SearchableSelect options={districtOptions} value={districtFilter}
-                  onValueChange={(val) => { setDistrictFilter(val); setTalukaFilter(""); }}
+                <DistrictSelect stateId={stateFilter} value={districtFilter}
+                  onValueChange={(val) => { setDistrictFilter(val as string); setTalukaFilter(""); }}
                   placeholder={stateFilter ? "District" : "Select state first"}
-                  disabled={!stateFilter || isLoadingDistricts}
+                  disabled={!stateFilter}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
-                  align="start" />
+                  align="start"
+                  isClearable />
               </div>
               <div className="w-[155px]">
-                <SearchableSelect options={talukaOptions} value={talukaFilter} onValueChange={setTalukaFilter}
+                <TalukaSelect stateId={stateFilter} districtId={districtFilter} value={talukaFilter} onValueChange={(val) => setTalukaFilter(val as string)}
                   placeholder={districtFilter ? "Taluka" : "Select district first"}
-                  disabled={!districtFilter || isLoadingTalukas}
+                  disabled={!districtFilter}
                   triggerClassName="h-8.5 text-[12px]"
                   contentClassName="w-[200px] max-h-[55vh]"
-                  align="start" />
+                  align="start"
+                  isClearable />
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2 xl:shrink-0">
@@ -415,7 +347,6 @@ export function VillageListPage() {
           <div className="px-6 ">
             <VillageForm
               initialData={selectedVillage}
-              states={stateOptions}
               onSubmit={(val: VillageFormValues) => mutation.mutate(val)}
               onCancel={() => setIsDialogOpen(false)}
               isLoading={mutation.isPending}

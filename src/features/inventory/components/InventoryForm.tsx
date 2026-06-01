@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -13,13 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { CancelButtonContent } from "@/components/common/cancel-button-content";
+import { InventoryCategorySelect } from "@/components/common/api-selects";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Loader2 } from "lucide-react";
 import { ActionIcon } from "@/config/icons.config";
 import { INVENTORY_UNIT_OPTIONS, INVENTORY_UNITS, type InventoryUnitValue } from "@/constants/unit.constants";
 import { convertInventoryToKgFormat, formatForDisplay } from "@/utils/unit-conversion";
 import {
-  InventoryCategoryOption,
   InventoryFormInputValues,
   InventoryFormValues,
   InventoryRow,
@@ -28,7 +28,6 @@ import {
 
 interface InventoryFormProps {
   initialData?: InventoryRow | null;
-  categories: InventoryCategoryOption[];
   onSubmit: (data: InventoryFormValues) => void;
   onCancel: () => void;
   isOpen?: boolean;
@@ -37,33 +36,11 @@ interface InventoryFormProps {
 
 export function InventoryForm({
   initialData,
-  categories,
   onSubmit,
   onCancel,
   isOpen = false,
   isLoading,
 }: InventoryFormProps) {
-  const activeCategories = useMemo(
-    () => categories.filter((category) => category.isActive),
-    [categories],
-  );
-
-  const categoryOptions = useMemo(() => {
-    const selected = initialData
-      ? categories.find((category) => category.id === initialData.category_uuid)
-      : undefined;
-
-    const base = activeCategories.map((category) => ({
-      label: category.name,
-      value: category.id,
-    }));
-
-    if (selected && !selected.isActive) {
-      return [{ label: `${selected.name} (inactive)`, value: selected.id }, ...base];
-    }
-
-    return base;
-  }, [activeCategories, categories, initialData]);
 
   const form = useForm<InventoryFormInputValues, unknown, InventoryFormValues>({
     resolver: zodResolver(inventoryFormSchema),
@@ -118,7 +95,7 @@ export function InventoryForm({
       display_quantity: display.quantity,
       display_price: display.price,
     });
-  }, [categoryOptions, form, initialData, isOpen]);
+  }, [form, initialData, isOpen]);
 
   const handleSubmit = (values: InventoryFormValues) => {
     try {
@@ -169,13 +146,10 @@ export function InventoryForm({
               <FormItem>
                 <FormLabel required>Category</FormLabel>
                 <FormControl>
-                  <SearchableSelect
-                    options={categoryOptions}
+                  <InventoryCategorySelect
                     value={field.value}
                     onValueChange={field.onChange}
                     placeholder="Select category"
-                    searchPlaceholder="Search category..."
-                    isClearable={false}
                   />
                 </FormControl>
                 <FormMessage />

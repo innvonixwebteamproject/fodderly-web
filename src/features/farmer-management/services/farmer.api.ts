@@ -341,11 +341,13 @@ export const getTalukas = async (params: {
   search?: string;
 }): Promise<{ data: TalukaRecord[]; meta: MasterMeta; message: string }> => {
   const page = params.page ?? 1;
-  const limit = params.limit ?? 100;
+  const limit = params.limit ?? 10;
   const response = await api.get<WrappedResponse<RawTaluka[]>>("/talukas", {
     params: {
       page,
       limit,
+      sortBy: "name",
+      sortOrder: "ASC",
       ...(params.districtId?.trim() ? { districtId: params.districtId.trim() } : {}),
       ...(params.stateId?.trim() ? { stateId: params.stateId.trim() } : {}),
       ...(params.search?.trim() ? { search: params.search.trim() } : {}),
@@ -378,11 +380,13 @@ export const getVillages = async (params: {
   search?: string;
 }): Promise<{ data: VillageRecord[]; meta: MasterMeta; message: string }> => {
   const page = params.page ?? 1;
-  const limit = params.limit ?? 100;
+  const limit = params.limit ?? 10;
   const response = await api.get<WrappedResponse<RawVillage[]>>("/villages", {
     params: {
       page,
       limit,
+      sortBy: "name",
+      sortOrder: "ASC",
       ...(params.talukaId?.trim() ? { talukaId: params.talukaId.trim() } : {}),
       ...(params.districtId?.trim() ? { districtId: params.districtId.trim() } : {}),
       ...(params.stateId?.trim() ? { stateId: params.stateId.trim() } : {}),
@@ -409,7 +413,7 @@ export const getVillages = async (params: {
   };
 };
 
-const GEO_FORM_PAGE_SIZE = 100;
+const GEO_FORM_PAGE_SIZE = 10;
 const GEO_AGG_MAX_PAGES = 100;
 
 export const getAllTalukas = async (params: {
@@ -494,7 +498,7 @@ export const getFoddermenOptions = async (params: {
   isActive?: boolean;
 }): Promise<{ data: FoddermanOptionRecord[]; meta: MasterMeta; message: string }> => {
   const page = params.page ?? 1;
-  const limit = params.limit ?? 100;
+  const limit = params.limit ?? 10;
   const response = await api.get<WrappedResponse<RawFodderman[]>>("/fodderman", {
     params: {
       page,

@@ -21,6 +21,15 @@ import { DataGrid } from "@/components/ui/data-grid";
 import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
 import {
+  DistrictSelect,
+  FarmerSelect,
+  FoddermanSelect,
+  PartnerSelect,
+  StateSelect,
+  TalukaSelect,
+  VillageSelect,
+} from "@/components/common/api-selects";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -42,13 +51,6 @@ import {
 import { getApiSortParams } from "@/lib/api-sorting";
 import { formatOrderListRupeeAmount } from "../utils/format-order-list-rupee";
 import { canAdminCancelOrder, canAdminScheduleDelivery } from "../utils/order-schedule-rules";
-import {
-  useFarmerOptionsQuery,
-  useFoddermanOptionsQuery,
-  useTalukaOptionsQuery,
-  useVillageOptionsQuery,
-} from "@/features/farmer-management/hooks";
-import { usePartnerDistrictsQuery, usePartnerStatesQuery, usePartnersQuery } from "@/features/partner-management";
 import type {
   AdminOrderListApiPaymentMode,
   AdminOrderListApiPaymentStatus,
@@ -122,6 +124,7 @@ export function OrderListPage() {
     setDistrictFilter("");
     setTalukaFilter("");
     setVillageFilter("");
+    setPartnerFilter("");
     setFarmerFilter("");
     setFoddermanFilter("");
   }, [stateFilter]);
@@ -129,6 +132,7 @@ export function OrderListPage() {
   useEffect(() => {
     setTalukaFilter("");
     setVillageFilter("");
+    setPartnerFilter("");
     setFarmerFilter("");
     setFoddermanFilter("");
   }, [districtFilter]);
@@ -139,54 +143,14 @@ export function OrderListPage() {
     setFoddermanFilter("");
   }, [talukaFilter]);
 
-  const { data: statesResponse, isLoading: isLoadingStates } = usePartnerStatesQuery();
-  const { data: districtsResponse, isLoading: isLoadingDistricts } = usePartnerDistrictsQuery(
-    stateFilter || undefined,
-    Boolean(stateFilter),
-  );
-  const { data: talukaOptions } = useTalukaOptionsQuery(districtFilter || undefined);
-  const { data: villageOptions, isLoading: isLoadingVillages } = useVillageOptionsQuery(
-    talukaFilter || undefined,
-    districtFilter || undefined,
-    stateFilter || undefined,
-  );
-  const { data: farmerOptions, isLoading: isLoadingFarmers } = useFarmerOptionsQuery({
-    stateId: stateFilter || undefined,
-    districtId: districtFilter || undefined,
-    talukaId: talukaFilter || undefined,
-    villageId: villageFilter || undefined,
-  });
-  const { data: foddermanOptions, isLoading: isLoadingFoddermen } = useFoddermanOptionsQuery({
-    stateId: stateFilter || undefined,
-    districtId: districtFilter || undefined,
-    talukaId: talukaFilter || undefined,
-    villageId: villageFilter || undefined,
-  });
-  /** Partner list API caps `limit` (e.g. @Max(100)); keep in sync with backend. */
-  const { data: partnersResponse } = usePartnersQuery(1, 100);
+  useEffect(() => {
+    setFarmerFilter("");
+    setFoddermanFilter("");
+  }, [villageFilter]);
 
-  const states = useMemo(() => statesResponse?.data ?? [], [statesResponse?.data]);
-  const districts = useMemo(() => districtsResponse?.data ?? [], [districtsResponse?.data]);
-  const partnerOptions = useMemo(
-    () =>
-      (partnersResponse?.data ?? []).map((p) => {
-        const name = p.fullName || p.companyName || p.email || p.id;
-        return {
-          value: p.id,
-          label: p.phone ? `${name} (${p.phone})` : name,
-        };
-      }),
-    [partnersResponse?.data],
-  );
-
-  const stateSelectOptions = useMemo(
-    () => states.map((s) => ({ value: s.id, label: s.name })),
-    [states],
-  );
-  const districtSelectOptions = useMemo(
-    () => districts.map((d) => ({ value: d.id, label: d.name })),
-    [districts],
-  );
+  useEffect(() => {
+    setFarmerFilter("");
+  }, [foddermanFilter]);
 
   const listFilters: OrderListFilters = useMemo(
     () => ({
@@ -579,79 +543,85 @@ export function OrderListPage() {
                     <DialogTitle>Order filters</DialogTitle>
                   </DialogHeader>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <SearchableSelect
-                      options={stateSelectOptions}
+                    <StateSelect
                       value={stateFilter}
-                      onValueChange={setStateFilter}
+                      onValueChange={(val) => setStateFilter(val as string)}
                       placeholder="All states"
                       searchPlaceholder="Search state…"
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={isLoadingStates}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={districtSelectOptions}
+                    <DistrictSelect
+                      stateId={stateFilter}
                       value={districtFilter}
-                      onValueChange={setDistrictFilter}
+                      onValueChange={(val) => setDistrictFilter(val as string)}
                       placeholder={stateFilter ? "All districts" : "Select state first"}
                       searchPlaceholder="Search district…"
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={!stateFilter || isLoadingDistricts}
+                      disabled={!stateFilter}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={talukaOptions}
+                    <TalukaSelect
+                      stateId={stateFilter}
+                      districtId={districtFilter}
                       value={talukaFilter}
-                      onValueChange={setTalukaFilter}
+                      onValueChange={(val) => setTalukaFilter(val as string)}
                       placeholder={
                         !stateFilter ? "Select state first" : !districtFilter ? "Select district first" : "All talukas"
                       }
                       searchPlaceholder="Search taluka…"
-                      searchInputClassName="text-xs placeholder:text-xs"
                       disabled={!stateFilter || !districtFilter}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={villageOptions}
+                    <VillageSelect
+                      stateId={stateFilter}
+                      districtId={districtFilter}
+                      talukaId={talukaFilter}
                       value={villageFilter}
-                      onValueChange={setVillageFilter}
+                      onValueChange={(val) => setVillageFilter(val as string)}
                       placeholder={talukaFilter ? "All villages" : "Select taluka first"}
                       searchPlaceholder="Search village…"
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={!talukaFilter || isLoadingVillages}
+                      disabled={!talukaFilter}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={partnerOptions}
+                    <PartnerSelect
+                      districtId={districtFilter}
                       value={partnerFilter}
-                      onValueChange={setPartnerFilter}
+                      onValueChange={(val) => setPartnerFilter(val as string)}
                       placeholder="All partners"
                       searchPlaceholder="Search partner…"
-                      searchInputClassName="text-xs placeholder:text-xs"
                       triggerClassName="h-9 bg-background text-[13px]"
                       contentClassName="!w-[280px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={farmerOptions}
+                    <FarmerSelect
+                      stateId={stateFilter}
+                      districtId={districtFilter}
+                      talukaId={talukaFilter}
+                      villageId={villageFilter}
+                      foddermanId={foddermanFilter}
                       value={farmerFilter}
-                      onValueChange={setFarmerFilter}
+                      onValueChange={(val) => setFarmerFilter(val as string)}
                       placeholder="All farmers"
                       searchPlaceholder="Search farmer…"
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={isLoadingFarmers}
                       triggerClassName="h-9 bg-background text-[13px]"
                       contentClassName="!w-[280px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={foddermanOptions}
+                    <FoddermanSelect
+                      stateId={stateFilter}
+                      districtId={districtFilter}
+                      talukaId={talukaFilter}
+                      villageId={villageFilter}
                       value={foddermanFilter}
-                      onValueChange={setFoddermanFilter}
+                      onValueChange={(val) => setFoddermanFilter(val as string)}
                       placeholder="All fodderman"
                       searchPlaceholder="Search fodderman…"
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={isLoadingFoddermen}
                       triggerClassName="h-9 bg-background text-[13px]"
                       contentClassName="!w-[280px]"
+                      isClearable
                     />
                     <SearchableSelect
                       options={ADMIN_ORDER_LIST_STATUS_FILTER_OPTIONS}

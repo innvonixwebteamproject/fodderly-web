@@ -21,7 +21,7 @@ import { DataGridColumnHeader } from "@/components/ui/data-grid-column-header";
 import { DataGridTable } from "@/components/ui/data-grid-table";
 import { Card, CardHeader, CardTable, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { InventoryCategorySelect } from "@/components/common/api-selects";
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { useInventoryCategoriesQuery } from "@/features/category-management/hooks";
 import { usePartnerAllocationsQuery } from "@/features/product-management/hooks";
 import { formatForDisplay } from "@/utils/unit-conversion";
 import { InventoryForm } from "../components/InventoryForm";
@@ -50,7 +49,7 @@ import {
   useInventoriesInfiniteQuery,
   useUpdateInventoryMutation,
 } from "../hooks/useInventory";
-import type { InventoryCategoryOption, InventoryFormValues, InventoryRow } from "../types";
+import type { InventoryFormValues, InventoryRow } from "../types";
 
 const formatCreatedDate = (value?: string) => {
   if (!value) return "-";
@@ -78,24 +77,6 @@ export function InventoryListPage() {
     const timer = window.setTimeout(() => setDebouncedSearchTerm(searchTerm), 350);
     return () => window.clearTimeout(timer);
   }, [searchTerm]);
-
-  const categoriesQuery = useInventoryCategoriesQuery({
-    page: 1,
-    limit: 100,
-    status: "active",
-  });
-
-  const categoryOptions: InventoryCategoryOption[] = useMemo(() => {
-    return (categoriesQuery.data?.data || []).map((category) => ({
-      id: category.id,
-      name: category.name,
-      isActive: category.isActive,
-    }));
-  }, [categoriesQuery.data?.data]);
-
-  const categorySelectOptions = useMemo(() => {
-    return categoryOptions.map((category) => ({ label: category.name, value: category.id }));
-  }, [categoryOptions]);
 
   const { sortBy, sortOrder } = getApiSortParams({
     sorting,
@@ -375,13 +356,10 @@ export function InventoryListPage() {
 
             <div className="flex flex-wrap items-center justify-end gap-2 xl:shrink-0 2xl:flex-nowrap">
               <div className="w-[160px]">
-                <SearchableSelect
-                  options={categorySelectOptions}
+                <InventoryCategorySelect
                   value={categoryFilter}
-                  onValueChange={setCategoryFilter}
+                  onValueChange={(value) => setCategoryFilter(value as string)}
                   placeholder="Category"
-                  searchPlaceholder="Search category..."
-                  searchInputClassName="text-xs placeholder:text-xs"
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>
@@ -466,7 +444,6 @@ export function InventoryListPage() {
           <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar px-6">
             <InventoryForm
               initialData={selectedItem}
-              categories={categoriesQuery.data?.data || []}
               onSubmit={handleSubmit}
               onCancel={() => setIsFormOpen(false)}
               isOpen={isFormOpen}

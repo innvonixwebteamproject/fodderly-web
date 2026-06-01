@@ -20,17 +20,13 @@ import {
 } from "@/components/ui/card";
 import { Container } from "@/components/common/container";
 import { CancelButtonContent } from "@/components/common/cancel-button-content";
-import { SearchableSelectMulti } from "@/components/ui/searchable-select-multi";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { DistrictMultiSelect, StateSelect } from "@/components/common/api-selects";
 import { useNavigate } from "react-router-dom";
 import { IPartner, PartnerSchemaType, partnerSchema } from "../types";
 import { Loader2, X } from "lucide-react";
 import { ActionIcon } from "@/config/icons.config";
 import { COMPANY_TYPE_OPTIONS } from "../constants";
-import {
-  usePartnerDistrictsQuery,
-  usePartnerStatesQuery,
-} from "../hooks";
 
 interface PartnerFormProps {
   initialData?: IPartner | null;
@@ -74,38 +70,30 @@ export function PartnerForm({
     },
   });
 
-  const { data: statesResponse, isLoading: isLoadingStates } = usePartnerStatesQuery();
   const selectedStateId = form.watch("stateId");
-  const { data: districtsResponse, isLoading: isLoadingDistricts } =
-    usePartnerDistrictsQuery(selectedStateId, Boolean(selectedStateId));
-
-  // Fetch all districts once to build the map for initial state derivation (editing)
-  const { data: allDistrictsResponse } = usePartnerDistrictsQuery();
-
-  const states = useMemo(() => statesResponse?.data ?? [], [statesResponse?.data]);
-  const districts = useMemo(
-    () => districtsResponse?.data ?? [],
-    [districtsResponse?.data],
-  );
-  const allDistricts = useMemo(
-    () => allDistrictsResponse?.data ?? [],
-    [allDistrictsResponse?.data],
-  );
-
-  const stateOptions = useMemo(
+  const districtLabelMap = useMemo(
     () =>
-      states
-        .filter((state) => state.id)
-        .map((state) => ({
-          value: state.id,
-          label: state.name,
-        })),
-    [states],
+      new Map(
+        (initialData?.districts ?? [])
+          .filter((district) => district.id && district.name)
+          .map((district) => [district.id, district.name]),
+      ),
+    [initialData?.districts],
+  );
+
+  const selectedDistrictLabels = useMemo(
+    () => Object.fromEntries(districtLabelMap),
+    [districtLabelMap],
   );
 
   const districtStateMap = useMemo(
-    () => new Map(allDistricts.map((district) => [district.id, district.stateId])),
-    [allDistricts],
+    () =>
+      new Map(
+        (initialData?.districts ?? [])
+          .filter((district) => district.id && district.stateId)
+          .map((district) => [district.id, district.stateId]),
+      ),
+    [initialData?.districts],
   );
 
   useEffect(() => {
@@ -135,16 +123,7 @@ export function PartnerForm({
     });
   }, [districtStateMap, form, initialData]);
 
-  const isBusy = isLoading || isLoadingStates || isLoadingDistricts;
-
-  const districtOptions = useMemo(
-    () =>
-      districts.map((district) => ({
-        value: district.id,
-        label: district.name,
-      })),
-    [districts],
-  );
+  const isBusy = isLoading;
 
   const handleCancel = () => {
     if (
@@ -254,8 +233,7 @@ export function PartnerForm({
                       <FormItem>
                         <FormLabel required>State</FormLabel>
                         <FormControl>
-                          <SearchableSelect
-                            options={stateOptions}
+                          <StateSelect
                             value={field.value}
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -265,8 +243,6 @@ export function PartnerForm({
                               });
                             }}
                             placeholder="Select State"
-                            searchPlaceholder="Search State..."
-                            disabled={isLoadingStates}
                           />
                         </FormControl>
                         <FormMessage />
@@ -280,11 +256,11 @@ export function PartnerForm({
                       <FormItem>
                         <FormLabel required>District</FormLabel>
                         <FormControl>
-                          <SearchableSelectMulti
-                            options={districtOptions}
+                          <DistrictMultiSelect
+                            stateId={selectedStateId}
                             value={field.value}
                             onValueChange={(value) => {
-                              form.setValue("districtIds", value, {
+                              form.setValue("districtIds", value as string[], {
                                 shouldDirty: true,
                                 shouldValidate: true,
                               });
@@ -295,7 +271,8 @@ export function PartnerForm({
                                 : "Select State First"
                             }
                             searchPlaceholder="Search District..."
-                            disabled={!selectedStateId || isLoadingDistricts}
+                            disabled={!selectedStateId}
+                            selectedOptionLabels={selectedDistrictLabels}
                           />
                         </FormControl>
                         <FormMessage />

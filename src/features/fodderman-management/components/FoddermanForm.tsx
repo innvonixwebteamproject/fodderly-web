@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm, SubmitHandler, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -22,11 +21,15 @@ import {
 import { Container } from "@/components/common/container";
 import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import {
+  DistrictSelect,
+  PartnerSelect,
+  StateSelect,
+  TalukaSelect,
+  VillageMultiSelect,
+} from "@/components/common/api-selects";
 import { IFodderman, FoddermanSchemaType, foddermanSchema } from "../types";
 import { Loader2 } from "lucide-react";
-import { usePartnersQuery } from "@/features/partner-management/hooks";
-import { usePartnerDistrictsQuery, usePartnerStatesQuery } from "@/features/partner-management/hooks";
-import { useTalukaOptionsQuery, useVillageOptionsQuery } from "@/features/farmer-management/hooks/useFarmerGeoStubs";
 import { LANGUAGE_OPTIONS } from "../constants";
 import { useNavigate } from "react-router-dom";
 import { ActionIcon } from "@/config/icons.config";
@@ -68,112 +71,60 @@ export function FoddermanForm({
   const selectedDistrictId = form.watch("districtId");
   const selectedTalukaId = form.watch("talukaId");
 
-  const { data: statesResponse, isLoading: isLoadingStates } = usePartnerStatesQuery(!isEditing);
-  const { data: districtsResponse, isLoading: isLoadingDistricts } = usePartnerDistrictsQuery(
-    selectedStateId || undefined,
-    !isEditing && Boolean(selectedStateId),
-  );
-  const { data: talukaOptions, isLoading: isLoadingTalukas } =
-    useTalukaOptionsQuery(!isEditing ? selectedDistrictId || undefined : undefined);
-  const { data: villageOptions, isLoading: isLoadingVillages } = useVillageOptionsQuery(
-    selectedTalukaId || undefined,
-    selectedDistrictId || undefined,
-    selectedStateId || undefined,
-  );
-
-  const hasPrefilledRef = useRef(false);
-
   useEffect(() => {
-    if (initialData && !hasPrefilledRef.current) {
-      const initialVillageNames = new Set(
-        (initialData.villages || []).map((v) => v.name.toLowerCase().trim())
-      );
-
-      const matchedIdsFromOptions = (villageOptions || [])
-        .filter((opt) => opt.label && initialVillageNames.has(opt.label.toLowerCase().trim()))
-        .map((opt) => opt.value);
-
-      const uniqueIds = Array.from(
-        new Set([
-          ...(initialData.villageIds || []).filter((id) => id && id.length > 20),
-          ...matchedIdsFromOptions
-        ])
-      );
-
-      const currentVillageIds = form.getValues("villageIds") || [];
-      const isSame =
-        currentVillageIds.length === uniqueIds.length &&
-        [...currentVillageIds].sort().join(",") === [...uniqueIds].sort().join(",");
-
-      const isFormInitialized = form.getValues("firstName") !== "";
-
-      if (!isFormInitialized) {
-        form.reset({
-          firstName: initialData.firstName,
-          lastName: initialData.lastName,
-          email: initialData.email || "",
-          mobileNumber: initialData.mobileNumber,
-          languagePreference: initialData.languagePreference,
-          stateId: initialData.stateId,
-          districtId: initialData.districtId,
-          talukaId: initialData.talukaId,
-          pinCode: initialData.pinCode,
-          partnerId: initialData.partnerId || "",
-          villageIds: uniqueIds,
-        });
-      } else if (!isSame) {
-        form.setValue("villageIds", uniqueIds, { shouldDirty: false, shouldValidate: true });
-      }
-
-      // Once options are loaded and we have successfully resolved/mapped all village IDs, mark as prefilled
-      const isOptionsLoaded = (villageOptions || []).length > 0;
-      if (isOptionsLoaded) {
-        hasPrefilledRef.current = true;
-      }
+    if (initialData) {
+      form.reset({
+        firstName: initialData.firstName,
+        lastName: initialData.lastName,
+        email: initialData.email || "",
+        mobileNumber: initialData.mobileNumber,
+        languagePreference: initialData.languagePreference,
+        stateId: initialData.stateId,
+        districtId: initialData.districtId,
+        talukaId: initialData.talukaId,
+        pinCode: initialData.pinCode,
+        partnerId: initialData.partnerId || "",
+        villageIds: initialData.villageIds || [],
+      });
     }
-  }, [initialData, form, villageOptions]);
+  }, [initialData, form]);
 
-  const states = useMemo(() => statesResponse?.data ?? [], [statesResponse?.data]);
-  const districts = useMemo(() => districtsResponse?.data ?? [], [districtsResponse?.data]);
-  const stateOptions = useMemo(
-    () => states.map((state) => ({ label: state.name, value: state.id })),
-    [states],
+  const selectedOptionLabels = useMemo(
+    () => ({
+      state: initialData?.stateId && initialData.stateName
+        ? { [initialData.stateId]: initialData.stateName }
+        : {},
+      district: initialData?.districtId && initialData.districtName
+        ? { [initialData.districtId]: initialData.districtName }
+        : {},
+      taluka: initialData?.talukaId && initialData.talukaName
+        ? { [initialData.talukaId]: initialData.talukaName }
+        : {},
+      partner: initialData?.partnerId && initialData.partnerName
+        ? { [initialData.partnerId]: initialData.partnerName }
+        : {},
+      villages: Object.fromEntries(
+        (initialData?.villages || [])
+          .filter((village) => village.id && village.name)
+          .map((village) => [village.id, village.name]),
+      ),
+    }),
+    [initialData],
   );
-  const districtOptions = useMemo(
-    () => districts.map((district) => ({ label: district.name, value: district.id })),
-    [districts],
-  );
+
   const selectedStateName = useMemo(() => {
     if (isEditing && initialData?.stateName) {
       return initialData.stateName;
     }
-    return stateOptions.find((state) => state.value === selectedStateId)?.label ?? "";
-  }, [stateOptions, initialData?.stateName, isEditing, selectedStateId]);
+    return selectedOptionLabels.state[selectedStateId] ?? "";
+  }, [selectedOptionLabels.state, initialData?.stateName, isEditing, selectedStateId]);
 
   const selectedDistrictName = useMemo(() => {
     if (isEditing && initialData?.districtName) {
       return initialData.districtName;
     }
-    return districtOptions.find((district) => district.value === selectedDistrictId)?.label ?? "";
-  }, [districtOptions, initialData?.districtName, isEditing, selectedDistrictId]);
-  const villageAllocationOptions = useMemo(() => villageOptions, [villageOptions]);
-
-  const partnerDistrictId = selectedDistrictId || undefined;
-  const { data: partnersData } = usePartnersQuery(
-    1,
-    100,
-    undefined,
-    "active",
-    partnerDistrictId,
-  );
-  const partnerOptions = useMemo(
-    () =>
-      (partnersData?.data || []).map((partner) => ({
-        label: `${partner.fullName || `${partner.firstName || ""} ${partner.lastName || ""}`.trim()} (${partner.phone})`,
-        value: partner.id,
-      })),
-    [partnersData?.data],
-  );
+    return selectedOptionLabels.district[selectedDistrictId] ?? "";
+  }, [selectedOptionLabels.district, initialData?.districtName, isEditing, selectedDistrictId]);
 
   const validateDistrictPincode = async (pinCode: string) => {
     if (isEditing) {
@@ -263,12 +214,7 @@ export function FoddermanForm({
     navigate("/admin/fodderman");
   };
 
-  const isBusy =
-    Boolean(isLoading) ||
-    isLoadingStates ||
-    isLoadingDistricts ||
-    isLoadingTalukas ||
-    isLoadingVillages;
+  const isBusy = Boolean(isLoading);
 
   return (
     <Container className="pb-4">
@@ -362,8 +308,7 @@ export function FoddermanForm({
                           {isEditing ? (
                             <Input value={initialData?.stateName || "-"} disabled />
                           ) : (
-                            <SearchableSelect
-                              options={stateOptions}
+                            <StateSelect
                               value={field.value}
                               isClearable={!isEditing}
                               onValueChange={(value) => {
@@ -393,7 +338,7 @@ export function FoddermanForm({
                               }}
                               placeholder="Select State"
                               searchPlaceholder="Search State..."
-                              disabled={isLoadingStates}
+                              selectedOptionLabels={selectedOptionLabels.state}
                             />
                           )}
                         </FormControl>
@@ -411,8 +356,8 @@ export function FoddermanForm({
                           {isEditing ? (
                             <Input value={initialData?.districtName || "-"} disabled />
                           ) : (
-                            <SearchableSelect
-                              options={districtOptions}
+                            <DistrictSelect
+                              stateId={selectedStateId || undefined}
                               value={field.value}
                               isClearable={!isEditing}
                               onValueChange={(value) => {
@@ -435,7 +380,8 @@ export function FoddermanForm({
                                 selectedStateId ? "Select District" : "Select State First"
                               }
                               searchPlaceholder="Search District..."
-                              disabled={!selectedStateId || isLoadingDistricts}
+                              disabled={!selectedStateId}
+                              selectedOptionLabels={selectedOptionLabels.district}
                             />
                           )}
                         </FormControl>
@@ -455,8 +401,9 @@ export function FoddermanForm({
                           {isEditing ? (
                             <Input value={initialData?.talukaName || "-"} disabled />
                           ) : (
-                            <SearchableSelect
-                              options={talukaOptions}
+                            <TalukaSelect
+                              stateId={selectedStateId || undefined}
+                              districtId={selectedDistrictId || undefined}
                               value={field.value}
                               isClearable={!isEditing}
                               onValueChange={(value) => {
@@ -471,7 +418,8 @@ export function FoddermanForm({
                                 selectedDistrictId ? "Select Taluka" : "Select District First"
                               }
                               searchPlaceholder="Search Taluka..."
-                              disabled={!selectedDistrictId || isLoadingTalukas}
+                              disabled={!selectedDistrictId}
+                              selectedOptionLabels={selectedOptionLabels.taluka}
                             />
                           )}
                         </FormControl>
@@ -515,11 +463,14 @@ export function FoddermanForm({
                       <FormItem>
                         <FormLabel required>Partner</FormLabel>
                         <FormControl>
-                          <SearchableSelect
-                            options={partnerOptions}
+                          <PartnerSelect
+                            districtId={selectedDistrictId || undefined}
                             value={field.value || ""}
                             onValueChange={field.onChange}
                             placeholder="Select Partner"
+                            searchPlaceholder="Search Partner..."
+                            disabled={!selectedDistrictId}
+                            selectedOptionLabels={selectedOptionLabels.partner}
                           />
                         </FormControl>
                         <FormMessage />
@@ -557,41 +508,23 @@ export function FoddermanForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel required>Allocated Villages</FormLabel>
-                      <div className="max-h-[260px] overflow-y-auto rounded-md border p-4">
-                        {villageAllocationOptions.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {villageAllocationOptions.map((village) => (
-                              <label
-                                key={village.value}
-                                className="flex items-center gap-2 rounded border px-3 py-2 text-sm"
-                              >
-                                <Checkbox
-                                  checked={field.value.includes(village.value)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      const next = Array.from(
-                                        new Set([...field.value, village.value]),
-                                      );
-                                      field.onChange(next);
-                                    } else {
-                                      field.onChange(
-                                        field.value.filter((value) => value !== village.value),
-                                      );
-                                    }
-                                  }}
-                                />
-                                <span className="truncate">{village.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {selectedTalukaId
-                              ? "No villages available for selected Taluka."
-                              : "Select Taluka first to load villages."}
-                          </p>
-                        )}
-                      </div>
+                      <FormControl>
+                        <VillageMultiSelect
+                          stateId={selectedStateId || undefined}
+                          districtId={selectedDistrictId || undefined}
+                          talukaId={selectedTalukaId || undefined}
+                          value={field.value}
+                          onValueChange={(value) => field.onChange(value as string[])}
+                          placeholder={
+                            selectedTalukaId
+                              ? "Select Villages"
+                              : "Select Taluka First"
+                          }
+                          searchPlaceholder="Search Village..."
+                          disabled={!selectedTalukaId}
+                          selectedOptionLabels={selectedOptionLabels.villages}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

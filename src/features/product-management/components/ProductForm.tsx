@@ -18,6 +18,7 @@ import { CancelButtonContent } from "@/components/common/cancel-button-content";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
+import { CategorySelect } from "@/components/common/api-selects";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -45,7 +46,6 @@ import {
 
 interface ProductFormProps {
   initialData?: ProductRecord | null;
-  categoryOptions: ProductOption[];
   inventoryOptions: ProductOption[];
   onSubmit: (data: ProductFormValues) => void;
   onCancel: () => void;
@@ -75,7 +75,6 @@ const normalizeTranslation = (value?: Partial<Record<(typeof PRODUCT_LANGUAGES)[
 
 export function ProductForm({
   initialData,
-  categoryOptions,
   inventoryOptions,
   onSubmit,
   onCancel,
@@ -507,11 +506,7 @@ export function ProductForm({
                     <FormItem>
                       <FormLabel required>Category</FormLabel>
                       <FormControl>
-                        <SearchableSelect
-                          options={categoryOptions.map((item) => ({
-                            value: item.id,
-                            label: item.label,
-                          }))}
+                        <CategorySelect
                           value={field.value}
                           onValueChange={field.onChange}
                           placeholder="Select category"

@@ -20,9 +20,8 @@ import { ActionButton } from "@/components/common/action-button";
 import { RowActionsMenu } from "@/components/common/row-actions-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SearchableSelect } from "@/components/ui/searchable-select";
+import { CategorySelect } from "@/components/common/api-selects";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { useProductCategoriesQuery } from "@/features/category-management/hooks";
 import { INVENTORY_UNITS } from "@/constants/unit.constants";
 import type { AllocationItem } from "../types/allocation.types";
 import { usePartnerAllocationProductDetailQuery } from "../hooks";
@@ -80,16 +79,7 @@ export function PartnerProductListPage() {
     return () => window.clearTimeout(timer);
   }, [searchTerm]);
 
-  const categoriesQuery = useProductCategoriesQuery({ page: 1, limit: 100, status: "active" });
 
-  const categoryOptions = useMemo(
-    () =>
-      (categoriesQuery.data?.data || []).map((category) => ({
-        value: category.id,
-        label: category.name.en || "-",
-      })),
-    [categoriesQuery.data?.data],
-  );
 
   const {
     data,
@@ -451,12 +441,10 @@ export function PartnerProductListPage() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-[170px]">
-                <SearchableSelect
-                  options={categoryOptions}
+                <CategorySelect
                   value={categoryFilter}
                   onValueChange={(value) => setCategoryFilter(value)}
                   placeholder="Category"
-                  searchPlaceholder="Search Category..."
                   triggerClassName="h-9 bg-background text-[13px]"
                 />
               </div>

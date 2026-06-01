@@ -60,13 +60,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { StateSelect, DistrictSelect, TalukaSelect, PartnerSelect } from "@/components/common/api-selects";
 import { STATUS_OPTIONS } from "../constants";
-import {
-  usePartnerDistrictsQuery,
-  usePartnerStatesQuery,
-  usePartnersQuery,
-} from "@/features/partner-management/hooks";
-import { useTalukaOptionsQuery } from "@/features/farmer-management/hooks/useFarmerGeoStubs";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import {
   Tooltip,
@@ -278,24 +273,6 @@ export function FoddermanListPage() {
     null,
   );
   const [selectedFoddermanId, setSelectedFoddermanId] = useState<string | null>(null);
-  const { data: statesResponse, isLoading: isLoadingStates } = usePartnerStatesQuery();
-  const { data: districtsResponse, isLoading: isLoadingDistricts } = usePartnerDistrictsQuery(
-    stateFilter || undefined,
-    Boolean(stateFilter),
-  );
-  const { data: talukasResponse, isLoading: isLoadingTalukas } = useTalukaOptionsQuery(
-    districtFilter || undefined,
-  );
-  const { data: partnersData, isLoading: isLoadingPartners } = usePartnersQuery(
-    1,
-    100,
-    undefined,
-    "active",
-    districtFilter || undefined,
-    undefined,
-    undefined,
-    { enabled: !isPartnerUser },
-  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -373,35 +350,6 @@ export function FoddermanListPage() {
   const foddermen: IFodderman[] = useMemo(() => {
     return data?.pages.flatMap((page) => page.data) || [];
   }, [data]);
-
-  const states = useMemo(() => statesResponse?.data ?? [], [statesResponse?.data]);
-  const districts = useMemo(() => districtsResponse?.data ?? [], [districtsResponse?.data]);
-  const talukaOptions = useMemo(() => talukasResponse ?? [], [talukasResponse]);
-  const partnerOptions = useMemo(
-    () =>
-      (partnersData?.data || []).map((partner) => {
-        const name = partner.fullName || `${partner.firstName || ""} ${partner.lastName || ""}`.trim();
-        return {
-          label: partner.phone ? `${name} (${partner.phone})` : name,
-          value: partner.id,
-        };
-      }),
-    [partnersData?.data],
-  );
-
-  useEffect(() => {
-    if (!isPartnerUser || districtFilter || districts.length !== 1) return;
-    setDistrictFilter(districts[0].id);
-  }, [isPartnerUser, districtFilter, districts]);
-
-  const stateOptions = useMemo(
-    () => states.map((state) => ({ label: state.name, value: state.id })),
-    [states],
-  );
-  const districtOptions = useMemo(
-    () => districts.map((district) => ({ label: district.name, value: district.id })),
-    [districts],
-  );
 
   const activeFilterCount = useMemo(
     () =>
@@ -698,30 +646,27 @@ This action will update the fodderman's status immediately.`
                     <DialogTitle>Fodderman Filters</DialogTitle>
                   </DialogHeader>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <SearchableSelect
-                      options={stateOptions}
+                    <StateSelect
                       value={stateFilter}
-                      onValueChange={setStateFilter}
+                      onValueChange={(val) => setStateFilter(val as string)}
                       placeholder="All States"
-                      searchPlaceholder="Search State..."
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={isLoadingStates}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={districtOptions}
+                    <DistrictSelect
+                      stateId={stateFilter}
                       value={districtFilter}
-                      onValueChange={setDistrictFilter}
+                      onValueChange={(val) => setDistrictFilter(val as string)}
                       placeholder={stateFilter ? "All Districts" : "Select state first"}
-                      searchPlaceholder="Search District..."
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={!stateFilter || isLoadingDistricts}
+                      disabled={!stateFilter}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      isClearable
                     />
-                    <SearchableSelect
-                      options={talukaOptions}
+                    <TalukaSelect
+                      stateId={stateFilter}
+                      districtId={districtFilter}
                       value={talukaFilter}
-                      onValueChange={setTalukaFilter}
+                      onValueChange={(val) => setTalukaFilter(val as string)}
                       placeholder={
                         !stateFilter
                           ? "Select state first"
@@ -729,22 +674,21 @@ This action will update the fodderman's status immediately.`
                             ? "Select district first"
                             : "All Talukas"
                       }
-                      searchPlaceholder="Search Taluka..."
-                      searchInputClassName="text-xs placeholder:text-xs"
-                      disabled={!stateFilter || !districtFilter || isLoadingTalukas}
+                      disabled={!stateFilter || !districtFilter}
                       triggerClassName="h-9 bg-background text-[13px]"
+                      isClearable
                     />
                     {!isPartnerUser && (
-                      <SearchableSelect
-                        options={partnerOptions}
+                      <PartnerSelect
+                        districtId={districtFilter}
                         value={partnerFilter}
-                        onValueChange={setPartnerFilter}
-                        placeholder="All Partners"
+                        onValueChange={(val) => setPartnerFilter(val as string)}
+                        placeholder={districtFilter ? "All Partners" : "Select district first"}
                         searchPlaceholder="Search Partner..."
-                        searchInputClassName="text-xs placeholder:text-xs"
-                        disabled={isLoadingPartners}
+                        disabled={!districtFilter}
                         triggerClassName="h-9 bg-background text-[13px]"
                         contentClassName="!w-[280px]"
+                        isClearable
                       />
                     )}
                     <SearchableSelect

@@ -9,5 +9,8 @@ export const usePartnerDistrictsQuery = (
     queryKey: ["partner-districts", stateId],
     queryFn: () => getAllPartnerDistricts(stateId),
     enabled,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 };

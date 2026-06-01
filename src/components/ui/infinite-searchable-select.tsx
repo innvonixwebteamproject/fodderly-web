@@ -9,7 +9,7 @@ import { X, Loader2, Search, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { UseInfiniteQueryResult, InfiniteData } from "@tanstack/react-query";
+import { useInfiniteQuery, UseInfiniteQueryResult, InfiniteData } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
@@ -26,7 +26,80 @@ export interface InfiniteSelectResponse<T> {
   };
 }
 
-interface InfiniteSearchableSelectProps<T> {
+const getNextPageFromMeta = <T,>(
+  data: InfiniteData<InfiniteSelectResponse<T>> | undefined,
+): number | undefined => {
+  const lastPage = data?.pages[data.pages.length - 1];
+  if (!lastPage?.meta) return undefined;
+
+  const { page, totalPages, hasNextPage } = lastPage.meta;
+  if (hasNextPage === false) return undefined;
+  if (totalPages > 0 && page >= totalPages) return undefined;
+  if (hasNextPage || page < totalPages) return page + 1;
+
+  return undefined;
+};
+
+function useInfiniteSelectScroll<T>({
+  data,
+  fetchNextPage,
+  hasNextPage,
+  isFetching,
+  isLoading,
+  queryIdentity,
+}: {
+  data: InfiniteData<InfiniteSelectResponse<T>> | undefined;
+  fetchNextPage: UseInfiniteQueryResult<InfiniteData<InfiniteSelectResponse<T>>, Error>["fetchNextPage"];
+  hasNextPage: boolean;
+  isFetching: boolean;
+  isLoading: boolean;
+  queryIdentity: string;
+}) {
+  const loadingPageRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    loadingPageRef.current = null;
+  }, [queryIdentity]);
+
+  const loadNextPage = useCallback(() => {
+    const nextPage = getNextPageFromMeta(data);
+    if (!nextPage || !hasNextPage || isFetching || isLoading) return;
+    if (loadingPageRef.current === nextPage) return;
+
+    loadingPageRef.current = nextPage;
+    void fetchNextPage({ cancelRefetch: false }).finally(() => {
+      if (loadingPageRef.current === nextPage) {
+        loadingPageRef.current = null;
+      }
+    });
+  }, [data, fetchNextPage, hasNextPage, isFetching, isLoading]);
+
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const target = event.currentTarget;
+      const distanceFromBottom =
+        target.scrollHeight - target.scrollTop - target.clientHeight;
+
+      if (distanceFromBottom <= 48) {
+        loadNextPage();
+      }
+    },
+    [loadNextPage],
+  );
+
+  return { handleScroll };
+}
+
+function useDebounce<T>(value: T, delay?: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay || 500);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+export interface InfiniteSearchableSelectProps<T> {
   value: string | string[];
   onValueChange: (val: string | string[]) => void;
   placeholder?: string;
@@ -34,10 +107,15 @@ interface InfiniteSearchableSelectProps<T> {
   disabled?: boolean;
   isClearable?: boolean;
   multiple?: boolean;
-  query: UseInfiniteQueryResult<InfiniteData<InfiniteSelectResponse<T>>, Error>;
+  selectedOptionLabels?: Record<string, string>;
+  queryKeyPrefix: string[];
+  queryFn: (params: { page: number; limit: number; search: string }) => Promise<InfiniteSelectResponse<T>>;
+  limit?: number;
   getItemId: (item: T) => string;
   getItemLabel: (item: T) => string;
   triggerClassName?: string;
+  contentClassName?: string;
+  align?: "center" | "end" | "start";
 }
 
 export function InfiniteSearchableSelect<T>({
@@ -48,45 +126,62 @@ export function InfiniteSearchableSelect<T>({
   disabled = false,
   multiple = false,
   isClearable = false,
-  query,
+  queryKeyPrefix,
+  queryFn,
+  limit = 10,
   getItemId,
   getItemLabel,
   triggerClassName,
+  contentClassName,
+  align = "start",
+  selectedOptionLabels,
 }: InfiniteSearchableSelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const observerTargetRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    query;
+  const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isLoading } = useInfiniteQuery({
+    queryKey: [...queryKeyPrefix, "infinite-select", debouncedSearch, limit],
+    queryFn: ({ pageParam = 1 }) => queryFn({ page: pageParam, limit, search: debouncedSearch }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.hasNextPage === false) return undefined;
+      if (lastPage.meta.totalPages > 0 && lastPage.meta.page >= lastPage.meta.totalPages) return undefined;
+      if (lastPage.meta.hasNextPage || lastPage.meta.page < lastPage.meta.totalPages) return lastPage.meta.page + 1;
+      return undefined;
+    },
+    // Only fetch when the dropdown is open — prevents background queries for every pre-selected value
+    enabled: open,
+    // Cache for 5 minutes — reuse data across multiple dropdown opens without re-fetching
+    staleTime: 5 * 60 * 1000,
+    // Keep data in memory for 10 minutes after last use
+    gcTime: 10 * 60 * 1000,
+    // Do NOT refetch when user switches browser tabs — avoids mass request bursts
+    refetchOnWindowFocus: false,
+  });
 
   // Flatten all pages into a single array
   const items = useMemo(() => {
+    const seen = new Set<string>();
     return (
-      data?.pages.flatMap((page: InfiniteSelectResponse<T>) => page.data) || []
+      data?.pages.flatMap((page: InfiniteSelectResponse<T>) => page.data).filter((item) => {
+        const id = getItemId(item);
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      }) || []
     );
-  }, [data]);
+  }, [data, getItemId]);
 
   // Map items to options
   const options = useMemo(() => {
     return items.map((item) => ({
       value: getItemId(item),
       label: getItemLabel(item),
+      original: item,
     }));
   }, [items, getItemId, getItemLabel]);
-
-  // Client-side filtering
-  const filteredOptions = useMemo(() => {
-    if (!search.trim()) return options;
-    const searchLower = search.toLowerCase();
-    return options.filter((opt) =>
-      opt.label.toLowerCase().includes(searchLower),
-    );
-  }, [options, search]);
 
   // Reset search when popover closes
   useEffect(() => {
@@ -95,105 +190,34 @@ export function InfiniteSearchableSelect<T>({
     }
   }, [open]);
 
-  // Set up intersection observer - using a delayed effect after DOM is ready
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  const { handleScroll } = useInfiniteSelectScroll({
+    data,
+    fetchNextPage,
+    hasNextPage: Boolean(hasNextPage),
+    isFetching,
+    isLoading,
+    queryIdentity: `${queryKeyPrefix.join("|")}|${debouncedSearch}|${limit}`,
+  });
 
-    // Small delay to ensure both refs are set
-    const timer = setTimeout(() => {
-      const target = observerTargetRef.current;
-      const container = scrollContainerRef.current;
-
-      if (!target) {
-        return;
-      }
-
-      if (!container) {
-        return;
-      }
-
-      // Cleanup existing observer
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-
-      // Create new observer
-      observerRef.current = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (
-              entry.isIntersecting &&
-              hasNextPage &&
-              !isFetchingNextPage &&
-              !isLoading
-            ) {
-              fetchNextPage();
-            }
-          });
-        },
-        {
-          root: container,
-          threshold: 0.1,
-          rootMargin: "20px",
-        },
-      );
-
-      observerRef.current.observe(target);
-    }, 100); // 100ms delay to ensure DOM is ready
-
-    return () => {
-      clearTimeout(timer);
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-        observerRef.current = null;
-      }
-    };
-  }, [open, hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
-
-  // Manual scroll handler as backup
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
-
-    // If scrolled to 80% or more, fetch next page
-    if (
-      scrollPercentage > 0.8 &&
-      hasNextPage &&
-      !isFetchingNextPage &&
-      !isLoading
-    ) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
-
-  // Attach scroll listener
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container || !open) return;
-
-    container.addEventListener("scroll", handleScroll);
-
-    // Trigger initial check in case content is already scrollable
-    setTimeout(() => handleScroll(), 100);
-
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-    };
-  }, [open, handleScroll]);
-
+  // To preserve selected values that are not in the current search results or pages,
+  // we would ideally need a separate query to fetch selected items by ID.
+  // For now, we only show labels for items that exist in our loaded `options`.
+  // If they don't exist, we show their ID as a fallback.
   const selectedOptions = useMemo(() => {
     if (multiple) {
       const values = Array.isArray(value) ? value : [];
-      return options.filter((opt) => values.includes(opt.value));
+      return values.map(v => {
+        const found = options.find(o => o.value === v);
+        return found || { value: v, label: selectedOptionLabels?.[v] || v };
+      });
     }
-    const opt = options.find((opt) => opt.value === value);
-    return opt ? [opt] : [];
-  }, [options, value, multiple]);
+    if (!value) return [];
+    const found = options.find((opt) => opt.value === value);
+    const fallbackValue = value as string;
+    return found
+      ? [found]
+      : [{ value: fallbackValue, label: selectedOptionLabels?.[fallbackValue] || fallbackValue }];
+  }, [multiple, options, selectedOptionLabels, value]);
 
   const handleSelect = (val: string) => {
     if (multiple) {
@@ -226,12 +250,15 @@ export function InfiniteSearchableSelect<T>({
         <Button
           variant="outline"
           role="combobox"
-          autoHeight
+          autoHeight={multiple}
           mode="input"
           placeholder={selectedOptions.length === 0}
-          className={cn("w-full px-1.5 py-1 relative", triggerClassName)}
+          className={cn(
+            "w-full justify-between px-2 py-1.5 text-left text-[12px] relative",
+            triggerClassName,
+          )}
         >
-          <div className="flex items-center gap-1 pe-2.5 min-w-0 w-full">
+          <div className="flex items-center gap-1 truncate min-w-0">
             {selectedOptions.length > 0 ? (
               multiple ? (
                 <div className="flex flex-wrap items-center gap-1 min-w-0">
@@ -240,7 +267,7 @@ export function InfiniteSearchableSelect<T>({
                       <TooltipTrigger asChild>
                         <Badge
                           variant="outline"
-                          className="max-w-[150px] shrink-0"
+                          className="max-w-[150px] shrink-0 text-[11px]"
                         >
                           <span className="truncate">{opt.label}</span>
                           <button
@@ -259,7 +286,7 @@ export function InfiniteSearchableSelect<T>({
                   ))}
                   {(hiddenCount > 0 || expanded) && (
                     <Badge
-                      className="cursor-pointer px-1.5 text-muted-foreground hover:bg-accent shrink-0"
+                      className="cursor-pointer px-1.5 text-[11px] text-muted-foreground hover:bg-accent shrink-0"
                       appearance="ghost"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -273,7 +300,7 @@ export function InfiniteSearchableSelect<T>({
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="px-2.5 truncate flex-1 text-left min-w-0">
+                    <span className="truncate">
                       {selectedOptions[0].label}
                     </span>
                   </TooltipTrigger>
@@ -281,31 +308,33 @@ export function InfiniteSearchableSelect<T>({
                 </Tooltip>
               )
             ) : (
-              <span className="px-2.5 text-muted-foreground truncate flex-1 text-left min-w-0">
+              <span className="text-muted-foreground truncate">
                 {placeholder || "Select option"}
               </span>
             )}
           </div>
-          {isClearable && value && (
-            <button
-              type="button"
-              className="absolute right-9 top-1/2 -translate-y-1/2 p-1 hover:text-red-500 text-muted-foreground z-10"
-              onClick={handleClear}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          )}
-          <ButtonArrow className="absolute top-2 end-3" />
+          <div className="flex items-center gap-1">
+            {isClearable && value && (
+              <X
+                className="h-4 w-4 text-muted-foreground cursor-pointer"
+                onClick={handleClear}
+              />
+            )}
+            <ButtonArrow />
+          </div>
         </Button>
       </PopoverTrigger>
 
       <PopoverPortal>
         <PopoverContent
-          className="w-[var(--radix-popper-anchor-width)] min-w-[200px] max-w-[400px] p-0"
-          align="start"
+          onWheel={(event) => event.stopPropagation()}
+          className={cn(
+            "z-[110] w-[var(--radix-popper-anchor-width)] min-w-[200px] max-w-[500px] max-h-[min(55vh,420px)] overflow-hidden p-0",
+            contentClassName,
+          )}
+          align={align}
         >
           <div className="flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
-            {/* Search Input */}
             <div className="sticky top-0 z-10 bg-popover border-b p-2">
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -315,29 +344,27 @@ export function InfiniteSearchableSelect<T>({
                   onChange={(e) => setSearch(e.target.value)}
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
-                  className="pl-8 h-8"
+                  className="pl-8 h-8 text-[12px] placeholder:text-[12px]"
                 />
               </div>
             </div>
 
-            {/* List Container */}
             <div
-              ref={scrollContainerRef}
-              className="max-h-[300px] overflow-y-auto overflow-x-hidden"
+              className="custom-scrollbar max-h-[300px] overflow-y-auto overflow-x-hidden"
+              onScroll={handleScroll}
               onWheel={(e) => e.stopPropagation()}
             >
-              {/* Loading State */}
               {isLoading && items.length === 0 ? (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
-              ) : filteredOptions.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
+              ) : options.length === 0 ? (
+                <div className="py-6 text-center text-[12px] text-muted-foreground">
                   {search ? "No results found" : "No options available"}
                 </div>
               ) : (
                 <div className="p-1.5 space-y-0.5">
-                  {filteredOptions.map((opt, index) => {
+                  {options.map((opt, index) => {
                     const isSelected = multiple
                       ? Array.isArray(value) && value.includes(opt.value)
                       : value === opt.value;
@@ -346,8 +373,8 @@ export function InfiniteSearchableSelect<T>({
                         key={`${opt.value}-${index}`}
                         onClick={() => handleSelect(opt.value)}
                         className={cn(
-                          "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer",
-                          isSelected && "bg-accent/50",
+                          "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-[12px] outline-none hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer",
+                          isSelected && "bg-accent/50"
                         )}
                       >
                         <span className="break-words whitespace-normal pe-8">{opt.label}</span>
@@ -360,10 +387,9 @@ export function InfiniteSearchableSelect<T>({
                 </div>
               )}
 
-              {/* Observer Target */}
-              <div ref={observerTargetRef}>
+              <div>
                 {isFetchingNextPage && (
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center gap-2 py-2">
                     <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
                       Loading more...
@@ -371,7 +397,7 @@ export function InfiniteSearchableSelect<T>({
                   </div>
                 )}
                 {!isFetchingNextPage && hasNextPage && (
-                  <div className="text-center text-xs text-muted-foreground">
+                  <div className="text-center text-xs text-muted-foreground py-2">
                     Scroll for more
                   </div>
                 )}

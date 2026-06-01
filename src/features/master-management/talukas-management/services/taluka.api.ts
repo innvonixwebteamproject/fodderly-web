@@ -48,7 +48,7 @@ export const getTalukas = async (
   };
 };
 
-const DROPDOWN_PAGE_LIMIT = 100;
+const DROPDOWN_PAGE_LIMIT = 10;
 const DROPDOWN_MAX_PAGES = 50;
 
 /** All talukas for filters / dropdowns (state and/or district). */
