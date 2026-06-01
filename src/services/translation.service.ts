@@ -1,7 +1,5 @@
 import { api } from "@/lib/axios.interceptors";
 
-const BHASHINI_PROVIDER = "bhashini";
-const TRANSLATION_PROVIDER = "bhashini";
 const TRANSLATION_ENDPOINT = "/auth/translate";
 
 export type LanguageCode = "en" | "hi" | "gu" | "mr" | "te" | "pa" | "ml";
@@ -50,7 +48,6 @@ const decodeHtmlEntities = (value: string) => {
   return textarea.value;
 };
 
-const getTranslationProvider = () => TRANSLATION_PROVIDER;
 
 const buildTranslatePayload = ({
   text,
@@ -72,7 +69,7 @@ const parseTranslateResponse = (payload: TranslateResponse) => {
   return translatedText;
 };
 
-const translateWithBhashini = async (
+const performTranslation = async (
   params: NormalizedTranslateParams,
 ): Promise<string> => {
   const response = await api.post<TranslateResponse>(
@@ -94,17 +91,13 @@ export const translateText = async ({
     return normalizedText;
   }
 
-  if (getTranslationProvider() !== BHASHINI_PROVIDER) {
-    throw new Error("Only Bhashini translation provider is supported.");
-  }
-
   const translationParams: NormalizedTranslateParams = {
     text: normalizedText,
     sourceLanguage,
     targetLanguage,
   };
 
-  return translateWithBhashini(translationParams);
+  return performTranslation(translationParams);
 };
 
 export const translateEnglishText = async (
