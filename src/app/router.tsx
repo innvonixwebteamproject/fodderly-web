@@ -181,6 +181,13 @@ const CancelledOrdersRefundsPage = lazy(() =>
 const PartnerOrderListPage = lazy(() => import("@/features/order-management/pages/PartnerOrderListPage"));
 const PartnerOrderDetailPage = lazy(() => import("@/features/order-management/pages/PartnerOrderDetailPage"));
 
+// Commission Management
+const CommissionManagementPage = lazy(() =>
+  import("@/features/commission-management/pages/CommissionManagementPage").then((m) => ({
+    default: m.CommissionManagementPage,
+  })),
+);
+
 
 // Public Pages
 const HomePage = lazy(() =>
@@ -256,6 +263,7 @@ const adminRoutes: RouteConfig[] = [
   { path: "orders/cancelled-refunds", element: <CancelledOrdersRefundsPage /> },
   { path: "orders/:orderId", element: <OrderDetailPage /> },
   { path: "financials/refunds", element: <RefundQueuePage /> },
+  { path: "financials/commission", element: <CommissionManagementPage /> },
 
   // Master Management
   { path: "master/states", element: <StateListPage /> },
